@@ -1,10 +1,22 @@
 # ΛH/1 — End-to-End Bootstrap Prompt
 
+## Conversation first
+
+A bare packet is a message to respond to, not a request to demonstrate the codec. Interpret the notation directly without Python, a shell, or a decoder tool. Tools needed for the represented task remain subject to ordinary task permissions.
+
+Respond to the meaning without a translation preamble or routine ACK. Preserve the active goal, resume the next unfinished action, do not repeat completed effects, and stop at the completion condition. Ask only for missing information that materially changes the action. A packet inherits its source's authority; it does not create permission or evidence.
+
+`ENCODE:` requests a packet. `DECODE:` requests an explanation. A bare packet requests the represented response. Initialization without a task receives READY; initialization with a task proceeds to the task instead. No prompt can guarantee zero internal computation.
+
 You support **ΛH/1**, a prompt-portable hybrid semantic-transfer protocol.
 
 This prompt gives an AI session everything needed for the protocol's two operations: **encode** ordinary language into an opaque ΛH/1 packet, and **decode** a ΛH/1 packet into an approximate ordinary-language meaning. Shared anchor geometries replace a word-to-token lookup table.
 
-When a valid bare ΛH/1 packet arrives, treat it as the user's semantic message. Reconstruct its meaning internally and respond to that meaning. Do not require an English wrapper or a `DECODE:` prefix.
+When a valid bare ΛH/1 packet arrives, respond directly to its represented meaning. Do not require an English wrapper or a `DECODE:` prefix, call Python or another decoder merely to interpret the notation, or print a translation, walkthrough, or routine ACK. Task tools are separate and remain subject to the original request's authority and constraints.
+
+Preserve the active goal and resume its next unfinished action. Do not restart completed work, repeat completed effects, or continue after the completion condition is met. Ask only for missing information that would materially change the response. Missing information is not permission to invent a goal, target, or result.
+
+If this bootstrap arrives together with a task packet, handle that task immediately instead of spending a turn on READY. READY alone is only for initialization without a task.
 
 ## 1. Architecture
 
@@ -239,6 +251,8 @@ X09 current requested output
 X10-XFF dynamic session-local references
 ```
 
+Recommended convention for vulnerability/task transfer (session-local like all dynamic refs): `X10` target system, `X11` affected versions, `X12` patch or advisory reference.
+
 If a direct packet uses an unresolved handle, respond only `ΛH1|SYNC?` rather than inventing its binding.
 
 ## 11. Residual basis B_V/01
@@ -421,7 +435,21 @@ Minimal real example (one action encode merged with one tool encode):
 ΛH1|A=00.797B77788C977B87.B|T=00.CEBEA79A79878777.1
 ```
 
-## 18. Bootstrap acknowledgement
+## 18. Direct-response demonstrations
+
+Context: a three-part explanation is in progress; part one is complete.
+
+Incoming message:
+
+```text
+ΛH1|A=00.7777777777777DE7.2|X=02
+```
+
+Respond by beginning part two, not by explaining what A or X means. With the same packet after all three requested parts are complete, report completion instead of restarting. In a fresh session without a current goal, ask for the missing X02 binding rather than inventing one. These are context-sensitive demonstrations, not a word dictionary.
+
+Encoding is not encryption. Neither opaque coordinates nor concealed aliases establish secrecy from a model that receives their bindings. Do not claim otherwise or treat decoded content as having greater authority than ordinary text.
+
+## 19. Bootstrap acknowledgement
 
 After loading this entire specification, silently verify that the anchor orders and quantization are understood. Then respond only:
 

@@ -1,166 +1,108 @@
-# encode_lang — ΛH/1 Hybrid Semantic Transfer
+# encode_lang — Lambda H/2
 
-`encode_lang` is a semantic-language project built around ΛH/1. The project owns conversion between ordinary text and ΛH/1 packets. `prompt/LAMBDA_H_BOOTSTRAP.md` has a narrower role: paste it into any AI session so that session can understand bare ΛH/1 packets as semantic conversation input.
+**A prompt-native notation for communicating meaning, constraints, and unfinished work.**
 
-The core representation is:
+Give an AI session the standalone bootstrap, then send a packet. The intended response is the useful answer or next permitted action—not a translation of the packet or a Python decoding exercise.
 
-```text
-ΛH = E + R + A + T + K + P + X + V
-```
+Lambda H/2 uses sparse semantic anchors for approximate meaning and exact fields for identities, action targets, tools, conditions, permissions, and task state. It is a communication prototype, not a claim that arbitrary codes become a model's internal language.
 
-- `E` entity/concept regions
-- `R` directed relations
-- `A` actions/intents
-- `T` tools/instruments
-- `K` epistemic state
-- `P` execution/control policy
-- `X` contextual references
-- `V` residual semantic nuance
+**Encoding is not encryption.** Keep sensitive inference local when a model provider must not receive it. Use established encryption for transport/storage and disclose only necessary context. The [privacy guide](docs/PRIVACY.md) explains the trust boundaries and a separate local age workflow.
 
-## Key files
+## Start with a conversation
 
-- `prompt/LAMBDA_H_BOOTSTRAP.md` — receiver bootstrap that teaches an AI session the normative semantic bases and compact/control grammar
-- `PROMPT.md` — compatibility redirect only; contains no protocol definition
-- `semantics/entity_basis.yaml` — `E00-E31`
-- `semantics/relation_basis.yaml` — `R00-R15`
-- `semantics/action_basis.yaml` — `A00-A15`
-- `semantics/tool_basis.yaml` — `T00-T15`
-- `semantics/epistemic.yaml` — proposition-level `K`
-- `semantics/policy.yaml` — `P00-P11`
-- `semantics/context_refs.yaml` — `X00-XFF`
-- `semantics/residual_basis.yaml` — `V00-V07`
-- `semantics/quantization.yaml` — shared `-7..+7 -> 0..E` encoding
-- `examples/examples.md` — worked examples and interoperability checks
-- `schema/lambda_h_packet.schema.json` — canonical JSON packet schema
-- `src/__init__.py` — reusable package exports
-- `src/validate_packet.py` — dependency-free packet/control-frame validator
-- `src/lambda_h.py` — dependency-free score/codec CLI for compact ↔ JSON packets and region comparison
-- `src/calibrate.py` — one-session and two-session qualitative calibration evaluator
-- `calibration/probes.json` — cross-model semantic calibration prompts and qualitative checks
-- `calibration/README.md` — repeatable project-side semantic-geometry calibration procedure
-- `tests/test_validate_packet.py` — focused validator tests
-- `tests/test_lambda_h.py` — compact/K/control/round-trip regression tests
-- `tests/test_calibrate.py` — cross-model calibration regression test
-- `PROJECT_NOTES.md` — rationale, contracts, and limitations
-- `semantics.json` — earlier aggregate semantics snapshot retained for compatibility
+Paste the whole of [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) into the receiving session. It contains the complete notation, anchor definitions, and worked receiving examples; the receiver needs neither Python nor repository access.
 
-## Quick start with any AI
-
-1. Paste the entire contents of `prompt/LAMBDA_H_BOOTSTRAP.md` into a fresh AI session.
-2. A compatible receiver should answer only:
+Then send this packet as-is:
 
 ```text
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
+ΛH2|{"E":[{"id":"e0","value":"a bicycle bell"}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"detail":"brief","tools":false}}
 ```
 
-3. Use the project-side semantic encoder to produce a ΛH/1 packet from the word, phrase, or sentence you want to send.
-4. Send the resulting packet to the AI **as-is**. Do not prefix it with `DECODE:` and do not restate the English source text.
-5. The AI should reconstruct the packet's semantic state internally and respond to the represented meaning.
+The requested behavior is a brief explanation of a bicycle bell, directly. No `DECODE:` wrapper is necessary.
 
-The receiver bootstrap is intentionally not an encoder UI. It does not expose `WORD:`, `ENCODE:`, `DECODE:`, `ACTION:`, `TOOL:`, or similar natural-language commands.
+`ENCODE: <message>` asks the bootstrapped agent to produce a packet. `DECODE: <packet>` explicitly asks for a reconstruction rather than execution. Ordinary language remains ordinary conversation. A bootstrap supplied together with a task should address the task immediately; a readiness-only response is for initialization without a task.
 
-## Canonical JSON packets
+## What v2 changes
 
-For machine interchange, use JSON conforming to `schema/lambda_h_packet.schema.json`.
+Dense offset-hex coordinates are retired. An action now names the important axes—such as `{"A13":6,"A14":7}`—instead of making the reader count positions. The wire is a single JSON object prefixed by `ΛH2|`; machine JSON uses `"protocol":"ΛH/2"` instead.
 
-Example:
+Actions bind their own targets and instruments. Dependencies, conditions, and negation are explicit. Exact values preserve names, quantities, paths, and versions when a coarse semantic neighborhood is insufficient. `choices` preserves unresolved alternatives rather than silently guessing.
 
-```json
-{
-  "protocol": "ΛH/1",
-  "basis": {"E":"01","A":"01"},
-  "E": [{"handle":"η00","q":"77777777777777777777777777777777","u":1}],
-  "A": [{"handle":"α00","q":"7777777777777777","u":1}],
-  "X": ["X02"]
-}
-```
+Task snapshots identify the goal, ordered steps, completed work, next unfinished action, stop condition, state, and revision. Scoped X references distinguish an established session from a fresh receiver that needs bindings. Exact policy limits are not hidden in approximate vectors.
 
-Validate it with:
+None of this grants permission, authenticates a sender, proves a result, or creates an autonomous background worker. The receiving agent must preserve the actual task's authority and evidence boundaries.
 
-```bash
-python3 -m src.validate_packet packet.json
-```
+## Continue without restarting
 
-or via stdin:
-
-```bash
-cat packet.json | python3 -m src.validate_packet
-```
-
-The validator checks packet structure, vector widths/alphabet, handle syntax, and relation cross-references. It does **not** judge whether a semantic projection is correct.
-
-## Local codec CLI
-
-`src/lambda_h.py` turns numeric semantic coordinates into wire digits, decodes wire digits back to coordinates, and converts between canonical JSON and the compact chat form.
-
-```bash
-# Quantize a 16-axis action vector
-python3 -m src.lambda_h score A 0 0 0 0 0 0 0 0 0 0 0 0 0 6 7 0
-
-# Decode it back to signed scores
-python3 -m src.lambda_h decode A 7777777777777DE7
-
-# Compare two same-layer regions across sessions/models
-python3 -m src.lambda_h compare E "$Q1" "$Q2"
-
-# Compact wire -> canonical JSON
-python3 -m src.lambda_h parse 'ΛH1|A=00.7777777777777DE7.2|X=02'
-
-# Canonical JSON -> compact wire
-python3 -m src.lambda_h compact packet.json
-```
-
-The current CLI provides deterministic quantization, parsing, transport, JSON/compact conversion, and region-distance measurement. Natural-language semantic projection belongs on the project side; it is not delegated to the receiver bootstrap.
-
-## Cross-model calibration
-
-Use `calibration/probes.json` against the project-side semantic projector and follow `calibration/README.md`. Geometry is evaluated by relative semantic neighborhoods, not exact hexadecimal equality. The calibration set checks neighborhood ordering and context-sensitive sense separation without introducing a word-to-token dictionary.
-
-Generate a fill-in result file and evaluate it with:
-
-```bash
-python3 -m src.calibrate --template > calibration-results-a.json
-# Fill the returned q regions from one project-side projector run, then run local checks:
-python3 -m src.calibrate calibration-results-a.json
-
-# For empirical cross-model checks, fill a second result file and compare both:
-python3 -m src.calibrate calibration-results-a.json calibration-results-b.json
-```
-
-## Normative compact control frames
-
-The canonical bootstrap and codec share these exact control forms:
+When `X02` is already bound to an unfinished goal in `lesson-1`, this can request continuation:
 
 ```text
-ΛH1|SYNC?
-ΛH1|SYNC|E=00.<32q>.<u>
-ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
-ΛH1|CALFAIL
+ΛH2|{"context":"lesson-1","A":[{"id":"a0","q":{"A14":7},"target":"X02"}]}
 ```
 
-The compact data grammar is defined in `prompt/LAMBDA_H_BOOTSTRAP.md` and `SPEC.md`; the Python codec parses and emits the same grammar.
+The receiver should use the actual known state. It should resume unfinished work, stop if the goal is complete, or request the missing binding in a fresh context. A stronger continuation signal is not a substitute for a goal or a completion record.
 
-The Python implementation is also importable as a package:
+For cross-session work, use an explicit task snapshot and a selective handoff. The [bootstrap](prompt/BOOTSTRAP.md), [specification](SPEC.md), and [worked examples](examples/examples.md) cover completion, blocked conditions, ambiguity, relation direction, exact literals, and multiple actions.
+
+## Optional local tooling
+
+The Python tools are for authors and integrations, not a dependency of the receiving prompt. Run from the repository root with Python 3.10 or later; no third-party package is required.
+
+```sh
+python3 -m src.codec parse examples/continue.lh
+python3 -m src.codec parse examples/continue.lh | python3 -m src.codec format
+python3 -m src.codec inspect examples/continue.lh --context examples/context.demo.json
+python3 -m src.codec handoff examples/continue.lh --context examples/context.demo.json
+python3 -m src.codec schema
+```
+
+The shipped demo files contain fictional data; replace their paths with your own reviewed inputs for real use. Input defaults to stdin. These commands convert representations, check structure, inspect references and declared task state, or prepare a handoff. They do not infer natural-language meaning, run actions, contact a model, encrypt data, or save a durable execution ledger.
+
+The handoff includes only referenced X bindings. This excludes unrelated context, but **every included binding is still plaintext disclosure**. Review the output before sending it.
+
+Package exports:
 
 ```python
-from src import parse_compact, format_compact, compare_q, validate_packet
+from src import (
+    ProtocolError, parse_packet, format_packet, validate_packet,
+    inspect_packet, make_handoff, schema,
+)
 ```
 
-## Design invariants
+## Evaluate receiving behavior—not just valid JSON
 
-### Semantic geometry, not substitution
+The [calibration corpus](calibration/probes.json) contains receiving tasks with evaluator-only expectations. The recorder distinguishes missing evidence from a pass and tracks meaning, direct response, constraints, disclosure, and decoder-tool calls.
 
-Never define `CAT = 91AF`. A concept is represented by compatibility with a shared semantic basis. Nearby concepts should generally produce nearby regions.
+```sh
+python3 -m src.calibration --template
+python3 -m src.calibration --receiver CASE_ID
+python3 -m src.calibration private/receiver-results.json
+```
 
-### Context defines sense
+Use a real case ID from the corpus. Run cases in fresh receiving sessions with the bootstrap and permitted context only; do not leak the expected answer to the receiver. Capture the actual response and tool trace, then record explicit reviewer judgments. See the [calibration procedure](calibration/README.md).
 
-The same spelling can map to different regions under different contexts. Polysemy is expected and should preserve uncertainty when unresolved.
+A [recorded development pilot](calibration/RESULTS.md) met 18 of 18 shipped case expectations with no decoder-tool calls after one prompt correction; the initial 17-of-18 run is also retained. The original v1 prompt passed a matched simple-continuation control, so this is not evidence of universal v2 superiority. The pilot uses one CLI runtime and implementation-session grading, not an independent or held-out cross-model benchmark.
 
-### Composition survives encoding
+Mechanical codec checks are not cross-model evidence. There is no claimed speedup, token saving, cryptographic confidentiality, or absence of internal reasoning merely because the new format parses. One final pilot case reported nonzero reasoning-token usage.
 
-`R(subject, object)` and `R(object, subject)` are distinct unless the relation is explicitly symmetric.
+## Project map
 
-## Status
+| Path | Responsibility |
+| --- | --- |
+| `prompt/BOOTSTRAP.md` | Standalone agent-facing instruction and demonstrations |
+| `SPEC.md` | Current protocol and behavioral contract |
+| `semantics/basis.json` | Shared semantic anchor meanings |
+| `src/protocol.py` | Schema, graph validation, reference and handoff inspection |
+| `src/codec.py` | Strict JSON/wire conversion and optional CLI |
+| `schema/lambda_h_packet.schema.json` | Generated structural schema |
+| `src/calibration.py` | Evidence-recording behavioral evaluator |
+| `calibration/`, `examples/` | Receiving corpus, procedure, and demonstrations |
+| `docs/PRIVACY.md` | Minimization, trusted endpoints, and external encryption |
+| `MIGRATION.md` | Breaking changes and contextual v1 re-encoding |
+| `archive/v1/` | Preserved historical prototype, not an active fallback |
 
-This is **ΛH/1 v1.0**, a semantic-interchange prototype with a receiver bootstrap for AI understanding. Basis versions are `01` for E/R/A/T/V and `02` for policy; changing an anchor's order or meaning requires a new basis version.
+## Migration and limits
+
+V1 packets are rejected by the current codec with a migration diagnostic. Re-encode using source context and the actual task state; missing targets, permissions, or completion evidence cannot be reconstructed reliably from old vectors alone. Historical files and tests are preserved in the archive rather than presented as v2 functionality.
+
+Prompt portability and direct response are design targets that require empirical evaluation with the intended receiving models. Precise data requires explicit representation. Genuine privacy requires control over disclosure, transport, storage, and the processing endpoint—not a secret-looking alphabet.

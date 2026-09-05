@@ -1,222 +1,122 @@
-# ΛH/1 Protocol Specification
+# Lambda H/2 protocol specification
 
-## 1. Purpose
+Status: prompt-portable semantic-communication prototype. Version: `ΛH/2`. The protocol distinguishes approximate meaning from exact task structure. It does not guarantee zero model reasoning, exact lexical recovery, cross-model fidelity, confidentiality, or autonomous execution.
 
-ΛH/1 is a semantic representation format for project-side text↔packet conversion and receiver-side AI understanding. The receiver bootstrap supplies shared anchor geometries so a session can consume bare ΛH/1 packets directly, without a word-to-token lookup table or an ENCODE/DECODE prompt interface.
+## 1. Contract owners
 
-The representation is hybrid:
+- `semantics/basis.json`: machine-readable semantic anchor meanings.
+- `src/protocol.py`: executable structural schema, graph invariants, and context/handoff inspection.
+- `schema/lambda_h_packet.schema.json`: generated structural schema, exported with `python3 -m src.codec schema`.
+- `prompt/BOOTSTRAP.md`: complete standalone encoder/receiver instructions, including the anchors and direct-response examples.
+- This document: the behavioral and interoperability contract.
 
-```text
-ΛH = E + R + A + T + K + P + X + V
-```
+These surfaces must agree. Schema validation alone does not check graph, evidence, permission, task completion, or semantic meaning. Changing anchor meaning, wire semantics, or a deployed incompatible contract requires a new protocol version. Archived v1 files are not current definitions.
 
-- `E`: entities and concepts
-- `R`: relations between entities
-- `A`: actions/intents
-- `T`: tools/instruments
-- `K`: epistemic status and proposition confidence
-- `P`: execution/control policy
-- `X`: contextual references
-- `V`: residual nuance
+## 2. Wire and machine forms
 
-The canonical modular bases and their ordering live in `semantics/*.yaml`; `semantics.json` is retained as the earlier aggregate compatibility snapshot. Changing an anchor meaning or order requires a new basis version.
-
-## 2. Quantization
-
-Continuous semantic judgments are coarsened to integer scores in `[-7,+7]`.
-
-Wire encoding uses one hexadecimal-like digit per coordinate:
+The wire is `ΛH2|` followed by exactly one ordinary JSON object:
 
 ```text
--7  -6  -5  -4  -3  -2  -1   0  +1  +2  +3  +4  +5  +6  +7
- 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E
+ΛH2|{"E":[{"id":"e0","value":"a bicycle bell"}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}]}
 ```
 
-`F` is reserved.
+The prefix owns the version. A wire body must not also contain `protocol`. The corresponding machine JSON contains `"protocol":"ΛH/2"` and no prefix. Whitespace outside JSON strings is insignificant. Quoting, escapes, Unicode, booleans, null, and numbers follow JSON; duplicate keys and non-finite numbers are invalid.
 
-Use `0` semantic score for unrelated anchors. Negative scores are for meaningful opposition/incompatibility, not merely lack of affinity.
+There is no second layer-specific delimiter grammar. A `|` or a string resembling `a0` inside an exact literal is just data. Arrays retain order. The codec converts these two forms without inferring meaning or executing anything.
 
-## 3. Layer packets
+## 3. Meaning and identity
 
-### Entity
+Sparse regions use named, signed, nonzero integer coordinates. `{"A13":6,"A14":7}` emphasizes execution and continuation without positional counting or an offset conversion. Allowed scores are -7 through 7, excluding explicit zero: omitted axes are neutral. Negative means opposition, not irrelevance, logical negation, or prohibition.
 
-`B_E/01` contains 32 anchors:
+Basis widths: E=32, R=16, A=16, T=16, V=8. An unknown axis is invalid. Node `u`, when supplied, is an integer from 0 (resolved) to 7 (high ambiguity). Omitted uncertainty is unspecified, not certainty. Neither scores nor uncertainty are calibrated probabilities.
+
+Nearby concepts can have indistinguishable coarse regions. Preserve a task-critical distinction with an exact scalar `value`, explicit alternatives in `choices`, or a genuinely shared X binding. Do not imply recovery of omitted original words. Do not copy an entire instruction into an entity value merely to bypass composition.
+
+Local IDs are e/r/a/t/c followed by one or more decimal digits. Each local node referenced by a packet must be declared in that packet. X references are uppercase X plus two hexadecimal digits and may use external context. IDs are aliases, not universal word definitions.
+
+## 4. Semantic records
+
+| Field | Required node fields | Optional node fields |
+| --- | --- | --- |
+| E | `id`; at least one of `q`, `value`, `choices` | `u` |
+| R | `id`, `q`, `subject`, `object` | `u`, `not` |
+| A | `id`, `q`, `target` | `u`, `tool`, `after`, `when`, `until`, `not` |
+| T | `id`; at least one of `q`, `value` | `u` |
+| C | `id`, `op`, `left`; `right` for binary operators | none |
+| K | `target`, `state` | `confidence`, `truth` |
+
+E/R/A/T/C are arrays of nodes. K is an array with at most one entry per target. Repeated node IDs are invalid. Exact values are strings, finite numbers, booleans, or null. Use strings for precision-critical decimal representations, including significant trailing zeroes; ordinary JSON-number parsing does not preserve arbitrary decimal precision or spelling. `choices` contains at least two distinct alternatives; alternatives are not simultaneous facts.
+
+R has ordered subject and object references. `not:true` negates the relation. A describes a requested operation and has an explicit target; `tool` points to its own t-node, never implicitly to every action. `after` lists a-node prerequisites and must be acyclic. Without a task snapshot, independent actions use declaration order. A with `not:true` is prohibited and must not be included as an executable task step.
+
+Requests and descriptions are different: an action described inside a literal or an example is not a new instruction. The receiver must preserve the originating message's authority, not treat content as privileged because it is encoded.
+
+## 5. Conditions and epistemics
+
+C operators are `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `exists`, and `done`. The six comparison operators require both operands. `exists` and `done` take only `left`; `done` requires an action reference.
+
+Resolve operands and compare actual values. Do not coerce strings or booleans into numbers. Ordered comparisons need comparable values. `exists` concerns the denoted resource, not the mere presence of an identifier or a supplied path string. `done` concerns established completion, not an action declaration. Unavailable or ambiguous operands produce an unknown condition, not false.
+
+An action's `when` must be established true before acting. Its `until` is checked before another repetition and stops repetition when established true. A task-level `stop` is checked before further work. Unknown conditions call for the missing evidence; they are not permission to continue or a reason to fabricate completion.
+
+K states are K00 observed, K01 reported, K02 assumed, K03 hypothesized, K04 inferred, K05 multiply supported, K06 contradicted, K07 unknown, and K08 confirmed to the task's required standard. Optional confidence lies in 0..1. Optional `truth` qualifies only an r- or c-proposition. The state and provenance still matter: a high-confidence hypothesis is not a verified fact, and a packet cannot certify its own claims merely by labeling them confirmed.
+
+The Python inspector does not evaluate these semantic predicates or establish external evidence. Condition interpretation belongs to the receiving agent/application under its actual observation and authority boundaries.
+
+## 6. Exact policy and residual nuance
+
+P is an object of optional fields:
+
+- `mutation` and `tools`: booleans. False is a prohibition; true requests use only within existing permission. Omission inherits existing limits.
+- `scope`: references limiting the task; cannot expand earlier authority.
+- `detail`: brief, normal, or full. `reply`: natural (default) or packet.
+- `effort` and `initiative`: integer preferences from -7 through 7, not authorizations or execution guarantees.
+
+V is a sparse V-coordinate object for remaining nuance. Do not use it to conceal a missing condition, operand, permission, or task state. Exact prohibitions outrank approximate affinities.
+
+## 7. Context binding and selective handoff
+
+Include a nonempty `context` namespace whenever X references or bindings occur. X is an object mapping references to exact scalar values. The same namespace has stable bindings; conflicting rebindings require a new namespace. Do not import an unrelated namespace's bindings.
+
+Reserved roles: X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output. A role is not an automatic value. X0A–X0F are reserved; X10–XFF are explicitly bound dynamic references.
+
+`mode` is message by default. A bind packet has only mode, context, and X in its wire body. It establishes context without executing a task. A handoff packet includes every X binding it references, but this does not establish availability of the denoted files, tools, or external evidence.
+
+A local context file for optional tooling has `context` and X fields. `inspect_packet` requires a matching namespace and rejects conflicting bindings. `make_handoff` includes only required X bindings, excluding unrelated inline or external bindings. It does not redact a necessary secret or encrypt the result: included bindings are disclosed to the recipient.
+
+## 8. Task snapshots and continuity
+
+A task object requires `id`, nonnegative `revision`, `state`, `goal`, ordered `steps`, and `done`. Steps and done are action IDs; done may be empty and must be a subset of steps. Prerequisites must precede their dependents, and a completed dependent must have completed prerequisites.
+
+- Active: `next` is exactly the first unfinished step; no blocker.
+- Complete: every planned step is in done; no next or blocker.
+- Blocked: a blocker reference is present; no next.
+- Cancelled: no next or blocker; remaining planned steps are abandoned rather than falsely recorded as done.
+
+Optional stop is a condition ID. When a stop condition terminates work early, report the actual outcome and reconcile the snapshot without pretending unperformed steps completed. Cancellation of remaining planned steps is distinct from whether the broader goal was achieved.
+
+Within a conversation, an older revision must not replace a newer known task. Conflicting snapshots at the same revision require reconciliation. Check actual external effects before replaying an uncertain step. IDs and revisions are not authentication, persistence, exactly-once effects, or an event log. The package does not create a background process or future agent turn.
+
+## 9. Receiver interaction
+
+After one standalone bootstrap, a bare packet leads to its represented response. No Python, shell, or decoder tool is needed merely to read the notation. Task tools are a separate matter. Do not print a coordinate walkthrough, unsolicited translation, or routine ACK.
+
+`ENCODE:` requests a packet. `DECODE:` requests approximate ordinary-language reconstruction, not execution. Normal language remains normal conversation. Bootstrap-only initialization receives ready; initialization containing a task addresses that task immediately.
+
+The only controls are:
 
 ```text
-ΛE1|b=01|q=<32 digits>|u=<0-E>
+ΛH2|{"control":"ready"}
+ΛH2|{"control":"need","context":"lesson-1","refs":["X02"]}
+ΛH2|{"control":"invalid","reason":"An action references an undeclared local node."}
 ```
 
-`u` is uncertainty. Low values mean the intended sense is well resolved; high values indicate ambiguity/polysemy.
+Controls contain no task payload. Use need for missing scoped bindings, invalid for malformed structure, and a specific natural-language question for material semantic ambiguity. Do not expose unrelated context in an error or clarification.
 
-### Relation
+## 10. Evaluation and privacy boundary
 
-`B_R/01` contains 16 directed relation anchors:
+The success criterion is a correct receiving response: preserved meaning, direction, identity, constraints, appropriate continuation/stopping, no unnecessary decoder tools, and no unnecessary disclosure. A READY response, valid JSON, or geometry score is not evidence that this criterion holds.
 
-```text
-ΛR1|b=01|q=<16 digits>|u=<0-E>
-```
+The calibration corpus and evidence recorder distinguish unrun cases from failures and passes. Receiver expectations must not be included in the receiving prompt. Codec checks are mechanical evidence only; no cross-model performance claim is made without actual receiving runs.
 
-Relations are directional unless a shared relation region is explicitly known to be symmetric.
-
-### Action
-
-`B_A/01` contains 16 operation anchors:
-
-```text
-ΛA1|b=01|q=<16 digits>|u=<0-E>
-```
-
-### Tool
-
-`B_T/01` contains 16 tool/instrument anchors:
-
-```text
-ΛT1|b=01|q=<16 digits>|u=<0-E>
-```
-
-### Policy
-
-`B_P/02` contains 12 bipolar policy axes:
-
-```text
-ΛP1|b=02|q=<12 digits>|u=<0-E>
-```
-### Residual
-
-`B_V/01` contains 8 bipolar residual axes:
-
-```text
-ΛV1|b=01|q=<8 digits>|u=<0-E>
-```
-
-Use `V` only for nuance that is not cleanly represented by the other layers.
-
-## 4. Epistemics
-
-`K` is proposition-level metadata, not a global confidence score.
-
-Normative compact forms target the relation handle and carry status/confidence separately:
-
-```text
-K=R02:K03:0.35
-K=R04:K05:0.82
-```
-
-This means the first relation proposition is a hypothesis at 0.35 support, while the second is supported at 0.82. The underlying relation packet is separate from the epistemic status.
-
-## 5. Context and handles
-
-Fixed references are `X00` through `X09`; dynamic references use `X10` through `XFF`.
-
-Session-local handles:
-
-```text
-ηNN  entity/concept
-ρNN  relation
-αNN  action
-τNN  tool
-```
-
-A handle is not universal. If a receiver lacks a binding it must return:
-
-```text
-ΛH1|SYNC?
-```
-
-The sender should then resend the missing region binding, not invent a textual meaning for the handle.
-
-## 6. Compact wire form
-
-ΛH/1 defines a deterministic compact chat syntax in addition to canonical JSON. Fields are separated by `|`; unused fields are omitted. The canonical field order is `E,R,A,T,K,P,X,V`.
-
-```text
-ΛH1|E=00.<32q>.<u>,01.<32q>.<u>|R=00.<16q>.<u>(01,00)|A=00.<16q>.<u>|T=00.<16q>.<u>|K=R00:K03:0.42|P=<12q>.<u>|X=00,02|V=<8q>.<u>
-```
-
-Rules:
-
-- Compact handles are two uppercase hexadecimal digits. The field supplies the namespace: `E=00...` maps to `η00`, `R=00...` maps to `ρ00`, `A=00...` maps to `α00`, and `T=00...` maps to `τ00`.
-- Relation arguments are entity handle IDs in `(subject,object)` order.
-- Every region entry includes `q` and a one-digit uncertainty `u` in `0-E`.
-- `K` entries use `<target>:<K00-K08>:<confidence>`. Compact targets are `ENN`, `RNN`, `ANN`, `TNN`, or `XNN`.
-- `P` is exactly 12 wire digits plus uncertainty; `V` is exactly 8 wire digits plus uncertainty.
-- `X` contains two-digit reference IDs; `X=02` means `X02`.
-- Basis versions are implicit in compact ΛH1 packets after a shared READY declaration. A different basis requires a new compatible protocol/basis declaration rather than silent reinterpretation.
-- JSON remains the canonical machine contract. `python3 -m src.lambda_h parse` and `compact` provide deterministic conversion between the two forms.
-
-Control frames are normative too:
-
-```text
-ΛH1|SYNC?
-ΛH1|SYNC|E=00.<32q>.<u>
-ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
-ΛH1|CALFAIL
-```
-
-`SYNC` must carry at least one ordinary semantic field. `ACK` must contain at least one of E/R/A/T and uses relation summaries `HH(HH,HH)`. New ACK frames do not use square brackets.
-
-Do not merge several entities by averaging their vectors. Keep them as distinct `E` entries and express relationships in `R`.
-
-## 7. Encoding algorithm
-
-For ordinary language:
-
-1. Resolve context and polysemy.
-2. Identify distinct entities/concepts.
-3. Project each entity onto `B_E/01`.
-4. Identify directed relationships and project each onto `B_R/01`.
-5. Identify requested operation(s) and project onto `B_A/01`.
-6. Identify requested/preferred tool classes and project onto `B_T/01`.
-7. Attach proposition-level epistemic state using `K`.
-8. Encode control posture in `B_P/02`.
-9. Resolve contextual references in `X`.
-10. Put only leftover nuance into `V`.
-11. Emit the hybrid packet.
-
-For single-word project-side encoding, select the primary semantic layer first. A concrete/abstract noun usually starts in `E`; a verb-like operation usually starts in `A`; a relation word such as `inside` starts in `R`; an execution posture such as `continue` may start in `P`; and a tool name starts in `T`.
-
-The receiver bootstrap does not expose these layer choices as commands. The project constructs the packet; the receiver consumes the resulting semantic structure directly.
-
-## 8. Decoding algorithm
-
-1. Validate basis versions and packet lengths.
-2. Decode wire digits into `[-7,+7]` coordinates.
-3. Reconstruct each region relative to the corresponding shared basis.
-4. Resolve handles and `X` references.
-5. Compose entities, relations, actions, tools, epistemics, policy, and residual state.
-6. For an AI receiver, consume the reconstructed meaning directly as the incoming message. A project-side decoder may render an approximate ordinary-language projection when needed.
-
-Decoding is approximate. The receiver should reconstruct the semantic neighborhood and compositional structure, not claim recovery of exact original wording. The receiver bootstrap does not require a `DECODE:` wrapper.
-
-## 9. Interoperability criterion
-
-Prompt-only models may not produce identical coordinates. A successful implementation preserves:
-
-- relative semantic neighborhoods;
-- polysemy/context separation;
-- relation argument order;
-- distinction between entity/action/tool/policy layers;
-- proposition-level uncertainty;
-- session-handle synchronization.
-
-For example, ordinary senses should usually satisfy:
-
-```text
-sim(cat,dog) > sim(cat,hat)
-sim(cat,rat) > sim(cat,fire)
-```
-
-The two senses of `fire` in combustion and employment termination should separate strongly when context is supplied.
-
-## 10. Entity-resolution limit and planned contrastive residual
-
-`B_E/01` is a coarse universal geometry. It can place nearby concepts such as cat, dog, and rat in the correct neighborhood without necessarily carrying enough information to recover which nearby concept was intended.
-
-A future version may extend entity representation as:
-
-```text
-E = E0 + EΔ
-```
-
-where `E0` is the current 32-anchor universal region and `EΔ` is a task/session-induced contrastive subregion used only when a coarse neighborhood contains multiple live candidates. `EΔ` is not part of ΛH/1 v1.0 and must not be invented ad hoc in current packets; adding it requires a versioned contract.
+The protocol does not provide confidentiality. Use selective disclosure, a trusted processing endpoint, and established encrypted transport/storage according to the threat model. See [privacy guidance](docs/PRIVACY.md) and [migration notes](MIGRATION.md).

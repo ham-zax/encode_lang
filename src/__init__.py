@@ -1,27 +1,23 @@
-"""Reusable Python package for the ΛH/1 semantic-transfer codec."""
+"""Optional local tooling for the Lambda H/2 semantic notation.
 
+The receiving agent needs the standalone bootstrap, not this Python package.
+Imports are lazy so `python3 -m src.codec` has no eager module side effects.
+"""
 from __future__ import annotations
 
 from typing import Any
 
 __all__ = [
-    "CodecError",
-    "compare_q",
-    "decode_q",
-    "encode_scores",
-    "format_compact",
-    "parse_compact",
-    "validate_packet",
+    "ProtocolError", "parse_packet", "format_packet", "validate_packet",
+    "inspect_packet", "make_handoff", "schema",
 ]
 
 
 def __getattr__(name: str) -> Any:
-    if name == "validate_packet":
-        from .validate_packet import validate_packet
-
-        return validate_packet
-    if name in {"CodecError", "compare_q", "decode_q", "encode_scores", "format_compact", "parse_compact"}:
-        from . import lambda_h
-
-        return getattr(lambda_h, name)
+    if name in {"parse_packet", "format_packet"}:
+        from . import codec
+        return getattr(codec, name)
+    if name in {"ProtocolError", "validate_packet", "inspect_packet", "make_handoff", "schema"}:
+        from . import protocol
+        return getattr(protocol, name)
     raise AttributeError(name)

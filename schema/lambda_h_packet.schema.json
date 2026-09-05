@@ -1,354 +1,2258 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/lambda-h/1/schema/lambda_h_packet.schema.json",
-  "title": "Lambda H/1 semantic transfer packet",
-  "type": "object",
-  "required": [
-    "protocol"
-  ],
-  "properties": {
-    "protocol": {
-      "const": "ΛH/1"
-    },
-    "control": {
-      "type": "string",
-      "enum": ["SYNC?", "SYNC", "ACK", "READY", "CALFAIL"]
-    },
-    "ack": {
-      "$ref": "#/$defs/ack"
-    },
-    "basis": {
+  "title": "Lambda H/2 packet (graph constraints also require the protocol validator)",
+  "oneOf": [
+    {
       "type": "object",
       "properties": {
-        "E": {
-          "const": "01"
+        "protocol": {
+          "const": "ΛH/2"
         },
-        "R": {
-          "const": "01"
-        },
-        "A": {
-          "const": "01"
-        },
-        "T": {
-          "const": "01"
-        },
-        "P": {
-          "const": "02"
-        },
-        "V": {
-          "const": "01"
-        }
-      },
-      "additionalProperties": false
-    },
-    "E": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/entity"
-      }
-    },
-    "R": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/relation"
-      }
-    },
-    "A": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/action"
-      }
-    },
-    "T": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/tool"
-      }
-    },
-    "K": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/epistemic"
-      }
-    },
-    "P": {
-      "$ref": "#/$defs/policy"
-    },
-    "X": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "pattern": "^X[0-9A-F]{2}$"
-      }
-    },
-    "V": {
-      "$ref": "#/$defs/residual"
-    }
-  },
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {"required": ["ack"]},
-      "then": {"required": ["control"], "properties": {"control": {"const": "ACK"}}}
-    },
-    {
-      "if": {"required": ["control"], "properties": {"control": {"const": "SYNC?"}}},
-      "then": {"not": {"anyOf": [
-        {"required": ["ack"]}, {"required": ["basis"]}, {"required": ["E"]},
-        {"required": ["R"]}, {"required": ["A"]}, {"required": ["T"]},
-        {"required": ["K"]}, {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
-      ]}}
-    },
-    {
-      "if": {"required": ["control"], "properties": {"control": {"const": "CALFAIL"}}},
-      "then": {"not": {"anyOf": [
-        {"required": ["ack"]}, {"required": ["basis"]}, {"required": ["E"]},
-        {"required": ["R"]}, {"required": ["A"]}, {"required": ["T"]},
-        {"required": ["K"]}, {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
-      ]}}
-    },
-    {
-      "if": {"required": ["control"], "properties": {"control": {"const": "READY"}}},
-      "then": {
-        "required": ["basis"],
-        "properties": {"basis": {"required": ["E", "R", "A", "T", "P", "V"]}},
-        "not": {"anyOf": [
-          {"required": ["ack"]}, {"required": ["E"]}, {"required": ["R"]},
-          {"required": ["A"]}, {"required": ["T"]}, {"required": ["K"]},
-          {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
-        ]}
-      }
-    },
-    {
-      "if": {"required": ["control"], "properties": {"control": {"const": "ACK"}}},
-      "then": {
-        "required": ["ack"],
-        "not": {"anyOf": [
-          {"required": ["basis"]}, {"required": ["E"]}, {"required": ["R"]},
-          {"required": ["A"]}, {"required": ["T"]}, {"required": ["K"]},
-          {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
-        ]}
-      }
-    },
-    {
-      "if": {"required": ["control"], "properties": {"control": {"const": "SYNC"}}},
-      "then": {
-        "not": {"required": ["ack"]},
-        "anyOf": [
-          {"required": ["E"]}, {"required": ["R"]}, {"required": ["A"]},
-          {"required": ["T"]}, {"required": ["K"]}, {"required": ["P"]},
-          {"required": ["X"]}, {"required": ["V"]}
-        ]
-      }
-    }
-  ],
-  "$defs": {
-    "ackId": {
-      "type": "string",
-      "pattern": "^[0-9A-F]{2}$"
-    },
-    "ackRelation": {
-      "type": "object",
-      "required": ["handle", "subject", "object"],
-      "properties": {
-        "handle": {"$ref": "#/$defs/ackId"},
-        "subject": {"$ref": "#/$defs/ackId"},
-        "object": {"$ref": "#/$defs/ackId"}
-      },
-      "additionalProperties": false
-    },
-    "ack": {
-      "type": "object",
-      "minProperties": 1,
-      "properties": {
-        "E": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}},
-        "R": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ackRelation"}},
-        "A": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}},
-        "T": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}}
-      },
-      "additionalProperties": false
-    },
-    "uncertainty": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 14
-    },
-    "entityHandle": {
-      "type": "string",
-      "pattern": "^η[0-9A-F]{2}$"
-    },
-    "relationHandle": {
-      "type": "string",
-      "pattern": "^ρ[0-9A-F]{2}$"
-    },
-    "actionHandle": {
-      "type": "string",
-      "pattern": "^α[0-9A-F]{2}$"
-    },
-    "toolHandle": {
-      "type": "string",
-      "pattern": "^τ[0-9A-F]{2}$"
-    },
-    "entity": {
-      "type": "object",
-      "required": [
-        "handle",
-        "q",
-        "u"
-      ],
-      "properties": {
-        "handle": {
-          "$ref": "#/$defs/entityHandle"
-        },
-        "q": {
+        "context": {
           "type": "string",
-          "pattern": "^[0-E]{32}$"
+          "minLength": 1,
+          "maxLength": 128
         },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
-        }
-      },
-      "additionalProperties": false
-    },
-    "relation": {
-      "type": "object",
-      "required": [
-        "handle",
-        "q",
-        "u",
-        "subject",
-        "object"
-      ],
-      "properties": {
-        "handle": {
-          "$ref": "#/$defs/relationHandle"
-        },
-        "q": {
-          "type": "string",
-          "pattern": "^[0-E]{16}$"
-        },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
-        },
-        "subject": {
-          "$ref": "#/$defs/entityHandle"
-        },
-        "object": {
-          "$ref": "#/$defs/entityHandle"
-        }
-      },
-      "additionalProperties": false
-    },
-    "action": {
-      "type": "object",
-      "required": [
-        "handle",
-        "q",
-        "u"
-      ],
-      "properties": {
-        "handle": {
-          "$ref": "#/$defs/actionHandle"
-        },
-        "q": {
-          "type": "string",
-          "pattern": "^[0-E]{16}$"
-        },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
-        }
-      },
-      "additionalProperties": false
-    },
-    "tool": {
-      "type": "object",
-      "required": [
-        "handle",
-        "q",
-        "u"
-      ],
-      "properties": {
-        "handle": {
-          "$ref": "#/$defs/toolHandle"
-        },
-        "q": {
-          "type": "string",
-          "pattern": "^[0-E]{16}$"
-        },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
-        }
-      },
-      "additionalProperties": false
-    },
-    "epistemic": {
-      "type": "object",
-      "required": [
-        "target",
-        "status",
-        "confidence"
-      ],
-      "properties": {
-        "target": {
-          "type": "string",
-          "minLength": 1
-        },
-        "status": {
+        "mode": {
           "type": "string",
           "enum": [
-            "K00",
-            "K01",
-            "K02",
-            "K03",
-            "K04",
-            "K05",
-            "K06",
-            "K07",
-            "K08"
+            "message",
+            "handoff",
+            "bind"
           ]
         },
-        "confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
+        "E": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^e[0-9]+$"
+              },
+              "q": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                  "E00": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E01": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E02": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E03": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E04": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E05": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E06": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E07": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E08": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E09": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E10": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E11": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E12": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E13": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E14": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E15": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E16": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E17": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E18": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E19": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E20": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E21": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E22": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E23": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E24": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E25": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E26": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E27": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E28": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E29": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E30": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "E31": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "u": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "minItems": 2,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "q"
+                ]
+              },
+              {
+                "required": [
+                  "value"
+                ]
+              },
+              {
+                "required": [
+                  "choices"
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "R": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^r[0-9]+$"
+              },
+              "q": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                  "R00": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R01": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R02": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R03": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R04": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R05": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R06": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R07": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R08": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R09": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R10": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R11": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R12": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R13": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R14": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "R15": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "u": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "subject": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "object": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "not": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "q",
+              "subject",
+              "object"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "A": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^a[0-9]+$"
+              },
+              "q": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                  "A00": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A01": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A02": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A03": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A04": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A05": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A06": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A07": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A08": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A09": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A10": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A11": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A12": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A13": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A14": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "A15": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "u": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "target": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "tool": {
+                "type": "string",
+                "pattern": "^t[0-9]+$"
+              },
+              "after": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^a[0-9]+$"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "when": {
+                "type": "string",
+                "pattern": "^c[0-9]+$"
+              },
+              "until": {
+                "type": "string",
+                "pattern": "^c[0-9]+$"
+              },
+              "not": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "q",
+              "target"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "T": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^t[0-9]+$"
+              },
+              "q": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                  "T00": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T01": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T02": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T03": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T04": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T05": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T06": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T07": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T08": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T09": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T10": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T11": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T12": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T13": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T14": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  },
+                  "T15": {
+                    "type": "integer",
+                    "enum": [
+                      -7,
+                      -6,
+                      -5,
+                      -4,
+                      -3,
+                      -2,
+                      -1,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "u": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "q"
+                ]
+              },
+              {
+                "required": [
+                  "value"
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "C": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^c[0-9]+$"
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "eq",
+                  "ne",
+                  "lt",
+                  "le",
+                  "gt",
+                  "ge",
+                  "exists",
+                  "done"
+                ]
+              },
+              "left": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "right": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              }
+            },
+            "required": [
+              "id",
+              "op",
+              "left"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "K": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "K00",
+                  "K01",
+                  "K02",
+                  "K03",
+                  "K04",
+                  "K05",
+                  "K06",
+                  "K07",
+                  "K08"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "truth": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "target",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "P": {
+          "type": "object",
+          "properties": {
+            "mutation": {
+              "type": "boolean"
+            },
+            "tools": {
+              "type": "boolean"
+            },
+            "scope": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "detail": {
+              "type": "string",
+              "enum": [
+                "brief",
+                "normal",
+                "full"
+              ]
+            },
+            "reply": {
+              "type": "string",
+              "enum": [
+                "natural",
+                "packet"
+              ]
+            },
+            "effort": {
+              "type": "integer",
+              "minimum": -7,
+              "maximum": 7
+            },
+            "initiative": {
+              "type": "integer",
+              "minimum": -7,
+              "maximum": 7
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "X": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^X(?:0[0-9]|[1-9A-F][0-9A-F])$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "V": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "V00": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V01": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V02": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V03": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V04": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V05": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V06": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            "V07": {
+              "type": "integer",
+              "enum": [
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "task": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "active",
+                "complete",
+                "blocked",
+                "cancelled"
+              ]
+            },
+            "goal": {
+              "type": "string",
+              "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^a[0-9]+$"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "done": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^a[0-9]+$"
+              },
+              "minItems": 0,
+              "uniqueItems": true
+            },
+            "next": {
+              "type": "string",
+              "pattern": "^a[0-9]+$"
+            },
+            "stop": {
+              "type": "string",
+              "pattern": "^c[0-9]+$"
+            },
+            "blocker": {
+              "type": "string",
+              "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+            }
+          },
+          "required": [
+            "id",
+            "revision",
+            "state",
+            "goal",
+            "steps",
+            "done"
+          ],
+          "additionalProperties": false
         }
       },
+      "required": [
+        "protocol"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "E"
+          ]
+        },
+        {
+          "required": [
+            "R"
+          ]
+        },
+        {
+          "required": [
+            "A"
+          ]
+        },
+        {
+          "required": [
+            "T"
+          ]
+        },
+        {
+          "required": [
+            "C"
+          ]
+        },
+        {
+          "required": [
+            "K"
+          ]
+        },
+        {
+          "required": [
+            "P"
+          ]
+        },
+        {
+          "required": [
+            "X"
+          ]
+        },
+        {
+          "required": [
+            "V"
+          ]
+        },
+        {
+          "required": [
+            "task"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "const": "ΛH/2"
+        },
+        "control": {
+          "const": "ready"
+        }
+      },
+      "required": [
+        "protocol",
+        "control"
+      ],
       "additionalProperties": false
     },
-    "policy": {
+    {
       "type": "object",
-      "required": [
-        "q",
-        "u"
-      ],
       "properties": {
-        "q": {
-          "type": "string",
-          "pattern": "^[0-E]{12}$"
+        "protocol": {
+          "const": "ΛH/2"
         },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
+        "control": {
+          "const": "need"
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^X(?:0[0-9]|[1-9A-F][0-9A-F])$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
         }
       },
+      "required": [
+        "protocol",
+        "control",
+        "context",
+        "refs"
+      ],
       "additionalProperties": false
     },
-    "residual": {
+    {
       "type": "object",
-      "required": [
-        "q",
-        "u"
-      ],
       "properties": {
-        "q": {
-          "type": "string",
-          "pattern": "^[0-E]{8}$"
+        "protocol": {
+          "const": "ΛH/2"
         },
-        "u": {
-          "$ref": "#/$defs/uncertainty"
+        "control": {
+          "const": "invalid"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
         }
       },
+      "required": [
+        "protocol",
+        "control",
+        "reason"
+      ],
       "additionalProperties": false
     }
-  }
+  ]
 }

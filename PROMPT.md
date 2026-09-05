@@ -1,11 +1,7 @@
-# Compatibility redirect
+# Start a Lambda H/2 conversation
 
-`PROMPT.md` is intentionally not a second protocol definition.
+Paste the complete contents of [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) into the receiving AI session. It is self-contained; the receiver does not need Python or repository access.
 
-The single authoritative bootstrap for ΛH/1 is:
+A bare `ΛH2|` packet requests the represented response directly. `ENCODE:` requests a packet; `DECODE:` requests an explanation rather than execution. When the bootstrap includes a task, the agent should address it immediately instead of returning a readiness-only response.
 
-```text
-prompt/LAMBDA_H_BOOTSTRAP.md
-```
-
-Paste that file, in full, into a fresh AI session. The bootstrap is receiver-only: it teaches the session to understand bare ΛH/1 packets directly. Ordinary-language encoding/decoding belongs to the external project, not to the AI-session prompt.
+This file is a pointer, not another protocol definition. The v1 bootstrap is historical material under `archive/v1/`, not the current language. Encoding is not encryption; see [`docs/PRIVACY.md`](docs/PRIVACY.md).

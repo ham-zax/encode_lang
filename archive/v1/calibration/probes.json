@@ -1,0 +1,36 @@
+{
+  "protocol": "ΛH/1",
+  "basis": {"E": "01", "T": "01", "A": "01"},
+  "probes": [
+    {"id": "cat", "layer": "E", "command": "cat"},
+    {"id": "dog", "layer": "E", "command": "dog"},
+    {"id": "rat", "layer": "E", "command": "rat"},
+    {"id": "hat", "layer": "E", "command": "hat"},
+    {"id": "shirt", "layer": "E", "command": "shirt"},
+    {"id": "bird", "layer": "E", "command": "bird"},
+    {"id": "stone", "layer": "E", "command": "stone"},
+    {"id": "fear", "layer": "E", "command": "fear"},
+    {"id": "rain", "layer": "E", "command": "rain"},
+    {"id": "promise", "layer": "E", "command": "promise"},
+    {"id": "fire_combustion", "layer": "E", "command": "fire — Flames are spreading through dry vegetation."},
+    {"id": "fire_employment", "layer": "E", "command": "fire — The company terminated the employee's position."},
+    {"id": "mouse_animal", "layer": "E", "command": "mouse — A small rodent moved across the floor."},
+    {"id": "mouse_device", "layer": "E", "command": "mouse — The user clicked a button with a computer pointing device."},
+    {"id": "bank_finance", "layer": "E", "command": "bank — A regulated institution accepted a deposit."},
+    {"id": "bank_river", "layer": "E", "command": "bank — The river overflowed onto the land beside its channel."},
+    {"id": "curl", "layer": "T", "command": "curl"},
+    {"id": "browser_devtools", "layer": "T", "command": "browser DevTools"},
+    {"id": "exploit_action", "layer": "A", "command": "exploit — Intruder code runs against an unpatched network service."},
+    {"id": "investigate_action", "layer": "A", "command": "investigate — An analyst traces the cause of a service outage."},
+    {"id": "browse_action", "layer": "A", "command": "browse — A user reads headlines on a news site."}
+  ],
+  "qualitative_checks": [
+    {"type": "closer_than", "layer": "E", "a": "cat", "b": "dog", "c": "hat", "meaning": "cat should be closer to dog than to hat"},
+    {"type": "closer_than", "layer": "E", "a": "cat", "b": "rat", "c": "hat", "meaning": "cat should be closer to rat than to hat"},
+    {"type": "closer_than", "layer": "E", "a": "shirt", "b": "hat", "c": "bird", "meaning": "shirt should be closer to hat than to bird"},
+    {"type": "sense_separation", "layer": "E", "a": "fire_combustion", "b": "fire_employment", "meaning": "the two contextual senses of fire should not collapse to the same region"},
+    {"type": "sense_separation", "layer": "E", "a": "mouse_animal", "b": "mouse_device", "meaning": "the two contextual senses of mouse should not collapse to the same region"},
+    {"type": "sense_separation", "layer": "E", "a": "bank_finance", "b": "bank_river", "meaning": "the two contextual senses of bank should not collapse to the same region"},
+    {"type": "closer_than", "layer": "A", "a": "exploit_action", "b": "investigate_action", "c": "browse_action", "meaning": "exploit should be closer to investigate than to browse"}
+  ]
+}

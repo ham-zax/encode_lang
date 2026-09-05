@@ -3,3 +3,14 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.local/
+*.lh.age
+*.context.private.json
+
+# Local contexts and receiver evidence may contain private content.
+# Ignore rules do not encrypt data or remove files already in Git history.
+private/
+.private/
+.local/
+calibration/results/
+calibration/traces/
