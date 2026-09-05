@@ -1,0 +1,23 @@
+protocol: "ΛH/1"
+basis: "B_R/01"
+layer: "R"
+wire_prefix: "ΛR1"
+dimensions: 16
+score_range: [-7, 7]
+anchors:
+  - {id: R00, text: "similarity, identity, equivalence, or semantic likeness"}
+  - {id: R01, text: "instance-to-category, subtype, classification, or membership relation"}
+  - {id: R02, text: "part-to-whole, component, composition, or structural inclusion"}
+  - {id: R03, text: "containment, enclosure, storage, or inside/outside relation"}
+  - {id: R04, text: "possession, ownership, control, or stewardship relation"}
+  - {id: R05, text: "spatial position, distance, direction, adjacency, or location relation"}
+  - {id: R06, text: "temporal order, duration, before/after, overlap, or sequence relation"}
+  - {id: R07, text: "causation, contribution, triggering, or causal influence"}
+  - {id: R08, text: "dependency, requirement, enabling, prerequisite, or support relation"}
+  - {id: R09, text: "transformation, conversion, state transition, or becoming relation"}
+  - {id: R10, text: "acting-on, affecting, modifying, or exerting influence on a target"}
+  - {id: R11, text: "targeting, directing toward, selecting, aiming at, or addressing"}
+  - {id: R12, text: "observation, sensing, communication, signalling, or information flow"}
+  - {id: R13, text: "opposition, prevention, blocking, inhibition, or contradiction"}
+  - {id: R14, text: "association, support, compatibility, correlation, or contextual linkage"}
+  - {id: R15, text: "social, normative, contractual, institutional, or role relation"}

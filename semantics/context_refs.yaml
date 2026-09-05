@@ -1,0 +1,16 @@
+protocol: "ΛH/1"
+layer: "X"
+reserved:
+  - {id: X00, text: "current subject"}
+  - {id: X01, text: "immediately previous subject"}
+  - {id: X02, text: "current user goal"}
+  - {id: X03, text: "current artifact"}
+  - {id: X04, text: "current hypothesis"}
+  - {id: X05, text: "current result"}
+  - {id: X06, text: "current plan"}
+  - {id: X07, text: "current blocker or failure"}
+  - {id: X08, text: "current environment or workspace"}
+  - {id: X09, text: "current requested output"}
+dynamic:
+  range: "X10-XFF"
+  text: "session-local references; must be synchronized before use in another session"

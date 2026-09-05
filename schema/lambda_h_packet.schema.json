@@ -1,0 +1,266 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/lambda-h/1/schema/lambda_h_packet.schema.json",
+  "title": "Lambda H/1 semantic transfer packet",
+  "type": "object",
+  "required": [
+    "protocol"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "ΛH/1"
+    },
+    "basis": {
+      "type": "object",
+      "properties": {
+        "E": {
+          "const": "01"
+        },
+        "R": {
+          "const": "01"
+        },
+        "A": {
+          "const": "01"
+        },
+        "T": {
+          "const": "01"
+        },
+        "P": {
+          "const": "01"
+        },
+        "V": {
+          "const": "01"
+        }
+      },
+      "additionalProperties": false
+    },
+    "E": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "R": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "A": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "T": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tool"
+      }
+    },
+    "K": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/epistemic"
+      }
+    },
+    "P": {
+      "$ref": "#/$defs/policy"
+    },
+    "X": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^X[0-9A-F]{2}$"
+      }
+    },
+    "V": {
+      "$ref": "#/$defs/residual"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "uncertainty": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 14
+    },
+    "entityHandle": {
+      "type": "string",
+      "pattern": "^η[0-9A-F]{2}$"
+    },
+    "relationHandle": {
+      "type": "string",
+      "pattern": "^ρ[0-9A-F]{2}$"
+    },
+    "actionHandle": {
+      "type": "string",
+      "pattern": "^α[0-9A-F]{2}$"
+    },
+    "toolHandle": {
+      "type": "string",
+      "pattern": "^τ[0-9A-F]{2}$"
+    },
+    "entity": {
+      "type": "object",
+      "required": [
+        "handle",
+        "q",
+        "u"
+      ],
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/entityHandle"
+        },
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{32}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        }
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "handle",
+        "q",
+        "u",
+        "subject",
+        "object"
+      ],
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/relationHandle"
+        },
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{16}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        },
+        "subject": {
+          "$ref": "#/$defs/entityHandle"
+        },
+        "object": {
+          "$ref": "#/$defs/entityHandle"
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "required": [
+        "handle",
+        "q",
+        "u"
+      ],
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/actionHandle"
+        },
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{16}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "handle",
+        "q",
+        "u"
+      ],
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/toolHandle"
+        },
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{16}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        }
+      },
+      "additionalProperties": false
+    },
+    "epistemic": {
+      "type": "object",
+      "required": [
+        "target",
+        "status",
+        "confidence"
+      ],
+      "properties": {
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "K00",
+            "K01",
+            "K02",
+            "K03",
+            "K04",
+            "K05",
+            "K06",
+            "K07",
+            "K08"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "q",
+        "u"
+      ],
+      "properties": {
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{12}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        }
+      },
+      "additionalProperties": false
+    },
+    "residual": {
+      "type": "object",
+      "required": [
+        "q",
+        "u"
+      ],
+      "properties": {
+        "q": {
+          "type": "string",
+          "pattern": "^[0-E]{8}$"
+        },
+        "u": {
+          "$ref": "#/$defs/uncertainty"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

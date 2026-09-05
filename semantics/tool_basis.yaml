@@ -1,0 +1,23 @@
+protocol: "ΛH/1"
+basis: "B_T/01"
+layer: "T"
+wire_prefix: "ΛT1"
+dimensions: 16
+score_range: [-7, 7]
+anchors:
+  - {id: T00, text: "HTTP request construction, transmission, response retrieval, or protocol-level web-client behavior"}
+  - {id: T01, text: "interactive browser navigation, rendering, page interaction, or browser runtime"}
+  - {id: T02, text: "browser developer instrumentation, DOM/network/console/storage inspection, or developer-tool functionality"}
+  - {id: T03, text: "session, cookie, authentication-state, token-state, or client identity handling"}
+  - {id: T04, text: "traffic interception, capture, replay, request/response modification, or proxy-like instrumentation"}
+  - {id: T05, text: "command-line, terminal, shell, or textual system-control interface"}
+  - {id: T06, text: "scripted automation, repeated execution, programmable orchestration, or batch processing"}
+  - {id: T07, text: "API-oriented client, structured endpoint interaction, or machine-readable request tooling"}
+  - {id: T08, text: "file, artifact, archive, document, binary, or local-data inspection"}
+  - {id: T09, text: "network transport, socket, DNS, connectivity, routing, or protocol diagnostics"}
+  - {id: T10, text: "database, datastore, query-console, or structured persistence tooling"}
+  - {id: T11, text: "source-code, repository, package, dependency, or project-structure inspection"}
+  - {id: T12, text: "debugger, tracer, profiler, runtime introspection, breakpoint, or execution-state instrumentation"}
+  - {id: T13, text: "scanner, enumerator, generator, fuzzer, broad-input exploration, or automated test-case production"}
+  - {id: T14, text: "agent, sub-agent, delegated tool process, or independently operating helper"}
+  - {id: T15, text: "generic external instrument not represented strongly by another tool anchor"}

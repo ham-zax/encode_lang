@@ -1,0 +1,14 @@
+protocol: "ΛH/1"
+layer: "K"
+confidence_range: [0.0, 1.0]
+rule: "Epistemic status and confidence attach to a specific proposition or relation, never globally to the whole packet."
+codes:
+  - {id: K00, text: "observed directly in the current evidence"}
+  - {id: K01, text: "reported by a source but not independently observed"}
+  - {id: K02, text: "assumed as a working premise"}
+  - {id: K03, text: "hypothesized or suspected"}
+  - {id: K04, text: "inferred from evidence"}
+  - {id: K05, text: "supported by multiple pieces of evidence"}
+  - {id: K06, text: "contradicted by evidence"}
+  - {id: K07, text: "unknown or unresolved"}
+  - {id: K08, text: "confirmed to the standard required by the current task"}

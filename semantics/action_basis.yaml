@@ -1,0 +1,23 @@
+protocol: "ΛH/1"
+basis: "B_A/01"
+layer: "A"
+wire_prefix: "ΛA1"
+dimensions: 16
+score_range: [-7, 7]
+anchors:
+  - {id: A00, text: "observe, read, receive, or inspect without altering the subject"}
+  - {id: A01, text: "analyze, decompose, reason about, or model structure"}
+  - {id: A02, text: "verify, validate, check, confirm, or test a claim or condition"}
+  - {id: A03, text: "investigate, diagnose, trace, or search for mechanism or cause"}
+  - {id: A04, text: "compare, discriminate, contrast, rank, or evaluate alternatives"}
+  - {id: A05, text: "classify, map, label, organize, or induce an ontology"}
+  - {id: A06, text: "explain, summarize, translate, teach, or make meaning explicit"}
+  - {id: A07, text: "explore, brainstorm, generate possibilities, or broaden a search space"}
+  - {id: A08, text: "create, generate, construct, author, or synthesize an artifact"}
+  - {id: A09, text: "modify, edit, transform, refine, or improve an existing artifact"}
+  - {id: A10, text: "solve, repair, remediate, resolve, or produce a working answer"}
+  - {id: A11, text: "plan, sequence, schedule, or choose a course of action"}
+  - {id: A12, text: "select, decide, commit, recommend, or choose among alternatives"}
+  - {id: A13, text: "execute, perform, operate, run, or carry out an intended action"}
+  - {id: A14, text: "iterate, loop, repeat, adapt, or continue until a condition changes"}
+  - {id: A15, text: "communicate, document, report, record, or publish results"}

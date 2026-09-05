@@ -1,0 +1,20 @@
+protocol: "ΛH/1"
+basis: "B_P/01"
+layer: "P"
+wire_prefix: "ΛP1"
+dimensions: 12
+score_range: [-7, 7]
+anchors:
+  - {id: P00, negative: "wait, pause, or stop", positive: "proceed or continue"}
+  - {id: P01, negative: "proceed without clarification", positive: "seek clarification before proceeding"}
+  - {id: P02, negative: "accept/infer with low evidence pressure", positive: "require strong evidence and validation"}
+  - {id: P03, negative: "preserve/read-only/no mutation", positive: "mutation or write actions permitted if independently authorized"}
+  - {id: P04, negative: "do not use external tools", positive: "use available tools if independently authorized and available"}
+  - {id: P05, negative: "single-path/narrow search", positive: "branch, enumerate alternatives, or explore broadly"}
+  - {id: P06, negative: "remain open and defer convergence", positive: "converge, select, or commit when supported"}
+  - {id: P07, negative: "shallow/lightweight effort", positive: "deep/thorough effort"}
+  - {id: P08, negative: "low urgency", positive: "high urgency"}
+  - {id: P09, negative: "minimal output", positive: "complete documentation and evidence"}
+  - {id: P10, negative: "single pass", positive: "iterate/re-evaluate as new evidence appears"}
+  - {id: P11, negative: "strictly user-directed step-by-step", positive: "proactive continuation within explicit scope and authorization"}
+safety_invariant: "Policy scores never grant access, authorization, or permission beyond the underlying user request and environment."

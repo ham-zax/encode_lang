@@ -1,0 +1,39 @@
+protocol: "ΛH/1"
+basis: "B_E/01"
+layer: "E"
+wire_prefix: "ΛE1"
+dimensions: 32
+score_range: [-7, 7]
+anchors:
+  - {id: E00, text: "something living that independently perceives and acts"}
+  - {id: E01, text: "a human-like intentional, social, or communicative actor"}
+  - {id: E02, text: "a non-human animal capable of movement and perception"}
+  - {id: E03, text: "a living organism characterized mainly by growth rather than locomotion"}
+  - {id: E04, text: "a biological body, organismal structure, or body component"}
+  - {id: E05, text: "something manufactured or intentionally constructed for a purpose"}
+  - {id: E06, text: "a passive physical object with shape, location, and persistence"}
+  - {id: E07, text: "something whose function involves holding, enclosing, storing, or containing"}
+  - {id: E08, text: "something worn on, carried on, or attached to a body"}
+  - {id: E09, text: "something whose primary function involves transportation through space"}
+  - {id: E10, text: "something whose function can involve intentional physical damage or force"}
+  - {id: E11, text: "a machine, computational system, or mechanism transforming inputs into outputs"}
+  - {id: E12, text: "something whose main role involves storing, carrying, or communicating information"}
+  - {id: E13, text: "a rule, agreement, institution, obligation, or normative structure"}
+  - {id: E14, text: "value, currency, property, ownership, or economic resource"}
+  - {id: E15, text: "a location, environment, region, territory, or spatial setting"}
+  - {id: E16, text: "a constructed physical structure intended to persist in a location"}
+  - {id: E17, text: "matter or substance considered mainly through physical composition"}
+  - {id: E18, text: "something primarily consumed as nourishment or nutrition"}
+  - {id: E19, text: "fluid, liquid, gas, or continuously deformable material"}
+  - {id: E20, text: "heat, combustion, radiation, electrical energy, or energetic physical phenomenon"}
+  - {id: E21, text: "an event, occurrence, transformation, or process unfolding through time"}
+  - {id: E22, text: "an intentional or causal interaction performed by an agent"}
+  - {id: E23, text: "a state, condition, quality, attribute, or property"}
+  - {id: E24, text: "an abstract idea, category, theory, concept, or conceptual object"}
+  - {id: E25, text: "quantity, magnitude, measurement, number, probability, or degree"}
+  - {id: E26, text: "time, duration, order, sequence, frequency, or temporal position"}
+  - {id: E27, text: "subjective experience, emotion, sensation, desire, or preference"}
+  - {id: E28, text: "a collection, organization, population, set, or coordinated group"}
+  - {id: E29, text: "a connection, dependency, ownership, association, or relation between entities"}
+  - {id: E30, text: "a signal, indication, image, sound, light, trace, or observable information pattern"}
+  - {id: E31, text: "an anomaly, hazard, failure, threat, defect, instability, or undesirable condition"}

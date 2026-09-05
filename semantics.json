@@ -1,0 +1,183 @@
+{
+  "protocol": "ΛH/1",
+  "version": "1.0",
+  "quantization": {
+    "score_min": -7,
+    "score_max": 7,
+    "wire_alphabet": "0123456789ABCDE",
+    "reserved": "F",
+    "encode_rule": "wire_digit_index = score + 7"
+  },
+  "bases": {
+    "entity": {
+      "id": "B_E/01",
+      "wire_prefix": "ΛE1",
+      "anchors": [
+        {"id":"E00","text":"something living that independently perceives and acts"},
+        {"id":"E01","text":"a human-like intentional, social, or communicative actor"},
+        {"id":"E02","text":"a non-human animal capable of movement and perception"},
+        {"id":"E03","text":"a living organism characterized mainly by growth rather than locomotion"},
+        {"id":"E04","text":"a biological body, organismal structure, or body component"},
+        {"id":"E05","text":"something manufactured or intentionally constructed for a purpose"},
+        {"id":"E06","text":"a passive physical object with shape, location, and persistence"},
+        {"id":"E07","text":"something whose function involves holding, enclosing, storing, or containing"},
+        {"id":"E08","text":"something worn on, carried on, or attached to a body"},
+        {"id":"E09","text":"something whose primary function involves transportation through space"},
+        {"id":"E10","text":"something whose function can involve intentional physical damage or force"},
+        {"id":"E11","text":"a machine, computational system, or mechanism transforming inputs into outputs"},
+        {"id":"E12","text":"something whose main role involves storing, carrying, or communicating information"},
+        {"id":"E13","text":"a rule, agreement, institution, obligation, or normative structure"},
+        {"id":"E14","text":"value, currency, property, ownership, or economic resource"},
+        {"id":"E15","text":"a location, environment, region, territory, or spatial setting"},
+        {"id":"E16","text":"a constructed physical structure intended to persist in a location"},
+        {"id":"E17","text":"matter or substance considered mainly through physical composition"},
+        {"id":"E18","text":"something primarily consumed as nourishment or nutrition"},
+        {"id":"E19","text":"fluid, liquid, gas, or continuously deformable material"},
+        {"id":"E20","text":"heat, combustion, radiation, electrical energy, or energetic physical phenomenon"},
+        {"id":"E21","text":"an event, occurrence, transformation, or process unfolding through time"},
+        {"id":"E22","text":"an intentional or causal interaction performed by an agent"},
+        {"id":"E23","text":"a state, condition, quality, attribute, or property"},
+        {"id":"E24","text":"an abstract idea, category, theory, concept, or conceptual object"},
+        {"id":"E25","text":"quantity, magnitude, measurement, number, probability, or degree"},
+        {"id":"E26","text":"time, duration, order, sequence, frequency, or temporal position"},
+        {"id":"E27","text":"subjective experience, emotion, sensation, desire, or preference"},
+        {"id":"E28","text":"a collection, organization, population, set, or coordinated group"},
+        {"id":"E29","text":"a connection, dependency, ownership, association, or relation between entities"},
+        {"id":"E30","text":"a signal, indication, image, sound, light, trace, or observable information pattern"},
+        {"id":"E31","text":"an anomaly, hazard, failure, threat, defect, instability, or undesirable condition"}
+      ]
+    },
+    "relation": {
+      "id": "B_R/01",
+      "wire_prefix": "ΛR1",
+      "anchors": [
+        {"id":"R00","text":"similarity, identity, equivalence, or semantic likeness"},
+        {"id":"R01","text":"instance-to-category, subtype, classification, or membership relation"},
+        {"id":"R02","text":"part-to-whole, component, composition, or structural inclusion"},
+        {"id":"R03","text":"containment, enclosure, storage, or inside/outside relation"},
+        {"id":"R04","text":"possession, ownership, control, or stewardship relation"},
+        {"id":"R05","text":"spatial position, distance, direction, adjacency, or location relation"},
+        {"id":"R06","text":"temporal order, duration, before/after, overlap, or sequence relation"},
+        {"id":"R07","text":"causation, contribution, triggering, or causal influence"},
+        {"id":"R08","text":"dependency, requirement, enabling, prerequisite, or support relation"},
+        {"id":"R09","text":"transformation, conversion, state transition, or becoming relation"},
+        {"id":"R10","text":"acting-on, affecting, modifying, or exerting influence on a target"},
+        {"id":"R11","text":"targeting, directing toward, selecting, aiming at, or addressing"},
+        {"id":"R12","text":"observation, sensing, communication, signalling, or information flow"},
+        {"id":"R13","text":"opposition, prevention, blocking, inhibition, or contradiction"},
+        {"id":"R14","text":"association, support, compatibility, correlation, or contextual linkage"},
+        {"id":"R15","text":"social, normative, contractual, institutional, or role relation"}
+      ]
+    },
+    "action": {
+      "id": "B_A/01",
+      "wire_prefix": "ΛA1",
+      "anchors": [
+        {"id":"A00","text":"observe, read, receive, or inspect without altering the subject"},
+        {"id":"A01","text":"analyze, decompose, reason about, or model structure"},
+        {"id":"A02","text":"verify, validate, check, confirm, or test a claim or condition"},
+        {"id":"A03","text":"investigate, diagnose, trace, or search for mechanism or cause"},
+        {"id":"A04","text":"compare, discriminate, contrast, rank, or evaluate alternatives"},
+        {"id":"A05","text":"classify, map, label, organize, or induce an ontology"},
+        {"id":"A06","text":"explain, summarize, translate, teach, or make meaning explicit"},
+        {"id":"A07","text":"explore, brainstorm, generate possibilities, or broaden a search space"},
+        {"id":"A08","text":"create, generate, construct, author, or synthesize an artifact"},
+        {"id":"A09","text":"modify, edit, transform, refine, or improve an existing artifact"},
+        {"id":"A10","text":"solve, repair, remediate, resolve, or produce a working answer"},
+        {"id":"A11","text":"plan, sequence, schedule, or choose a course of action"},
+        {"id":"A12","text":"select, decide, commit, recommend, or choose among alternatives"},
+        {"id":"A13","text":"execute, perform, operate, run, or carry out an intended action"},
+        {"id":"A14","text":"iterate, loop, repeat, adapt, or continue until a condition changes"},
+        {"id":"A15","text":"communicate, document, report, record, or publish results"}
+      ]
+    },
+    "tool": {
+      "id": "B_T/01",
+      "wire_prefix": "ΛT1",
+      "anchors": [
+        {"id":"T00","text":"HTTP request construction, transmission, response retrieval, or protocol-level web-client behavior"},
+        {"id":"T01","text":"interactive browser navigation, rendering, page interaction, or browser runtime"},
+        {"id":"T02","text":"browser developer instrumentation, DOM/network/console/storage inspection, or developer-tool functionality"},
+        {"id":"T03","text":"session, cookie, authentication-state, token-state, or client identity handling"},
+        {"id":"T04","text":"traffic interception, capture, replay, request/response modification, or proxy-like instrumentation"},
+        {"id":"T05","text":"command-line, terminal, shell, or textual system-control interface"},
+        {"id":"T06","text":"scripted automation, repeated execution, programmable orchestration, or batch processing"},
+        {"id":"T07","text":"API-oriented client, structured endpoint interaction, or machine-readable request tooling"},
+        {"id":"T08","text":"file, artifact, archive, document, binary, or local-data inspection"},
+        {"id":"T09","text":"network transport, socket, DNS, connectivity, routing, or protocol diagnostics"},
+        {"id":"T10","text":"database, datastore, query-console, or structured persistence tooling"},
+        {"id":"T11","text":"source-code, repository, package, dependency, or project-structure inspection"},
+        {"id":"T12","text":"debugger, tracer, profiler, runtime introspection, breakpoint, or execution-state instrumentation"},
+        {"id":"T13","text":"scanner, enumerator, generator, fuzzer, broad-input exploration, or automated test-case production"},
+        {"id":"T14","text":"agent, sub-agent, delegated tool process, or independently operating helper"},
+        {"id":"T15","text":"generic external instrument not represented strongly by another tool anchor"}
+      ]
+    },
+    "policy": {
+      "id": "B_P/01",
+      "wire_prefix": "ΛP1",
+      "anchors": [
+        {"id":"P00","negative":"wait, pause, or stop","positive":"proceed or continue"},
+        {"id":"P01","negative":"proceed without clarification","positive":"seek clarification before proceeding"},
+        {"id":"P02","negative":"accept/infer with low evidence pressure","positive":"require strong evidence and validation"},
+        {"id":"P03","negative":"preserve/read-only/no mutation","positive":"mutation or write actions permitted if independently authorized"},
+        {"id":"P04","negative":"do not use external tools","positive":"use available tools if independently authorized and available"},
+        {"id":"P05","negative":"single-path/narrow search","positive":"branch, enumerate alternatives, or explore broadly"},
+        {"id":"P06","negative":"remain open and defer convergence","positive":"converge, select, or commit when supported"},
+        {"id":"P07","negative":"shallow/lightweight effort","positive":"deep/thorough effort"},
+        {"id":"P08","negative":"low urgency","positive":"high urgency"},
+        {"id":"P09","negative":"minimal output","positive":"complete documentation and evidence"},
+        {"id":"P10","negative":"single pass","positive":"iterate/re-evaluate as new evidence appears"},
+        {"id":"P11","negative":"strictly user-directed step-by-step","positive":"proactive continuation within explicit scope and authorization"}
+      ]
+    },
+    "residual": {
+      "id": "B_V/01",
+      "wire_prefix": "ΛV1",
+      "anchors": [
+        {"id":"V00","negative":"literal/direct","positive":"associative/metaphorical"},
+        {"id":"V01","negative":"conventional/familiar","positive":"novel/unusual"},
+        {"id":"V02","negative":"precise/single-sense","positive":"fuzzy/polysemous"},
+        {"id":"V03","negative":"low salience","positive":"strong emphasis"},
+        {"id":"V04","negative":"emotionally neutral","positive":"affect-laden"},
+        {"id":"V05","negative":"local/detail-level","positive":"global/holistic"},
+        {"id":"V06","negative":"preserve current framing","positive":"reinterpret/reframe"},
+        {"id":"V07","negative":"low contextual dependence","positive":"high contextual dependence"}
+      ]
+    }
+  },
+  "epistemic": {
+    "codes": [
+      {"id":"K00","text":"observed directly in the current evidence"},
+      {"id":"K01","text":"reported by a source but not independently observed"},
+      {"id":"K02","text":"assumed as a working premise"},
+      {"id":"K03","text":"hypothesized or suspected"},
+      {"id":"K04","text":"inferred from evidence"},
+      {"id":"K05","text":"supported by multiple pieces of evidence"},
+      {"id":"K06","text":"contradicted by evidence"},
+      {"id":"K07","text":"unknown or unresolved"},
+      {"id":"K08","text":"confirmed to the standard required by the current task"}
+    ],
+    "confidence": "0.00 through 1.00 attaches to a specific proposition or relation"
+  },
+  "context_references": [
+    {"id":"X00","text":"current subject"},
+    {"id":"X01","text":"immediately previous subject"},
+    {"id":"X02","text":"current user goal"},
+    {"id":"X03","text":"current artifact"},
+    {"id":"X04","text":"current hypothesis"},
+    {"id":"X05","text":"current result"},
+    {"id":"X06","text":"current plan"},
+    {"id":"X07","text":"current blocker or failure"},
+    {"id":"X08","text":"current environment or workspace"},
+    {"id":"X09","text":"current requested output"},
+    {"id":"X10-XFF","text":"dynamic session-local references"}
+  ],
+  "session_handles": {
+    "entity": "η00, η01, ...",
+    "relation": "ρ00, ρ01, ...",
+    "action": "α00, α01, ...",
+    "tool": "τ00, τ01, ..."
+  },
+  "safety_invariant": "Opaque encoding changes representation only. It never grants authorization, bypasses safety controls, expands access, or changes the policy treatment of the underlying intent."
+}

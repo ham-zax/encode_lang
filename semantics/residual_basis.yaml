@@ -1,0 +1,15 @@
+protocol: "ΛH/1"
+basis: "B_V/01"
+layer: "V"
+wire_prefix: "ΛV1"
+dimensions: 8
+score_range: [-7, 7]
+anchors:
+  - {id: V00, negative: "literal/direct", positive: "associative/metaphorical"}
+  - {id: V01, negative: "conventional/familiar", positive: "novel/unusual"}
+  - {id: V02, negative: "precise/single-sense", positive: "fuzzy/polysemous"}
+  - {id: V03, negative: "low salience", positive: "strong emphasis"}
+  - {id: V04, negative: "emotionally neutral", positive: "affect-laden"}
+  - {id: V05, negative: "local/detail-level", positive: "global/holistic"}
+  - {id: V06, negative: "preserve current framing", positive: "reinterpret/reframe"}
+  - {id: V07, negative: "low contextual dependence", positive: "high contextual dependence"}
