@@ -44,7 +44,7 @@ Relationship arguments, action targets, instruments, prerequisites, negation, pe
 
 ## What this does not establish
 
-This is a specified communication geometry on human-described anchor axes, not a measurement of an LLM's internal semantic space. Shared interpretation and task fidelity still need actual receiver evidence. No mathematical field or numeric wire establishes the language of hidden reasoning, cryptographic secrecy, model superiority or permission to bypass a safety decision.
+This is a specified communication geometry on human-described anchor axes, not a measurement of an LLM's internal semantic space. Shared interpretation and task fidelity still need actual receiver evidence. 
 
 Density/distribution-based semantic representations have research precedents, but those works learn representations; this project does not claim to reproduce their empirical results. The ordinary squared-exponential form motivates the falloff, while the split directional widths here are an explicit prototype design choice.
 

@@ -68,7 +68,7 @@ python3 -m src.codec handoff examples/continue.lh \
 
 The result contains `packet.lh` and `context.private.json`. Only referenced bindings enter the sidecar. **The sidecar is readable disclosure**; inspect it and transfer it only to the intended endpoint. The numeric packet alone is not self-contained when it needs that context. The Python `make_handoff` API still returns an explicit developer bundle with selected bindings; do not mistake that bundle for an opaque packet.
 
-Numeric notation offers casual opacity, not cryptographic confidentiality. Someone with the public bootstrap can interpret its structure and approximate meaning. Sensitive transit/storage needs established encryption; sensitive processing needs a trusted endpoint. See [`docs/PRIVACY.md`](docs/PRIVACY.md).
+Numeric notation is casual opacity, not confidentiality; anyone with the public bootstrap can interpret it. Use established encryption for transit/storage and a trusted endpoint for sensitive processing. See [`docs/PRIVACY.md`](docs/PRIVACY.md).
 
 ## Evidence, not claims about hidden thought
 

@@ -30,7 +30,7 @@ Sparse regions use named, signed, nonzero integer coordinates. `{"A13":6,"A14":7
 
 Basis widths: E=32, R=16, A=16, T=16, V=8. An unknown axis is invalid. Node `u`, when supplied, is an integer from 0 (resolved) to 7 (high ambiguity). Omitted uncertainty is unspecified, not certainty. Neither scores nor uncertainty are calibrated probabilities.
 
-Nearby concepts can have indistinguishable coarse regions. Preserve a task-critical distinction with an exact scalar `value`, explicit alternatives in `choices`, or a genuinely shared X binding. Do not imply recovery of omitted original words. Do not copy an entire instruction into an entity value merely to bypass composition.
+Nearby concepts can have indistinguishable coarse regions. Preserve a task-critical distinction with an exact scalar `value`, explicit alternatives in `choices`, or a genuinely shared X binding.
 
 Local IDs are e/r/a/t/c followed by one or more decimal digits. Each local node referenced by a packet must be declared in that packet. X references are uppercase X plus two hexadecimal digits and may use external context. IDs are aliases, not universal word definitions.
 

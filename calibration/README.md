@@ -38,5 +38,3 @@ When reporting the numeric-wire property, inspect the emitted representation: ev
 ## Historical evidence
 
 The prior V2 bootstrap, corpus and pilot report are under `archive/v2/`. Their recorded 18-case result concerns that older prompt and format. It is not a 2.1 result, a demonstration of V2 superiority to V1, or evidence of zero internal reasoning. Current observations belong in `RESULTS.md` with their actual scope.
-
-No evaluation uses real secrets or scores evasion of a model provider's safety controls. Private inputs, traces and result records remain outside version-controlled source.

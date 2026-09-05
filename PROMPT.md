@@ -4,4 +4,4 @@ Paste [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) in full into the receiving se
 
 A bare `ΛH2.1|` numeric packet is the represented message. `ENCODE:` requests a packet; `DECODE:` explicitly requests a reconstruction instead of execution. Bootstrap plus a task should address the task immediately. Protocol replies stay numeric unless prose is requested by the user, task or P.reply.
 
-Readable developer JSON is an explicit diagnostic view, not normal communication. Exact text belongs in deliberately supplied context, not in an opaque-looking payload. Historical V1/V2 material remains under `archive/`. The current format does not claim encryption or control over hidden reasoning.
+`.

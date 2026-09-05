@@ -2,7 +2,7 @@
 
 **Goal:** Represent a concept as a graded neighborhood, with a focus and directional falloff, rather than requiring an exact word or forcing an English reconstruction.
 
-**Architecture:** Extend the current task graph forward to Lambda H/2.1. E/R/A/T nodes may use a point `q` or a field `f`: a weighted collection of numerical centers with explicit widths and optional lower/upper directional widths. The existing exact target, relation, condition, permission and progress structure remains authoritative. Optional Python computes geometric compatibility; it does not infer a word, execute a task, conceal meaning from safety checks, or control a model's hidden reasoning.
+**Architecture:** Extend the current task graph forward to Lambda H/2.1. E/R/A/T nodes may use a point `q` or a field `f`: a weighted collection of numerical centers with explicit widths and optional lower/upper directional widths. The existing exact target, relation, condition, permission and progress structure remains authoritative. Optional Python computes geometric compatibility.
 
 **Tech stack:** Existing Python standard-library codec and schema owner, JSON, Markdown. No new dependency or external model call.
 

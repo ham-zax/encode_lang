@@ -79,4 +79,4 @@ These are ready, need X03 in namespace 7, and invalid-shape respectively. Contro
 
 A bootstrap plus a task should act on the task immediately. A bare packet should not trigger a compulsory English reconstruction or routine acknowledgement. Python usage is allowed, not proof of failure. Actual task tools still need their ordinary permissions.
 
-The calibration recorder binds observations to the exact bootstrap and corpus. Mechanical geometric checks, valid packets, a READY response and old V2 receiving results are not new receiving-model evidence. No claim is made that this protocol controls a model's hidden reasoning language or bypasses a provider's safeguards.
+The calibration recorder binds observations to the exact bootstrap and corpus. Mechanical geometric checks, valid packets, a READY response and old V2 receiving results are not new receiving-model evidence.
