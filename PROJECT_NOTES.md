@@ -4,7 +4,7 @@
 
 Create a prompt-portable semantic interchange language that can be loaded into a fresh AI session without external model weights or a word lookup table.
 
-The design is inspired by the idea of constructing task-specific representations and preserving structured state rather than relying only on surface wording. The project deliberately separates semantic kinds instead of forcing everything into one opaque vector.
+The design is inspired by the idea of constructing task-specific representations and preserving structured state rather than relying only on surface wording. The project deliberately separates semantic kinds instead of forcing everything into one vector.
 
 ## Architecture decision
 
@@ -48,12 +48,11 @@ When changing anchor order or meaning, increment the affected basis version inst
 ## Known limitations
 
 1. Prompt-only scoring is fuzzy across model families.
-2. Opaque codes are not encryption.
-3. Session-local handles require synchronization.
-4. Relation/action/tool bases are semantic anchors, not guarantees that every model will infer exactly the same projection.
-5. Compact chat syntax is deterministic but intentionally narrower than JSON; free-form epistemic targets remain JSON-only.
-6. `validate_packet.py` and `lambda_h.py` validate structure/transport, not semantic correctness.
-7. The 32-dimensional entity basis is deliberately coarse. Nearby concepts can occupy almost the same region even when lexical identity differs.
+2. Session-local handles require synchronization.
+3. Relation/action/tool bases are semantic anchors, not guarantees that every model will infer exactly the same projection.
+4. Compact chat syntax is deterministic but intentionally narrower than JSON; free-form epistemic targets remain JSON-only.
+5. `validate_packet.py` and `lambda_h.py` validate structure/transport, not semantic correctness.
+6. The 32-dimensional entity basis is deliberately coarse. Nearby concepts can occupy almost the same region even when lexical identity differs.
 
 ## Planned contrastive entity residual
 

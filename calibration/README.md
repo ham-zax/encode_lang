@@ -5,7 +5,7 @@ Use this folder to check whether two fresh AI sessions reconstruct the same ΛH/
 ## Procedure
 
 1. Load `prompt/LAMBDA_H_BOOTSTRAP.md` into each AI session.
-2. Confirm each session answers `ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01`.
+2. Confirm each session answers `ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01`.
 3. Generate a result template with `python3 -m src.calibrate --template > calibration-results-a.json`.
 4. Send the commands in `probes.json` exactly as written.
 5. Record each returned `q` region under the matching probe id in `calibration-results-a.json`.

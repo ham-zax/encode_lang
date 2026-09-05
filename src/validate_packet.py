@@ -167,9 +167,9 @@ def _check_control_contract(errors: list[str], packet: dict[str, Any]) -> None:
         if extras:
             _error(errors, "packet", f"READY frame cannot contain: {', '.join(extras)}")
         basis = packet.get("basis")
-        expected = {"E": "01", "R": "01", "A": "01", "T": "01", "P": "01", "V": "01"}
+        expected = {"E": "01", "R": "01", "A": "01", "T": "01", "P": "02", "V": "01"}
         if basis != expected:
-            _error(errors, "basis", "READY requires exactly E/R/A/T/P/V basis version 01")
+            _error(errors, "basis", "READY requires exactly E/R/A/T/V basis version 01 and P basis version 02")
         return
 
     if control == "ACK":
@@ -208,8 +208,8 @@ def validate_packet(packet: Any) -> list[str]:
             for key, value in basis.items():
                 if key not in {"E", "R", "A", "T", "P", "V"}:
                     _error(errors, f"basis.{key}", "unknown basis layer")
-                elif value != "01":
-                    _error(errors, f"basis.{key}", 'must equal "01"')
+                elif (key == "P" and value != "02") or (key != "P" and value != "01"):
+                    _error(errors, f"basis.{key}", 'must equal "01" (policy: "02")')
 
     entity_handles = _check_region_list(errors, packet, "E") if "E" in packet else set()
     for layer in ("R", "A", "T"):

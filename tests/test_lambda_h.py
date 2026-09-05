@@ -50,7 +50,7 @@ class LambdaHCodecTests(unittest.TestCase):
             "ΛH1|SYNC?",
             f"ΛH1|SYNC|E=00.{e}.1",
             "ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00",
-            "ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01",
+            "ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01",
             "ΛH1|CALFAIL",
         ]
         for frame in frames:

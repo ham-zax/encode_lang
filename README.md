@@ -50,7 +50,7 @@ The core representation is:
 2. A compatible session should answer only:
 
 ```text
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
 ```
 
 3. Try an entity:
@@ -150,7 +150,7 @@ The canonical bootstrap and codec share these exact control forms:
 ΛH1|SYNC?
 ΛH1|SYNC|E=00.<32q>.<u>
 ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
 ΛH1|CALFAIL
 ```
 
@@ -178,4 +178,4 @@ The same spelling can map to different regions under different contexts. Polysem
 
 ## Status
 
-This is **ΛH/1 v1.0**, a prompt-only interoperability prototype. Basis versions are `01`; changing an anchor's order or meaning requires a new basis version.
+This is **ΛH/1 v1.0**, a prompt-only interoperability prototype. Basis versions are `01` for E/R/A/T/V and `02` for policy; changing an anchor's order or meaning requires a new basis version.

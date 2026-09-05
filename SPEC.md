@@ -76,14 +76,11 @@ Relations are directional unless a shared relation region is explicitly known to
 
 ### Policy
 
-`B_P/01` contains 12 bipolar policy axes:
+`B_P/02` contains 12 bipolar policy axes:
 
 ```text
-ΛP1|b=01|q=<12 digits>|u=<0-E>
+ΛP1|b=02|q=<12 digits>|u=<0-E>
 ```
-
-A policy code never grants actual access or authority. It only expresses desired execution posture.
-
 ### Residual
 
 `B_V/01` contains 8 bipolar residual axes:
@@ -144,7 +141,7 @@ Rules:
 - `K` entries use `<target>:<K00-K08>:<confidence>`. Compact targets are `ENN`, `RNN`, `ANN`, `TNN`, or `XNN`.
 - `P` is exactly 12 wire digits plus uncertainty; `V` is exactly 8 wire digits plus uncertainty.
 - `X` contains two-digit reference IDs; `X=02` means `X02`.
-- Basis version `01` is implicit in compact ΛH1 packets. A different basis requires a new compatible protocol/basis declaration rather than silent reinterpretation.
+- Basis versions are implicit in compact ΛH1 packets after a shared READY declaration. A different basis requires a new compatible protocol/basis declaration rather than silent reinterpretation.
 - JSON remains the canonical machine contract. `python3 -m src.lambda_h parse` and `compact` provide deterministic conversion between the two forms.
 
 Control frames are normative too:
@@ -153,7 +150,7 @@ Control frames are normative too:
 ΛH1|SYNC?
 ΛH1|SYNC|E=00.<32q>.<u>
 ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
-ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
 ΛH1|CALFAIL
 ```
 
@@ -172,7 +169,7 @@ For ordinary language:
 5. Identify requested operation(s) and project onto `B_A/01`.
 6. Identify requested/preferred tool classes and project onto `B_T/01`.
 7. Attach proposition-level epistemic state using `K`.
-8. Encode control posture in `B_P/01`.
+8. Encode control posture in `B_P/02`.
 9. Resolve contextual references in `X`.
 10. Put only leftover nuance into `V`.
 11. Emit the hybrid packet.

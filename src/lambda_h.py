@@ -240,12 +240,16 @@ def parse_compact(text: str) -> dict[str, Any]:
                 raise CodecError(f"duplicate READY field {name!r}")
             ready_fields[name] = value
         expected_names = {"BE", "BR", "BA", "BT", "BP", "BV"}
-        if set(ready_fields) != expected_names or any(value != "01" for value in ready_fields.values()):
-            raise CodecError("READY must contain exactly BE/BR/BA/BT/BP/BV=01")
+        if (
+            set(ready_fields) != expected_names
+            or ready_fields["BP"] != "02"
+            or any(value != "01" for name, value in ready_fields.items() if name != "BP")
+        ):
+            raise CodecError("READY must contain exactly BE/BR/BA/BT/BV=01 and BP=02")
         packet = {
             "protocol": "ΛH/1",
             "control": "READY",
-            "basis": {"E": "01", "R": "01", "A": "01", "T": "01", "P": "01", "V": "01"},
+            "basis": {"E": "01", "R": "01", "A": "01", "T": "01", "P": "02", "V": "01"},
         }
         errors = validate_packet(packet)
         if errors:
@@ -292,7 +296,7 @@ def parse_compact(text: str) -> dict[str, Any]:
         if not match:
             raise CodecError("P must be <12 wire digits>.<uncertainty>")
         packet["P"] = {"q": match.group(1), "u": _decode_u(match.group(2))}
-        basis["P"] = "01"
+        basis["P"] = "02"
 
     if "V" in fields:
         match = re.fullmatch(r"([0-E]{8})\.([0-E])", fields["V"])
@@ -346,7 +350,7 @@ def format_compact(packet: dict[str, Any]) -> str:
     if control in {"SYNC?", "CALFAIL"}:
         return f"ΛH1|{control}"
     if control == "READY":
-        return "ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01"
+        return "ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01"
     if control == "ACK":
         ack = packet["ack"]
         ack_parts: list[str] = []

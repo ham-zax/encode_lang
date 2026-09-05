@@ -78,7 +78,7 @@ A receiver may acknowledge reconstructed structure without translating to Englis
 ```json
 {
   "protocol": "ΛH/1",
-  "basis": {"E":"01","R":"01","A":"01","T":"01","P":"01","V":"01"},
+  "basis": {"E":"01","R":"01","A":"01","T":"01","P":"02","V":"01"},
   "E": [
     {"handle":"η00","q":"D5E4C387777453674974479543387479","u":1}
   ],
