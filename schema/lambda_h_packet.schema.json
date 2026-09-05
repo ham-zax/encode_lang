@@ -10,6 +10,13 @@
     "protocol": {
       "const": "ΛH/1"
     },
+    "control": {
+      "type": "string",
+      "enum": ["SYNC?", "SYNC", "ACK", "READY", "CALFAIL"]
+    },
+    "ack": {
+      "$ref": "#/$defs/ack"
+    },
     "basis": {
       "type": "object",
       "properties": {
@@ -80,7 +87,88 @@
     }
   },
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"required": ["ack"]},
+      "then": {"required": ["control"], "properties": {"control": {"const": "ACK"}}}
+    },
+    {
+      "if": {"required": ["control"], "properties": {"control": {"const": "SYNC?"}}},
+      "then": {"not": {"anyOf": [
+        {"required": ["ack"]}, {"required": ["basis"]}, {"required": ["E"]},
+        {"required": ["R"]}, {"required": ["A"]}, {"required": ["T"]},
+        {"required": ["K"]}, {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
+      ]}}
+    },
+    {
+      "if": {"required": ["control"], "properties": {"control": {"const": "CALFAIL"}}},
+      "then": {"not": {"anyOf": [
+        {"required": ["ack"]}, {"required": ["basis"]}, {"required": ["E"]},
+        {"required": ["R"]}, {"required": ["A"]}, {"required": ["T"]},
+        {"required": ["K"]}, {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
+      ]}}
+    },
+    {
+      "if": {"required": ["control"], "properties": {"control": {"const": "READY"}}},
+      "then": {
+        "required": ["basis"],
+        "properties": {"basis": {"required": ["E", "R", "A", "T", "P", "V"]}},
+        "not": {"anyOf": [
+          {"required": ["ack"]}, {"required": ["E"]}, {"required": ["R"]},
+          {"required": ["A"]}, {"required": ["T"]}, {"required": ["K"]},
+          {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
+        ]}
+      }
+    },
+    {
+      "if": {"required": ["control"], "properties": {"control": {"const": "ACK"}}},
+      "then": {
+        "required": ["ack"],
+        "not": {"anyOf": [
+          {"required": ["basis"]}, {"required": ["E"]}, {"required": ["R"]},
+          {"required": ["A"]}, {"required": ["T"]}, {"required": ["K"]},
+          {"required": ["P"]}, {"required": ["X"]}, {"required": ["V"]}
+        ]}
+      }
+    },
+    {
+      "if": {"required": ["control"], "properties": {"control": {"const": "SYNC"}}},
+      "then": {
+        "not": {"required": ["ack"]},
+        "anyOf": [
+          {"required": ["E"]}, {"required": ["R"]}, {"required": ["A"]},
+          {"required": ["T"]}, {"required": ["K"]}, {"required": ["P"]},
+          {"required": ["X"]}, {"required": ["V"]}
+        ]
+      }
+    }
+  ],
   "$defs": {
+    "ackId": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{2}$"
+    },
+    "ackRelation": {
+      "type": "object",
+      "required": ["handle", "subject", "object"],
+      "properties": {
+        "handle": {"$ref": "#/$defs/ackId"},
+        "subject": {"$ref": "#/$defs/ackId"},
+        "object": {"$ref": "#/$defs/ackId"}
+      },
+      "additionalProperties": false
+    },
+    "ack": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "E": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}},
+        "R": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ackRelation"}},
+        "A": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}},
+        "T": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ackId"}}
+      },
+      "additionalProperties": false
+    },
     "uncertainty": {
       "type": "integer",
       "minimum": 0,

@@ -18,8 +18,23 @@ HANDLE_RES = {
     "T": re.compile(r"^τ[0-9A-F]{2}$"),
 }
 EXPECTED_WIDTH = {"E": 32, "R": 16, "A": 16, "T": 16, "P": 12, "V": 8}
-ALLOWED_TOP = {"protocol", "basis", "E", "R", "A", "T", "K", "P", "X", "V"}
+ALLOWED_TOP = {
+    "protocol",
+    "control",
+    "ack",
+    "basis",
+    "E",
+    "R",
+    "A",
+    "T",
+    "K",
+    "P",
+    "X",
+    "V",
+}
 K_CODES = {f"K{i:02d}" for i in range(9)}
+CONTROL_TYPES = {"SYNC?", "SYNC", "ACK", "READY", "CALFAIL"}
+COMPACT_ID_RE = re.compile(r"^[0-9A-F]{2}$")
 
 
 def _error(errors: list[str], path: str, message: str) -> None:
@@ -71,6 +86,108 @@ def _check_region_list(errors: list[str], packet: dict[str, Any], layer: str) ->
         _check_q(errors, f"{path}.q", item.get("q"), EXPECTED_WIDTH[layer])
         _check_u(errors, f"{path}.u", item.get("u"))
     return handles
+
+
+def _check_ack(errors: list[str], ack: Any) -> None:
+    if not isinstance(ack, dict):
+        _error(errors, "ack", "must be an object")
+        return
+    allowed = {"E", "R", "A", "T"}
+    if not ack:
+        _error(errors, "ack", "must contain at least one summary field")
+    unknown = sorted(set(ack) - allowed)
+    if unknown:
+        _error(errors, "ack", f"unknown fields: {', '.join(unknown)}")
+
+    for layer in ("E", "A", "T"):
+        values = ack.get(layer)
+        if values is None:
+            continue
+        if not isinstance(values, list):
+            _error(errors, f"ack.{layer}", "must be an array")
+            continue
+        if not values:
+            _error(errors, f"ack.{layer}", "must not be empty")
+        seen: set[str] = set()
+        for i, value in enumerate(values):
+            path = f"ack.{layer}[{i}]"
+            if not isinstance(value, str) or not COMPACT_ID_RE.fullmatch(value):
+                _error(errors, path, "must be a two-digit uppercase hex id")
+            elif value in seen:
+                _error(errors, path, "duplicate id")
+            else:
+                seen.add(value)
+
+    relations = ack.get("R")
+    if relations is not None:
+        if not isinstance(relations, list):
+            _error(errors, "ack.R", "must be an array")
+        else:
+            if not relations:
+                _error(errors, "ack.R", "must not be empty")
+            seen_handles: set[str] = set()
+            for i, item in enumerate(relations):
+                path = f"ack.R[{i}]"
+                if not isinstance(item, dict):
+                    _error(errors, path, "must be an object")
+                    continue
+                if set(item) != {"handle", "subject", "object"}:
+                    _error(errors, path, "must contain exactly handle, subject, object")
+                    continue
+                for key in ("handle", "subject", "object"):
+                    value = item.get(key)
+                    if not isinstance(value, str) or not COMPACT_ID_RE.fullmatch(value):
+                        _error(errors, f"{path}.{key}", "must be a two-digit uppercase hex id")
+                handle = item.get("handle")
+                if isinstance(handle, str) and COMPACT_ID_RE.fullmatch(handle):
+                    if handle in seen_handles:
+                        _error(errors, f"{path}.handle", "duplicate relation id")
+                    else:
+                        seen_handles.add(handle)
+
+
+def _check_control_contract(errors: list[str], packet: dict[str, Any]) -> None:
+    control = packet.get("control")
+    if control is None:
+        if "ack" in packet:
+            _error(errors, "ack", "requires control=ACK")
+        return
+    if control not in CONTROL_TYPES:
+        _error(errors, "control", "must be SYNC?, SYNC, ACK, READY, or CALFAIL")
+        return
+
+    if control in {"SYNC?", "CALFAIL"}:
+        extras = sorted(set(packet) - {"protocol", "control"})
+        if extras:
+            _error(errors, "packet", f"{control} frame cannot contain: {', '.join(extras)}")
+        return
+
+    if control == "READY":
+        extras = sorted(set(packet) - {"protocol", "control", "basis"})
+        if extras:
+            _error(errors, "packet", f"READY frame cannot contain: {', '.join(extras)}")
+        basis = packet.get("basis")
+        expected = {"E": "01", "R": "01", "A": "01", "T": "01", "P": "01", "V": "01"}
+        if basis != expected:
+            _error(errors, "basis", "READY requires exactly E/R/A/T/P/V basis version 01")
+        return
+
+    if control == "ACK":
+        extras = sorted(set(packet) - {"protocol", "control", "ack"})
+        if extras:
+            _error(errors, "packet", f"ACK frame cannot contain: {', '.join(extras)}")
+        if "ack" not in packet:
+            _error(errors, "ack", "ACK frame requires an ack object")
+        else:
+            _check_ack(errors, packet["ack"])
+        return
+
+    # SYNC carries ordinary packet bindings but no ACK summary.
+    if "ack" in packet:
+        _error(errors, "ack", "SYNC frame cannot contain an ACK summary")
+    payload_fields = {"E", "R", "A", "T", "K", "P", "X", "V"}
+    if not any(field in packet for field in payload_fields):
+        _error(errors, "packet", "SYNC frame requires at least one binding or semantic field")
 
 
 def validate_packet(packet: Any) -> list[str]:
@@ -160,6 +277,7 @@ def validate_packet(packet: Any) -> list[str]:
                 else:
                     seen.add(ref)
 
+    _check_control_contract(errors, packet)
     return errors
 
 

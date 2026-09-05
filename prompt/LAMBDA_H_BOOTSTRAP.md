@@ -292,17 +292,91 @@ A full representation conceptually has:
 }
 ```
 
-Canonical machine interchange is JSON conforming to `schema/lambda_h_packet.schema.json`. Compact chat syntax such as `ΛH1|E=...|R=...` is conversational sugar and must preserve the same structure.
+Canonical machine interchange is JSON conforming to `schema/lambda_h_packet.schema.json`. The compact ΛH1 wire form is also normative and MUST use the exact grammar below; do not invent alternate separators or field shapes.
+
+### 13.1 Normative compact data grammar
+
+Canonical field order is `E,R,A,T,K,P,X,V`; unused fields are omitted.
+
+```text
+ΛH1|E=<entity-list>|R=<relation-list>|A=<action-list>|T=<tool-list>|K=<k-list>|P=<12q>.<u>|X=<x-list>|V=<8q>.<u>
+
+entity-entry   := HH.<32q>.<u>
+action-entry   := HH.<16q>.<u>
+tool-entry     := HH.<16q>.<u>
+relation-entry := HH.<16q>.<u>(HH,HH)
+
+entity-list    := entity-entry[,entity-entry...]
+action-list    := action-entry[,action-entry...]
+tool-list      := tool-entry[,tool-entry...]
+relation-list  := relation-entry[,relation-entry...]
+
+k-entry        := TARGET:K0N:CONF
+k-list         := k-entry[,k-entry...]
+TARGET         := EHH | RHH | AHH | THH | XHH
+N              := 0..8
+CONF           := decimal in [0,1]
+
+x-list         := HH[,HH...]
+HH             := exactly two uppercase hexadecimal digits 00..FF
+q              := a digit in 0..E; F is reserved
+u              := one digit 0..E representing uncertainty 0..14
+```
+
+Layer widths are fixed by the shared bases: E=32, R=16, A=16, T=16, P=12, V=8.
+
+Examples of exact field forms:
+
+```text
+E=00.<32q>.1,01.<32q>.2
+R=00.<16q>.2(01,00)
+A=00.<16q>.1
+T=00.<16q>.1
+K=R00:K03:0.42
+P=<12q>.2
+X=02
+V=<8q>.1
+```
+
+### 13.2 Normative control frames
+
+Use only these control forms:
+
+```text
+ΛH1|SYNC?
+ΛH1|SYNC|<one-or-more ordinary data fields>
+ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|CALFAIL
+```
+
+`ACK` may omit unused summary fields but must include at least one of E/R/A/T. ACK relation entries are `HH(HH,HH)` and acknowledge reconstructed structure only. `SYNC` carries ordinary bindings/semantic fields using the same grammar as a data frame. Do not use square brackets in newly emitted ACK frames.
 
 ## 14. Encoding rules
 
 For `WORD: <expression>`:
 1. Resolve sense from context.
-2. If entity-like, score all 32 entity anchors.
-3. Quantize and return only the opaque `ΛE1` region unless explanation is requested.
+2. Select the primary semantic layer rather than forcing every word into E.
+3. Project onto that layer's shared basis and return its native layer representation.
 4. Preserve ambiguity rather than forcing one sense.
 
-For `TOOL: <expression>` use B_T/01.
+For explicit layer selection:
+
+```text
+ACTION: <expression>    -> B_A/01
+RELATION: <expression>  -> B_R/01
+TOOL: <expression>      -> B_T/01
+POLICY: <expression>    -> B_P/01
+```
+
+For `SEMANTIC: <expression>`, first choose the primary layer among E/R/A/T/K/P/V, then emit:
+
+```text
+LAYER=<selected-layer>
+<that layer's native region or K code>
+```
+
+For K, epistemic state belongs to a proposition. If no proposition target is available, emit `LAYER=K` followed by `TARGET_REQUIRED` rather than inventing a target.
 
 For `ENCODE: <text>`:
 1. identify entities/concepts;
@@ -345,9 +419,12 @@ Recognize:
 
 ```text
 WORD: <expression>
-WORD: <expression>
 CONTEXT: <context>
+SEMANTIC: <expression>
+ACTION: <expression>
+RELATION: <expression>
 TOOL: <expression>
+POLICY: <expression>
 ENCODE: <text>
 DECODE: <packet>
 COMPARE: <packet1> || <packet2>

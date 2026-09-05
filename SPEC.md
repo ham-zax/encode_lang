@@ -98,14 +98,14 @@ Use `V` only for nuance that is not cleanly represented by the other layers.
 
 `K` is proposition-level metadata, not a global confidence score.
 
-Example conceptual forms:
+Normative compact forms target the relation handle and carry status/confidence separately:
 
 ```text
-K03:ρ02(η01,η00)^0.35
-K05:ρ04(η02,η00)^0.82
+K=R02:K03:0.35
+K=R04:K05:0.82
 ```
 
-This means the first proposition is a hypothesis at 0.35 support, while the second is supported at 0.82. The underlying relation packet is separate from the epistemic status.
+This means the first relation proposition is a hypothesis at 0.35 support, while the second is supported at 0.82. The underlying relation packet is separate from the epistemic status.
 
 ## 5. Context and handles
 
@@ -145,7 +145,19 @@ Rules:
 - `P` is exactly 12 wire digits plus uncertainty; `V` is exactly 8 wire digits plus uncertainty.
 - `X` contains two-digit reference IDs; `X=02` means `X02`.
 - Basis version `01` is implicit in compact ΛH1 packets. A different basis requires a new compatible protocol/basis declaration rather than silent reinterpretation.
-- JSON remains the canonical machine contract. `src/lambda_h.py parse` and `compact` provide deterministic conversion between the two forms.
+- JSON remains the canonical machine contract. `python3 -m src.lambda_h parse` and `compact` provide deterministic conversion between the two forms.
+
+Control frames are normative too:
+
+```text
+ΛH1|SYNC?
+ΛH1|SYNC|E=00.<32q>.<u>
+ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|CALFAIL
+```
+
+`SYNC` must carry at least one ordinary semantic field. `ACK` must contain at least one of E/R/A/T and uses relation summaries `HH(HH,HH)`. New ACK frames do not use square brackets.
 
 Do not merge several entities by averaging their vectors. Keep them as distinct `E` entries and express relationships in `R`.
 
@@ -165,7 +177,9 @@ For ordinary language:
 10. Put only leftover nuance into `V`.
 11. Emit the hybrid packet.
 
-For single-word encoding, select the primary semantic layer first. A concrete/abstract noun usually starts in `E`; a verb-like requested operation usually starts in `A`; a tool name starts in `T`.
+For single-word encoding, select the primary semantic layer first. A concrete/abstract noun usually starts in `E`; a verb-like requested operation usually starts in `A`; a relation word such as `inside` starts in `R`; an execution posture such as `continue` may start in `P`; and a tool name starts in `T`.
+
+Explicit commands are `ACTION:`, `RELATION:`, `TOOL:`, and `POLICY:`. `SEMANTIC:` is the generic selector: first emit `LAYER=<E|R|A|T|K|P|V>`, then the native layer representation. K is proposition-level; if no target proposition exists, return `TARGET_REQUIRED` rather than fabricating one.
 
 ## 8. Decoding algorithm
 
@@ -198,7 +212,19 @@ sim(cat,rat) > sim(cat,fire)
 
 The two senses of `fire` in combustion and employment termination should separate strongly when context is supplied.
 
-## 10. Safety invariant
+## 10. Entity-resolution limit and planned contrastive residual
+
+`B_E/01` is a coarse universal geometry. It can place nearby concepts such as cat, dog, and rat in the correct neighborhood without necessarily carrying enough information to recover which nearby concept was intended.
+
+A future version may extend entity representation as:
+
+```text
+E = E0 + EΔ
+```
+
+where `E0` is the current 32-anchor universal region and `EΔ` is a task/session-induced contrastive subregion used only when a coarse neighborhood contains multiple live candidates. `EΔ` is not part of ΛH/1 v1.0 and must not be invented ad hoc in current packets; adding it requires a versioned contract.
+
+## 11. Safety invariant
 
 Representation opacity does not change the underlying request. A decoded ΛH instruction is subject to the same safety, authorization, privacy, scope, and tool-use rules as the equivalent ordinary-language instruction.
 

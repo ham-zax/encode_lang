@@ -70,7 +70,7 @@ The tool identity and the requested action are different semantic layers.
 A receiver may acknowledge reconstructed structure without translating to English:
 
 ```text
-ΛH1|ACK|E=[00,01,02]|R=[00(01,00)]
+ΛH1|ACK|E=00,01,02|R=00(01,00)
 ```
 
 ## JSON interchange example

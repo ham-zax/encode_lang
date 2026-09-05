@@ -34,10 +34,13 @@ If deterministic coordinates become a requirement, the next architecture step is
 ## Source of truth
 
 - Modular basis definitions: `semantics/*.yaml`
-- Full AI bootstrap: `prompt/LAMBDA_H_BOOTSTRAP.md`
+- Single authoritative AI bootstrap and compact/control grammar: `prompt/LAMBDA_H_BOOTSTRAP.md`
+- `PROMPT.md` is a redirect only and must never contain an independent protocol copy.
 - Canonical machine packet contract: `schema/lambda_h_packet.schema.json`
 - Stdlib validation behavior: `src/validate_packet.py`
-- Deterministic score/compact codec: `src/lambda_h.py`
+- Deterministic score/compact codec and region metrics: `src/lambda_h.py`
+- Cross-model calibration probes: `calibration/probes.json`
+- Cross-model calibration evaluator: `src/calibrate.py`
 - `semantics.json` is retained as the earlier aggregate snapshot for compatibility.
 
 When changing anchor order or meaning, increment the affected basis version instead of silently changing `01`.
@@ -50,6 +53,17 @@ When changing anchor order or meaning, increment the affected basis version inst
 4. Relation/action/tool bases are semantic anchors, not guarantees that every model will infer exactly the same projection.
 5. Compact chat syntax is deterministic but intentionally narrower than JSON; free-form epistemic targets remain JSON-only.
 6. `validate_packet.py` and `lambda_h.py` validate structure/transport, not semantic correctness.
+7. The 32-dimensional entity basis is deliberately coarse. Nearby concepts can occupy almost the same region even when lexical identity differs.
+
+## Planned contrastive entity residual
+
+Do not solve the entity-resolution limit by adding a secret word dictionary. The intended future direction is versioned two-level entity representation:
+
+```text
+E = E0 + EΔ
+```
+
+`E0` is the current universal B_E/01 region. `EΔ` would be a task/session-induced contrastive subregion created only when several live concepts occupy the same coarse neighborhood. This is architectural work for a later protocol version, not part of ΛH/1 v1.0.
 
 ## Safety invariant
 

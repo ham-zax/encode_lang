@@ -91,14 +91,14 @@ compose:
 A receiver can ACK the reconstructed structure:
 
 ```text
-ΛH1|ACK|E=[00,01,02]|R=[00(01,00),01(01,02)]
+ΛH1|ACK|E=00,01,02|R=00(01,00),01(01,02)
 ```
 
 The ACK confirms entity/relation structure, not exact original wording.
 
 ## 6. Tool-class tests
 
-After loading `PROMPT.md`:
+After loading `prompt/LAMBDA_H_BOOTSTRAP.md`:
 
 ```text
 TOOL: curl
@@ -131,13 +131,13 @@ Do not fold the tool identity into the action vector.
 Represent a suspected relation:
 
 ```text
-K03:ρ02(η01,η00)^0.35
+K=R02:K03:0.35
 ```
 
 Represent a strongly supported relation:
 
 ```text
-K05:ρ02(η01,η00)^0.86
+K=R02:K05:0.86
 ```
 
 The relation can remain the same while its epistemic status changes.
@@ -154,8 +154,8 @@ The sender then provides only the missing bindings. After synchronization, the r
 
 ## 10. Fresh-session interoperability test
 
-1. Start AI session A with `PROMPT.md`.
-2. Start AI session B with the same `PROMPT.md`.
+1. Start AI session A with `prompt/LAMBDA_H_BOOTSTRAP.md`.
+2. Start AI session B with the same canonical bootstrap.
 3. Ask both to encode the same 10 words and 5 contextual polysemy pairs.
 4. Compare relative nearest-neighbor order, not exact hex.
 5. Ask A to encode a compositional sentence and B to decode it.

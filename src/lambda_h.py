@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from pathlib import Path
 from typing import Any
 
-from validate_packet import validate_packet
+try:  # package import
+    from .validate_packet import validate_packet
+except ImportError:  # direct-script compatibility
+    from validate_packet import validate_packet
 
 ALPHABET = "0123456789ABCDE"
 DIGIT_TO_SCORE = {digit: index - 7 for index, digit in enumerate(ALPHABET)}
@@ -61,6 +65,29 @@ def decode_q(q: str, *, width: int | None = None) -> list[int]:
     return [DIGIT_TO_SCORE[digit] for digit in q]
 
 
+def compare_q(q1: str, q2: str, *, width: int) -> dict[str, float | None]:
+    """Compare two regions without assuming bit-identical prompt projections."""
+    a = decode_q(q1, width=width)
+    b = decode_q(q2, width=width)
+    deltas = [x - y for x, y in zip(a, b)]
+    mean_abs_delta = sum(abs(delta) for delta in deltas) / width
+    rmse = math.sqrt(sum(delta * delta for delta in deltas) / width)
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    cosine = dot / (norm_a * norm_b) if norm_a and norm_b else None
+    if cosine is not None:
+        if abs(cosine - 1.0) < 1e-12:
+            cosine = 1.0
+        elif abs(cosine + 1.0) < 1e-12:
+            cosine = -1.0
+    return {
+        "mean_abs_delta": mean_abs_delta,
+        "rmse": rmse,
+        "cosine": cosine,
+    }
+
+
 def _decode_u(digit: str) -> int:
     if len(digit) != 1 or digit not in DIGIT_TO_SCORE:
         raise CodecError("uncertainty must be one wire digit 0-E")
@@ -98,7 +125,8 @@ def _parse_region_entries(value: str, layer: str) -> list[dict[str, Any]]:
         pattern = re.compile(rf"^({ID_RE})\.([0-E]{{{width}}})\.([0-E])$")
 
     entries: list[dict[str, Any]] = []
-    for raw in value.split(","):
+    raw_entries = re.split(r"(?<=\)),", value) if layer == "R" else value.split(",")
+    for raw in raw_entries:
         match = pattern.fullmatch(raw)
         if not match:
             raise CodecError(f"invalid {layer} entry {raw!r}")
@@ -134,8 +162,59 @@ def _parse_k_entries(value: str) -> list[dict[str, Any]]:
     return entries
 
 
+def _parse_ack_fields(tail: str) -> dict[str, Any]:
+    allowed = {"E", "R", "A", "T"}
+    fields: dict[str, str] = {}
+    for part in tail.split("|"):
+        if "=" not in part:
+            raise CodecError(f"invalid ACK field {part!r}; expected NAME=value")
+        name, value = part.split("=", 1)
+        if name not in allowed:
+            raise CodecError(f"unknown ACK field {name!r}")
+        if name in fields:
+            raise CodecError(f"duplicate ACK field {name!r}")
+        fields[name] = value
+    if not fields:
+        raise CodecError("ACK frame requires at least one summary field")
+
+    ack: dict[str, Any] = {}
+    for layer in ("E", "A", "T"):
+        if layer not in fields:
+            continue
+        value = fields[layer]
+        if value.startswith("[") and value.endswith("]"):
+            value = value[1:-1]
+        if not value:
+            raise CodecError(f"ACK {layer} field cannot be empty")
+        ids = value.split(",")
+        if any(not re.fullmatch(ID_RE, item) for item in ids):
+            raise CodecError(f"ACK {layer} entries must be two-digit uppercase hex ids")
+        ack[layer] = ids
+
+    if "R" in fields:
+        value = fields["R"]
+        if value.startswith("[") and value.endswith("]"):
+            value = value[1:-1]
+        pattern = re.compile(rf"^({ID_RE})\(({ID_RE}),({ID_RE})\)$")
+        raw_entries = re.split(r"(?<=\)),", value)
+        relations: list[dict[str, str]] = []
+        for raw in raw_entries:
+            match = pattern.fullmatch(raw)
+            if not match:
+                raise CodecError(f"invalid ACK relation entry {raw!r}")
+            handle, subject, obj = match.groups()
+            relations.append({"handle": handle, "subject": subject, "object": obj})
+        ack["R"] = relations
+
+    packet = {"protocol": "ΛH/1", "control": "ACK", "ack": ack}
+    errors = validate_packet(packet)
+    if errors:
+        raise CodecError("invalid ACK frame: " + "; ".join(errors))
+    return packet
+
+
 def parse_compact(text: str) -> dict[str, Any]:
-    """Parse normative compact ΛH1 wire syntax into canonical JSON shape."""
+    """Parse normative compact ΛH1 data/control syntax into canonical JSON shape."""
     text = text.strip()
     if not text.startswith("ΛH1|"):
         raise CodecError("compact packet must start with 'ΛH1|'")
@@ -143,6 +222,45 @@ def parse_compact(text: str) -> dict[str, Any]:
     tail = text[len("ΛH1|") :]
     if not tail:
         raise CodecError("compact packet has no fields")
+
+    if tail in {"SYNC?", "CALFAIL"}:
+        packet = {"protocol": "ΛH/1", "control": tail}
+        errors = validate_packet(packet)
+        if errors:
+            raise CodecError("invalid control frame: " + "; ".join(errors))
+        return packet
+
+    if tail.startswith("READY|"):
+        ready_fields: dict[str, str] = {}
+        for part in tail[len("READY|") :].split("|"):
+            if "=" not in part:
+                raise CodecError(f"invalid READY field {part!r}")
+            name, value = part.split("=", 1)
+            if name in ready_fields:
+                raise CodecError(f"duplicate READY field {name!r}")
+            ready_fields[name] = value
+        expected_names = {"BE", "BR", "BA", "BT", "BP", "BV"}
+        if set(ready_fields) != expected_names or any(value != "01" for value in ready_fields.values()):
+            raise CodecError("READY must contain exactly BE/BR/BA/BT/BP/BV=01")
+        packet = {
+            "protocol": "ΛH/1",
+            "control": "READY",
+            "basis": {"E": "01", "R": "01", "A": "01", "T": "01", "P": "01", "V": "01"},
+        }
+        errors = validate_packet(packet)
+        if errors:
+            raise CodecError("invalid READY frame: " + "; ".join(errors))
+        return packet
+
+    if tail.startswith("ACK|"):
+        return _parse_ack_fields(tail[len("ACK|") :])
+
+    control: str | None = None
+    if tail.startswith("SYNC|"):
+        control = "SYNC"
+        tail = tail[len("SYNC|") :]
+        if not tail:
+            raise CodecError("SYNC frame requires at least one binding or semantic field")
 
     allowed = {"E", "R", "A", "T", "K", "P", "X", "V"}
     fields: dict[str, str] = {}
@@ -157,6 +275,8 @@ def parse_compact(text: str) -> dict[str, Any]:
         fields[name] = value
 
     packet: dict[str, Any] = {"protocol": "ΛH/1"}
+    if control is not None:
+        packet["control"] = control
     basis: dict[str, str] = {}
 
     for layer in REGION_LAYERS:
@@ -217,10 +337,31 @@ def _format_k_target(target: Any) -> str:
 
 
 def format_compact(packet: dict[str, Any]) -> str:
-    """Format a canonical JSON packet as normative compact ΛH1 wire syntax."""
+    """Format a canonical JSON packet as normative compact ΛH1 data/control syntax."""
     errors = validate_packet(packet)
     if errors:
         raise CodecError("invalid JSON packet: " + "; ".join(errors))
+
+    control = packet.get("control")
+    if control in {"SYNC?", "CALFAIL"}:
+        return f"ΛH1|{control}"
+    if control == "READY":
+        return "ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01"
+    if control == "ACK":
+        ack = packet["ack"]
+        ack_parts: list[str] = []
+        for layer in ("E", "R", "A", "T"):
+            values = ack.get(layer)
+            if values is None:
+                continue
+            if layer == "R":
+                rendered = ",".join(
+                    f"{item['handle']}({item['subject']},{item['object']})" for item in values
+                )
+            else:
+                rendered = ",".join(values)
+            ack_parts.append(f"{layer}={rendered}")
+        return "ΛH1|ACK|" + "|".join(ack_parts)
 
     parts: list[str] = []
     for layer in REGION_LAYERS:
@@ -267,7 +408,8 @@ def format_compact(packet: dict[str, Any]) -> str:
 
     if not parts:
         raise CodecError("packet has no compact-encodable fields")
-    return "ΛH1|" + "|".join(parts)
+    prefix = "ΛH1|SYNC|" if control == "SYNC" else "ΛH1|"
+    return prefix + "|".join(parts)
 
 
 def _read_text(path: str | None) -> str:
@@ -295,6 +437,11 @@ def _build_parser() -> argparse.ArgumentParser:
     decode.add_argument("layer", choices=WIDTHS, help="semantic layer")
     decode.add_argument("q", help="0-E wire vector")
 
+    compare = sub.add_parser("compare", help="compare two regions from the same layer")
+    compare.add_argument("layer", choices=WIDTHS, help="semantic layer")
+    compare.add_argument("q1", help="first 0-E wire vector")
+    compare.add_argument("q2", help="second 0-E wire vector")
+
     parse = sub.add_parser("parse", help="compact wire -> canonical JSON")
     parse.add_argument("wire", nargs="?", help="wire packet; omit to read stdin")
 
@@ -314,6 +461,11 @@ def main() -> int:
 
         if args.command == "decode":
             print(" ".join(f"{score:+d}" for score in decode_q(args.q, width=_layer_width(args.layer))))
+            return 0
+
+        if args.command == "compare":
+            metrics = compare_q(args.q1, args.q2, width=_layer_width(args.layer))
+            print(json.dumps(metrics, indent=2))
             return 0
 
         if args.command == "parse":

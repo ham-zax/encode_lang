@@ -19,7 +19,8 @@ The core representation is:
 
 ## Key files
 
-- `prompt/LAMBDA_H_BOOTSTRAP.md` — complete end-to-end prompt for a fresh AI session
+- `prompt/LAMBDA_H_BOOTSTRAP.md` — single authoritative end-to-end prompt, including the normative compact/control grammar
+- `PROMPT.md` — compatibility redirect only; contains no protocol definition
 - `semantics/entity_basis.yaml` — `E00-E31`
 - `semantics/relation_basis.yaml` — `R00-R15`
 - `semantics/action_basis.yaml` — `A00-A15`
@@ -31,9 +32,15 @@ The core representation is:
 - `semantics/quantization.yaml` — shared `-7..+7 -> 0..E` encoding
 - `examples/examples.md` — worked examples and interoperability checks
 - `schema/lambda_h_packet.schema.json` — canonical JSON packet schema
-- `src/validate_packet.py` — dependency-free packet validator
-- `src/lambda_h.py` — dependency-free score/codec CLI for compact ↔ JSON packets
+- `src/__init__.py` — reusable package exports
+- `src/validate_packet.py` — dependency-free packet/control-frame validator
+- `src/lambda_h.py` — dependency-free score/codec CLI for compact ↔ JSON packets and region comparison
+- `src/calibrate.py` — one-session and two-session qualitative calibration evaluator
+- `calibration/probes.json` — cross-model semantic calibration prompts and qualitative checks
+- `calibration/README.md` — repeatable calibration procedure for fresh AI sessions
 - `tests/test_validate_packet.py` — focused validator tests
+- `tests/test_lambda_h.py` — compact/K/control/round-trip regression tests
+- `tests/test_calibrate.py` — cross-model calibration regression test
 - `PROJECT_NOTES.md` — rationale, contracts, and limitations
 - `semantics.json` — earlier aggregate semantics snapshot retained for compatibility
 
@@ -86,13 +93,13 @@ Example:
 Validate it with:
 
 ```bash
-python3 encode_lang/src/validate_packet.py packet.json
+python3 -m src.validate_packet packet.json
 ```
 
 or via stdin:
 
 ```bash
-cat packet.json | python3 encode_lang/src/validate_packet.py
+cat packet.json | python3 -m src.validate_packet
 ```
 
 The validator checks packet structure, vector widths/alphabet, handle syntax, and relation cross-references. It does **not** judge whether a semantic projection is correct.
@@ -103,19 +110,57 @@ The validator checks packet structure, vector widths/alphabet, handle syntax, an
 
 ```bash
 # Quantize a 16-axis action vector
-python3 encode_lang/src/lambda_h.py score A 0 0 0 0 0 0 0 0 0 0 0 0 0 6 7 0
+python3 -m src.lambda_h score A 0 0 0 0 0 0 0 0 0 0 0 0 0 6 7 0
 
 # Decode it back to signed scores
-python3 encode_lang/src/lambda_h.py decode A 7777777777777DE7
+python3 -m src.lambda_h decode A 7777777777777DE7
+
+# Compare two same-layer regions across sessions/models
+python3 -m src.lambda_h compare E "$Q1" "$Q2"
 
 # Compact wire -> canonical JSON
-python3 encode_lang/src/lambda_h.py parse 'ΛH1|A=00.7777777777777DE7.2|X=02'
+python3 -m src.lambda_h parse 'ΛH1|A=00.7777777777777DE7.2|X=02'
 
 # Canonical JSON -> compact wire
-python3 encode_lang/src/lambda_h.py compact packet.json
+python3 -m src.lambda_h compact packet.json
 ```
 
-The CLI does not invent semantic scores from English. The AI performs the semantic projection against the prompt-defined basis; the CLI makes quantization, parsing, and transport deterministic.
+The CLI does not invent semantic scores from English. The AI performs the semantic projection against the prompt-defined basis; the CLI makes quantization, parsing, transport, and region-distance measurement deterministic.
+
+## Cross-model calibration
+
+Use `calibration/probes.json` against each fresh AI session and follow `calibration/README.md`. Interoperability is evaluated by relative semantic geometry, not exact hexadecimal equality. The calibration set checks neighborhood ordering and context-sensitive sense separation without introducing a word-to-token dictionary.
+
+Generate a fill-in result file and evaluate it with:
+
+```bash
+python3 -m src.calibrate --template > calibration-results-a.json
+# Fill the returned q regions from one fresh AI session, then run local checks:
+python3 -m src.calibrate calibration-results-a.json
+
+# For empirical cross-model checks, fill a second result file and compare both:
+python3 -m src.calibrate calibration-results-a.json calibration-results-b.json
+```
+
+## Normative compact control frames
+
+The canonical bootstrap and codec share these exact control forms:
+
+```text
+ΛH1|SYNC?
+ΛH1|SYNC|E=00.<32q>.<u>
+ΛH1|ACK|E=00,01|R=00(01,00)|A=00|T=00
+ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=01|BV=01
+ΛH1|CALFAIL
+```
+
+The compact data grammar is defined in `prompt/LAMBDA_H_BOOTSTRAP.md` and `SPEC.md`; the Python codec parses and emits the same grammar.
+
+The Python implementation is also importable as a package:
+
+```python
+from src import parse_compact, format_compact, compare_q, validate_packet
+```
 
 ## Design invariants
 
