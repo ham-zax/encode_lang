@@ -1,71 +1,48 @@
-# Receiver pilot - 2026-09-05
+# Lambda H/2.1 implementation observations
 
-## Observed results
+Date: 2026-09-05. Scope: the forward field-and-numeric-wire implementation on the V2 baseline at `38b12de`. These are direct local implementation observations, not fresh receiving-model results.
 
-The final frozen Lambda H/2 bootstrap met the expectations for all 18 shipped receiver cases in this development pilot. All 18 captured sessions showed zero decoder-tool calls. These are implementation-session manual judgments backed by recorded inputs, answers, and event transcripts, not independent certification or a cross-model benchmark.
+## Mechanical observations
 
-| Run | Cases | Met expectations | Did not meet expectations | Decoder-tool calls |
-| --- | ---: | ---: | ---: | ---: |
-| Initial v2 bootstrap | 18 | 17 | 1 | 0 |
-| Final frozen v2 bootstrap | 18 | 18 | 0 | 0 |
-| Original v1 continuation control | 1 | 1 | 0 | 0 |
+| Observation | Result |
+| --- | --- |
+| Active Python source syntax | All 6 modules parsed successfully |
+| Exported developer-graph schema vs `src.protocol.schema()` | Equal |
+| Current corpus parse/format round-trips | 16 of 16 |
+| Current `.lh` sample round-trips | 3 of 3 |
+| Numeric packets embedded in active documentation | 12 parsed, no errors |
+| E/R/A/T/K/V anchor sets in bootstrap vs basis file | Equal |
+| Fresh empty evidence record | 0 passed, 0 failed, 16 missing |
+| Former competing v3/structure draft files | Absent |
 
-The initial broad-region case asked the user to select a specific energetic phenomenon instead of answering at the requested broad level. That failure was preserved. The prompt was clarified so that uncertainty about an exact label is not itself a blocker when a broad explanation is sufficient. The final run answered at that level while preserving uncertainty.
+No unit-test suite or external receiving-model experiment was run for this correction. Existing V2 observations are preserved in `../archive/v2/RESULTS.md`, with the original bootstrap/corpus, and are historical rather than relabeled as current.
 
-A separate continuation control using the original v1 bootstrap at commit `667204d` also resumed the unfinished pads/friction explanation without decoder tools. This pilot therefore does not establish that v1 was incapable of simple continuation, or that v2 is universally faster or more accurate. The migration adds explicit task structure and changes the notation; comparative generalization remains unestablished.
+## Directional geometry
 
-## Behavior covered
+For the shipped single-component center E20=4, E21=3, default width 2 and E20 lower/upper widths 1 and 2:
 
-The final receiver answered directly, continued the first unfinished step, stopped completed tasks, preserved relation direction and negation, retained hypothesis status despite high stated confidence, used context to disambiguate the computer-mouse sense, and asked about genuinely material bank-sense ambiguity.
+| Candidate | Observed compatibility |
+| --- | --- |
+| Center | 1.0 |
+| E20 shifted -2, E21 unchanged | 0.1353352832366127 |
+| E20 shifted +2, E21 unchanged | 0.6065306597126334 |
 
-It did not infer file existence from a supplied filename, stopped before an unnecessary counter increment, honored read-only limits, requested precisely the missing scoped binding, used a self-contained handoff immediately, preserved `report-1.20.csv`, omitted an unrelated fictional private marker, and did not restart completed work from a stale snapshot.
+Narrowing E20 by a factor of 0.5 preserved the center and the default width on other directions. Shifting E20 by -1 preserved all widths and moved the center to E20=3, E21=3.
 
-The final broad-region response was:
+Two equally weighted components centered at E20=-4 and +4, each width 1, gave approximately 0.5000000000000063 at either center and 0.00033546262790251185 at the midpoint. The components were not averaged into a false center. Equal-scoring candidates were reported ambiguous even with a zero requested margin. A distant candidate below the supplied minimum was unresolved.
 
-> This suggests an energetic process—such as combustion, heat release, radiation, or electrical activity—with some potential for danger or instability. The exact phenomenon is unspecified.
+These values establish the implemented formula and arithmetic behavior, not natural-language identity, a trained embedding, factual confidence, or a particular model's internal representations.
 
-The completed-task response was:
+## Text-disclosure boundary
 
-> Both explanations are complete; no further action is needed.
+The normal formatter rejected a developer entity containing a synthetic text literal instead of serializing it or silently dropping it. The observed sample wire body contained only numeric JSON syntax. Structural tag names and ordinary payload words were absent from that wire.
 
-## Configuration and provenance
+The handoff operation was exercised in a temporary new directory. It wrote a round-trippable numeric packet and a separate context sidecar containing only X02. Unrelated X03 and X99 bindings were excluded. An existing output directory was refused instead of overwritten. Temporary output was removed after inspection; no real secret or external recipient was involved.
 
-Runtime: installed Codex CLI 0.153.4, default model, requested reasoning effort `low`, read-only sandbox, fresh temporary workspace, ephemeral sessions, and ignored user config. The captured JSON event stream did not expose the resolved underlying model identity. These results must not be relabeled as a named-model benchmark.
+The sidecar remains readable disclosure. These checks do not establish cryptographic confidentiality, anonymity, secrecy from a receiving endpoint, or resistance to semantic inference by an observer with the bootstrap.
 
-Each case used a separate receiver session. The supplied task input contained the full bootstrap, the permitted case context, and the packet. Evaluator expectations and other cases' conversation histories were not supplied. The experimental task content was fictional. The CLI still provides its own surrounding runtime instructions; these were not bare model API calls or a verified fully isolated inference environment.
+## Receiver evidence still required
 
-Initial captured bootstrap SHA-256:
+No 2.1 receiving-model pass rate, latency result, token saving, or cross-model superiority is established here. Python calls are now permitted and recorded rather than automatically counted as failure, except when a case explicitly forbids tools. Current result records bind to both the bootstrap and the corpus.
 
-```text
-4e3628f5563832c286a0bfb4986a37f123ad2935a5da45729e0856ca22e29aee
-```
-
-Final frozen bootstrap SHA-256:
-
-```text
-d15595e6b9f476e27def0cf639153593bb167e0ccb619fac5480fd36eef2e567
-```
-
-The final record was accepted by `python3 -m src.calibration` with 18 passed, 0 failed, 0 missing, and exit status 0. Its digest matched the working bootstrap at final verification. A later prompt modification requires new evidence; it cannot silently inherit this result.
-
-The initial run remains historical. A decimal-literal clarification changed the working prompt after those inputs were captured. Those records were not relabeled as final-prompt evidence. The final run froze one prompt copy before all cases began.
-
-Existing malformed-agent-role startup warnings appeared for three local role definitions. They were retained and distinguished from decoder calls after inspecting the event types. No unknown item types remained unclassified in the final records. The unrelated runtime configuration was not repaired by this rewrite.
-
-## Tool-free does not mean zero internal reasoning
-
-Usage metadata reported zero reasoning-output tokens for 17 final cases and 11 for the exact-literal case. That rules out a claim that every case used zero reasoning tokens. Neither a low-effort setting nor an absence of visible reasoning establishes absence of internal computation.
-
-The supported observation is narrower: these receivers produced the intended responses without invoking a Python, shell, or other decoder tool.
-
-## Limitations
-
-This is a small development corpus, one CLI runtime, and one run per case per prompt version. Several cases overlap bootstrap demonstrations. The implementer graded the answers against published expectations; the grading is not independent. This is not a held-out evaluation, multi-model comparison, latency benchmark, token-efficiency study, or privacy audit.
-
-The private-marker case checks output minimization only. The receiving endpoint already saw the fictional marker, so the case does not establish secrecy from the model provider. No encryption keys were generated, encryption software installed, or private inference environment configured by this rewrite.
-
-## Evidence locations
-
-Raw inputs, answers, event transcripts, and separately graded observations remain under the ignored `.local/evaluations/` directory in the implementation checkout. Final-run records are under `.local/evaluations/final/`; the original v1 control is under `.local/evaluations/v1-control/`. These captures are not bundled as public project data because runtime traces can contain local environment details.
-
-Original `observations.ungraded.json` files are preserved. Ratings are in separate `observations.graded.json` files; the final evaluator output is `final/report.json`. Follow [the calibration procedure](README.md) to reproduce a run. A valid parse, READY response, or blank result template is not evidence of model understanding.
+A valid numeric packet and a correct geometric computation do not prove the receiving model will follow the task. The next empirical evidence must come from actual captured receiver responses under the current prompt; do not infer it from the earlier V2 pilot or from this arithmetic inspection. Hidden reasoning language is not measured or controlled by these checks.

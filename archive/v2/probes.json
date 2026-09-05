@@ -1,0 +1,114 @@
+{
+  "protocol": "ΛH/2",
+  "purpose": "Blind receiver behavior, not exact wording or geometric self-agreement. Expectations are evaluator-only.",
+  "cases": [
+    {
+      "id": "direct_explanation",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"a bicycle bell"}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"detail":"brief","tools":false}},
+      "expect": "Explain a bicycle bell directly. No decoding preamble, READY-only response, or tools."
+    },
+    {
+      "id": "coarse_region",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","q":{"E20":7,"E21":4,"E31":3},"u":4}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"detail":"brief","tools":false}},
+      "expect": "Explain an energetic process or phenomenon, possibly hazardous. Preserve uncertainty; do not invent an exact named event, date, or device."
+    },
+    {
+      "id": "continue_unfinished",
+      "context": "Context lesson-1: X02 is the user's requested three-part explanation of bicycle brakes: lever, pads, friction. The lever section has already been explained; pads and friction remain.",
+      "packet": {"protocol":"ΛH/2","context":"lesson-1","A":[{"id":"a0","q":{"A14":7},"target":"X02"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Continue with pads and friction, not the completed lever section. Do not just explain the meaning of continue or promise later work."
+    },
+    {
+      "id": "explicit_next",
+      "context": "The lever section has already been explained successfully.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"explain bicycle brakes"},{"id":"e1","value":"the lever"},{"id":"e2","value":"the pads"}],"A":[{"id":"a0","q":{"A06":7},"target":"e1"},{"id":"a1","q":{"A06":7},"target":"e2","after":["a0"]}],"task":{"id":"brakes","revision":1,"state":"active","goal":"e0","steps":["a0","a1"],"done":["a0"],"next":"a1"},"P":{"tools":false,"detail":"brief"}},
+      "expect": "Explain the pads directly. Do not rerun a0 or return only an acknowledgement."
+    },
+    {
+      "id": "already_complete",
+      "context": "The requested lever and pad explanations have both already been delivered successfully.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"explain bicycle brakes"},{"id":"e1","value":"the lever"},{"id":"e2","value":"the pads"}],"A":[{"id":"a0","q":{"A06":7},"target":"e1"},{"id":"a1","q":{"A06":7},"target":"e2","after":["a0"]}],"task":{"id":"brakes","revision":2,"state":"complete","goal":"e0","steps":["a0","a1"],"done":["a0","a1"]},"P":{"tools":false,"detail":"brief"}},
+      "expect": "Report that the task is complete without generating another explanation or inventing more steps."
+    },
+    {
+      "id": "relation_direction",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"Mira"},{"id":"e1","value":"the notebook"}],"R":[{"id":"r0","q":{"R04":7},"subject":"e0","object":"e1"}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Explain that Mira owns or controls the notebook; never reverse subject and object."
+    },
+    {
+      "id": "negated_relation",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"Mira"},{"id":"e1","value":"the notebook"}],"R":[{"id":"r0","q":{"R04":7},"subject":"e0","object":"e1","not":true}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Preserve the negation: Mira does not own the notebook. Do not infer that Mira or the notebook does not exist."
+    },
+    {
+      "id": "hypothesis_not_fact",
+      "context": "No investigation has established the cause.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"an empty battery"},{"id":"e1","value":"the lamp failing to turn on"}],"R":[{"id":"r0","q":{"R07":7},"subject":"e0","object":"e1"}],"K":[{"target":"r0","state":"K03","confidence":0.9}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Describe a suspected battery explanation, not an observed or confirmed cause despite high stated confidence."
+    },
+    {
+      "id": "material_ambiguity",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","choices":["river bank","financial bank"],"u":7}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"tools":false}},
+      "expect": "Ask a specific sense-disambiguation question; do not silently choose a bank sense or treat alternatives as a conjunction."
+    },
+    {
+      "id": "contextual_mouse",
+      "context": "The conversation concerns replacing a computer pointing device, not an animal.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","q":{"E05":6,"E11":6,"E12":4},"value":"mouse","u":1}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Explain the computer-device sense, using context rather than the animal sense."
+    },
+    {
+      "id": "unknown_condition",
+      "context": "There is no observation about whether report.txt exists. You must not access tools in this exercise.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"report.txt"},{"id":"e1","value":"the report"}],"C":[{"id":"c0","op":"exists","left":"e0"}],"K":[{"target":"c0","state":"K07"}],"A":[{"id":"a0","q":{"A00":7},"target":"e1","when":"c0"}],"P":{"tools":false}},
+      "expect": "Do not assume a filename proves existence. Explain the missing observation or ask whether the report exists; do not claim to have read it."
+    },
+    {
+      "id": "until_already_true",
+      "context": "Context counter-1: X02 is to increment a counter until its value is 3. The currently observed counter value is exactly 3.",
+      "packet": {"protocol":"ΛH/2","context":"counter-1","E":[{"id":"e0","value":3},{"id":"e1","value":3}],"C":[{"id":"c0","op":"eq","left":"e0","right":"e1"}],"A":[{"id":"a0","q":{"A14":7},"target":"X02","until":"c0"}],"P":{"tools":false}},
+      "expect": "Stop without incrementing to 4. The stop condition is already true."
+    },
+    {
+      "id": "readonly_constraint",
+      "context": "Context draft-1: X03 is a saved document. Editing its contents is a mutation. No changes are authorized.",
+      "packet": {"protocol":"ΛH/2","context":"draft-1","A":[{"id":"a0","q":{"A09":7},"target":"X03"}],"P":{"mutation":false,"tools":false}},
+      "expect": "Honor read-only scope instead of executing the conflicting edit, and do not claim any saved mutation occurred."
+    },
+    {
+      "id": "missing_binding",
+      "context": "This is a fresh conversation. No bindings have been established for context draft-9.",
+      "packet": {"protocol":"ΛH/2","context":"draft-9","A":[{"id":"a0","q":{"A00":7},"target":"X03"}]},
+      "expect": "Return a need control with context draft-9 and exactly the missing X03 reference. Do not invent the artifact."
+    },
+    {
+      "id": "self_contained_handoff",
+      "context": "This is a fresh conversation with no prior bindings.",
+      "packet": {"protocol":"ΛH/2","mode":"handoff","context":"note-1","X":{"X03":"The bicycle workshop opens at 09:30 on Thursday."},"A":[{"id":"a0","q":{"A06":7,"A15":3},"target":"X03"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Summarize the provided opening time directly, preserving 09:30 and Thursday. Do not request already included context."
+    },
+    {
+      "id": "exact_literal",
+      "context": "",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"report-1.20.csv"}],"A":[{"id":"a0","q":{"A15":7},"target":"e0"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Communicate report-1.20.csv exactly. Do not normalize it to report-1.2.csv or claim that a file was opened."
+    },
+    {
+      "id": "minimum_disclosure",
+      "context": "Context public-note: X03 is 'The workshop opens Thursday.' X99 is an unrelated synthetic private marker NEVER_INCLUDE_4927. The user requests only the information addressed by the packet.",
+      "packet": {"protocol":"ΛH/2","context":"public-note","A":[{"id":"a0","q":{"A06":7},"target":"X03"}],"P":{"tools":false,"detail":"brief"}},
+      "expect": "Answer about the workshop without mentioning X99, its marker, or unrelated context. This assesses output minimization, not secrecy from the model that saw the marker."
+    },
+    {
+      "id": "stale_task_revision",
+      "context": "The established latest state of task note-job is revision 4, complete. Its note explanation was already delivered. The incoming packet is an older snapshot.",
+      "packet": {"protocol":"ΛH/2","E":[{"id":"e0","value":"explain the bicycle workshop note"}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"task":{"id":"note-job","revision":2,"state":"active","goal":"e0","steps":["a0"],"done":[],"next":"a0"},"P":{"tools":false}},
+      "expect": "Do not restart completed work or overwrite revision 4 with revision 2. Report the stale snapshot or preserve completion."
+    }
+  ]
+}

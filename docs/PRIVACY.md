@@ -1,6 +1,6 @@
 # Privacy: communicate less, protect the transport, choose the endpoint
 
-Lambda H/2 is a semantic notation, not a cipher. It can reduce unnecessary disclosure through scoped references and selective handoffs. It does not encrypt a packet, hide meaning from a receiving model, authenticate its sender, or stop a host from retaining the text it processes.
+Lambda H/2.1 is a semantic notation, not a cipher. Its normal wire contains numeric structure and semantic regions, not readable labels or literal text. That provides casual opacity; it does not encrypt meaning, authenticate a sender, or stop a host from retaining what it processes. Readable developer JSON and explicitly transferred context are distinct from the numeric wire.
 
 The default recommendation for information that must not reach a model provider is **local inference on a controlled device, with cloud tools disabled and only necessary data supplied**. For transfer between trusted devices, wrap the packet in an established encryption tool. Do not try to invent a prompt-decodable encryption scheme.
 
@@ -38,7 +38,7 @@ A context file has this shape (the values below are fictional):
 
 ```json
 {
-  "context": "private-session-7",
+  "context": "7",
   "X": {
     "X10": "private draft located on the sender's device",
     "X11": "unrelated private note"
@@ -46,9 +46,9 @@ A context file has this shape (the values below are fictional):
 }
 ```
 
-A packet may reference `X10` without copying either value. The optional `inspect` command reports which bindings are required or missing. The `handoff` command includes only referenced bindings, not the whole context file.
+A packet may reference `X10` without copying either value. The `inspect` command reports required or missing IDs without their values. The `handoff --output NEW_DIRECTORY` command writes a numeric `packet.lh` and a separate `context.private.json` containing only referenced bindings. The new directory's parent must exist; existing destinations are not overwritten. The wire alone does not supply the text in that sidecar.
 
-**Selective handoff is minimization, not redaction.** A required binding included in the handoff is plaintext disclosure to its recipient. Review the outgoing packet before sending. An agent cannot use a withheld identity, filename, measurement, or secret merely because an alias exists; it must request the binding or solve only the abstract portion that does not need it.
+**Selective handoff is minimization, not redaction.** A required binding in the sidecar is readable disclosure to its recipient. Review both output files before sending. The numerical formatter rejects text rather than encoding it as bytes or silently dropping it. An agent cannot use a withheld identity, filename, measurement or secret merely because an alias exists; it must request the binding or solve only the abstract portion that does not need it.
 
 For abstract advice, use intentionally non-identifying placeholders such as Party A and Party B, and keep the identity map local. Do not reuse aliases across unrelated contexts when linkability matters. The surrounding facts can still identify a person or organization even after their name is removed.
 

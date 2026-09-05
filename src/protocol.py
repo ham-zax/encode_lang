@@ -1,4 +1,4 @@
-"""Lambda H/2 contract, structural validation, and disclosure inspection.
+"""Lambda H/2.1 contract, structural validation, and disclosure inspection.
 
 This module does not infer meaning, execute actions, authenticate senders, or
 persist task state. Its schema checker implements only the vocabulary emitted
@@ -12,8 +12,8 @@ import re
 from copy import deepcopy
 from typing import Any
 
-PROTOCOL = "ΛH/2"
-PREFIX = "ΛH2|"
+PROTOCOL = "ΛH/2.1"
+PREFIX = "ΛH2.1|"
 LAYERS = {"E": 32, "R": 16, "A": 16, "T": 16, "V": 8}
 NODE_LAYERS = ("E", "R", "A", "T", "C")
 REF = r"^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
@@ -48,34 +48,51 @@ def choices(*values: str) -> dict[str, Any]:
 
 
 def region(layer: str) -> dict[str, Any]:
-    # An omitted anchor is neutral. Explicit zeroes are rejected so there is
-    # only one representation of neutral coordinates in a sparse region.
+    # Shared axis/value constraints keep point and component-center schemas equal.
     return {"type": "object", "minProperties": 1,
-            "properties": {f"{layer}{i:02d}": {"type": "integer", "enum": [-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7]}
-                           for i in range(LAYERS[layer])},
-            "additionalProperties": False}
+            "propertyNames": {"enum": [f"{layer}{i:02d}" for i in range(LAYERS[layer])]},
+            "additionalProperties": {"type": "integer", "enum": [-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7]}}
+
+
+def field_shape(layer: str) -> dict[str, Any]:
+    """Weighted components with default and per-direction coordinate widths."""
+    width = {"type": "number", "exclusiveMinimum": 0, "maximum": 14}
+    pair = {"type": "array", "items": width, "minItems": 2, "maxItems": 2}
+    bands = {"type": "object", "minProperties": 1,
+             "propertyNames": region(layer)["propertyNames"], "additionalProperties": pair}
+    component = object_shape({
+        "q": region(layer), "s": width, "b": bands,
+        "w": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+    }, ("q", "s"))
+    return array_shape(component)
 
 
 def node(layer: str, fields: dict[str, Any], required: tuple[str, ...]) -> dict[str, Any]:
     common = {"id": {"type": "string", "pattern": rf"^{layer.lower()}[0-9]+$"}}
     if layer in LAYERS:
-        common.update({"q": region(layer), "u": {"type": "integer", "minimum": 0, "maximum": 7}})
-    return object_shape(common | fields, ("id",) + required)
+        common.update({"q": region(layer), "f": field_shape(layer),
+                       "u": {"type": "integer", "minimum": 0, "maximum": 7}})
+    result = object_shape(common | fields, ("id",) + required)
+    if layer in LAYERS:
+        result["not"] = {"required": ["q", "f"]}
+    return result
 
 
 def schema() -> dict[str, Any]:
     alternatives = array_shape(LITERAL, unique=True)
     alternatives["minItems"] = 2
     entity = node("E", {"value": LITERAL, "choices": alternatives}, ())
-    entity["anyOf"] = [{"required": ["q"]}, {"required": ["value"]}, {"required": ["choices"]}]
+    entity["anyOf"] = [{"required": [key]} for key in ("q", "f", "value", "choices")]
     tool = node("T", {"value": LITERAL}, ())
-    tool["anyOf"] = [{"required": ["q"]}, {"required": ["value"]}]
-    relation = node("R", {"subject": REFERENCE, "object": REFERENCE, "not": {"type": "boolean"}}, ("q", "subject", "object"))
+    tool["anyOf"] = [{"required": [key]} for key in ("q", "f", "value")]
+    relation = node("R", {"subject": REFERENCE, "object": REFERENCE, "not": {"type": "boolean"}}, ("subject", "object"))
+    relation["anyOf"] = [{"required": ["q"]}, {"required": ["f"]}]
     action = node("A", {
         "target": REFERENCE, "tool": {"type": "string", "pattern": r"^t[0-9]+$"},
         "after": array_shape(ACTION, unique=True), "when": CONDITION,
         "until": CONDITION, "not": {"type": "boolean"},
-    }, ("q", "target"))
+    }, ("target",))
+    action["anyOf"] = [{"required": ["q"]}, {"required": ["f"]}]
     condition = node("C", {
         "op": choices("eq", "ne", "lt", "le", "gt", "ge", "exists", "done"),
         "left": REFERENCE, "right": REFERENCE,
@@ -118,10 +135,10 @@ def schema() -> dict[str, Any]:
                          "context": NAME, "refs": array_shape(XREFERENCE, unique=True)},
                         ("protocol", "control", "context", "refs"))
     invalid = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "invalid"},
-                            "reason": {"type": "string", "minLength": 1}},
-                           ("protocol", "control", "reason"))
+                            "code": {"type": "integer", "minimum": 0, "maximum": 3}},
+                           ("protocol", "control", "code"))
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
-            "title": "Lambda H/2 packet (graph constraints also require the protocol validator)",
+            "title": "Lambda H/2.1 developer graph (numeric wire decoded first; graph validation also required)",
             "oneOf": [data, ready, need, invalid]}
 
 
@@ -155,6 +172,8 @@ def _shape_errors(value: Any, shape: dict[str, Any], path: str = "packet") -> li
         kinds = kind if isinstance(kind, list) else [kind]
         if not any(_matches_type(value, item) for item in kinds):
             return [f"{path}: expected {kind}"]
+    if "not" in shape and not _shape_errors(value, shape["not"], path):
+        errors.append(f"{path}: incompatible fields or value")
     if "const" in shape and value != shape["const"]:
         errors.append(f"{path}: expected {shape['const']!r}")
     if "enum" in shape and value not in shape["enum"]:
@@ -187,6 +206,8 @@ def _shape_errors(value: Any, shape: dict[str, Any], path: str = "packet") -> li
             elif isinstance(extra, dict):
                 errors += _shape_errors(item, extra, f"{path}.{key}")
     elif isinstance(value, list):
+        if len(value) > shape.get("maxItems", math.inf):
+            errors.append(f"{path}: too many items")
         if len(value) < shape.get("minItems", 0):
             errors.append(f"{path}: too few items")
         if shape.get("uniqueItems") and any(any(_same_json(item, prior) for prior in value[:i]) for i, item in enumerate(value)):
@@ -195,11 +216,13 @@ def _shape_errors(value: Any, shape: dict[str, Any], path: str = "packet") -> li
             for i, item in enumerate(value):
                 errors += _shape_errors(item, shape["items"], f"{path}[{i}]")
     elif isinstance(value, str):
-        if "pattern" in shape and re.search(shape["pattern"], value) is None:
+        if "pattern" in shape and re.fullmatch(shape["pattern"], value) is None:
             errors.append(f"{path}: invalid identifier")
         if len(value) < shape.get("minLength", 0) or len(value) > shape.get("maxLength", math.inf):
             errors.append(f"{path}: invalid length")
     elif type(value) in (int, float):
+        if "exclusiveMinimum" in shape and value <= shape["exclusiveMinimum"]:
+            errors.append(f"{path}: must exceed {shape['exclusiveMinimum']}")
         if value < shape.get("minimum", -math.inf) or value > shape.get("maximum", math.inf):
             errors.append(f"{path}: out of range")
     return errors

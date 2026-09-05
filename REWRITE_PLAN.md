@@ -1,5 +1,7 @@
 # Lambda H/2 Implementation Plan
 
+> Historical plan for the V2 baseline. The active forward correction is [semantic fields and numeric wire](docs/SEMANTIC_FIELDS_PLAN.md). V2 pilot results below do not describe the current 2.1 prompt.
+
 **Goal:** Replace positional semantic packets with a prompt-portable, directly actionable representation and an honest privacy model.
 
 **Architecture:** One versioned JSON data model, transported as `ΛH2|` plus a JSON object. Sparse named coordinates carry approximate meaning; explicit references, roles, conditions, constraints, and task snapshots carry operational structure. Python is optional authoring/inspection tooling, never a receiver requirement. Encryption is a separate endpoint responsibility, not a property of semantic notation.

@@ -1,108 +1,102 @@
-# encode_lang — Lambda H/2
+# encode_lang — Lambda H/2.1
 
-**A prompt-native notation for communicating meaning, constraints, and unfinished work.**
+**Semantic fields, directed task structure, and a numeric communication wire.**
 
-Give an AI session the standalone bootstrap, then send a packet. The intended response is the useful answer or next permitted action—not a translation of the packet or a Python decoding exercise.
+A concept need not resolve to one word. Represent its center of emphasis, the falloff around it, and separate regions for distinct live meanings. Keep who acts on what, prerequisites, negation, permissions and progress exact.
 
-Lambda H/2 uses sparse semantic anchors for approximate meaning and exact fields for identities, action targets, tools, conditions, permissions, and task state. It is a communication prototype, not a claim that arbitrary codes become a model's internal language.
+This is a forward development of the V2 graph—not a rollback to V1. Python may unpack and score the representation. There is no compulsory English reconstruction between receiving a packet and using its meaning.
 
-**Encoding is not encryption.** Keep sensitive inference local when a model provider must not receive it. Use established encryption for transport/storage and disclose only necessary context. The [privacy guide](docs/PRIVACY.md) explains the trust boundaries and a separate local age workflow.
+## Start here
 
-## Start with a conversation
-
-Paste the whole of [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) into the receiving session. It contains the complete notation, anchor definitions, and worked receiving examples; the receiver needs neither Python nor repository access.
-
-Then send this packet as-is:
+Give the receiving agent the complete [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md). Then send a bare packet. For example, with namespace 1 and X02 already bound to an unfinished goal:
 
 ```text
-ΛH2|{"E":[{"id":"e0","value":"a bicycle bell"}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"detail":"brief","tools":false}}
+ΛH2.1|[[0,1],[4,[[[0,0],[1,[[14,7]]],[4,[5,2]]]]],[8,[[3,0],[4,0]]]]
 ```
 
-The requested behavior is a brief explanation of a bicycle bell, directly. No `DECODE:` wrapper is necessary.
+The receiver should continue the unfinished work, not explain this notation. The last policy record explicitly requests a brief natural-language response. Protocol replies otherwise stay in numeric form unless the user or requested output asks for prose. A completed goal must not be restarted.
 
-`ENCODE: <message>` asks the bootstrapped agent to produce a packet. `DECODE: <packet>` explicitly asks for a reconstruction rather than execution. Ordinary language remains ordinary conversation. A bootstrap supplied together with a task should address the task immediately; a readiness-only response is for initialization without a task.
+`ENCODE:` asks for a packet. `DECODE:` explicitly asks for a reconstruction. Loading the bootstrap with a task should address the task immediately, not spend a turn on READY.
 
-## What v2 changes
+## What changed
 
-Dense offset-hex coordinates are retired. An action now names the important axes—such as `{"A13":6,"A14":7}`—instead of making the reader count positions. The wire is a single JSON object prefixed by `ΛH2|`; machine JSON uses `"protocol":"ΛH/2"` instead.
+The default wire has **no readable object keys, ordinary words, literal text, or descriptive task names**. After `ΛH2.1|`, it contains arrays and finite numbers only. Fixed structural tags identify fields; they are not a word-to-code dictionary. The formatter rejects text instead of silently omitting it or hiding it as byte codes. Readable developer JSON is available deliberately for inspection, not as the normal wire.
 
-Actions bind their own targets and instruments. Dependencies, conditions, and negation are explicit. Exact values preserve names, quantities, paths, and versions when a coarse semantic neighborhood is insufficient. `choices` preserves unresolved alternatives rather than silently guessing.
+Semantic fields add actual geometric behavior, beyond renaming metadata. A field can have multiple weighted centers and different lower/upper widths on each axis. Focus can be moved, narrowed or broadened without collapsing separate meanings. A single component peaks at its center and fades with distance. Thresholds determine acceptance; they do not create lexical identity or evidence.
 
-Task snapshots identify the goal, ordered steps, completed work, next unfinished action, stop condition, state, and revision. Scoped X references distinguish an established session from a fresh receiver that needs bindings. Exact policy limits are not hidden in approximate vectors.
+The V2 direction, action/tool binding, conditions, exact policy limits and task snapshots remain. A broader action field never softens a read-only constraint. An unknown stop condition is not permission to continue. Progress and revisions are still supplied state, not a durable execution ledger.
 
-None of this grants permission, authenticates a sender, proves a result, or creates an autonomous background worker. The receiving agent must preserve the actual task's authority and evidence boundaries.
+## Python is allowed
 
-## Continue without restarting
-
-When `X02` is already bound to an unfinished goal in `lesson-1`, this can request continuation:
-
-```text
-ΛH2|{"context":"lesson-1","A":[{"id":"a0","q":{"A14":7},"target":"X02"}]}
-```
-
-The receiver should use the actual known state. It should resume unfinished work, stop if the goal is complete, or request the missing binding in a fresh context. A stronger continuation signal is not a substitute for a goal or a completion record.
-
-For cross-session work, use an explicit task snapshot and a selective handoff. The [bootstrap](prompt/BOOTSTRAP.md), [specification](SPEC.md), and [worked examples](examples/examples.md) cover completion, blocked conditions, ambiguity, relation direction, exact literals, and multiple actions.
-
-## Optional local tooling
-
-The Python tools are for authors and integrations, not a dependency of the receiving prompt. Run from the repository root with Python 3.10 or later; no third-party package is required.
+From the repository root, using Python 3.10 or later and only the standard library:
 
 ```sh
-python3 -m src.codec parse examples/continue.lh
-python3 -m src.codec parse examples/continue.lh | python3 -m src.codec format
+# Readable developer inspection, explicitly requested.
+python3 -m src.codec parse examples/field.lh
+
+# Normal wire output; rejects plaintext payloads and descriptive namespaces.
+python3 -m src.codec format examples/field.lh
+
+# Score explicit numeric candidates; thresholds are caller policy.
+python3 -m src.codec score examples/field.lh --node e0 \
+  --candidates examples/field-candidates.json --minimum 0.2 --margin 0.05
+
+# Narrow one direction; output remains a numeric packet.
+python3 -m src.codec focus examples/field.lh --node e0 --scale 0.5 --axis E20
+
+# Move the center without changing the widths.
+python3 -m src.codec focus examples/field.lh --node e0 --shift E20=-1
+
 python3 -m src.codec inspect examples/continue.lh --context examples/context.demo.json
-python3 -m src.codec handoff examples/continue.lh --context examples/context.demo.json
-python3 -m src.codec schema
 ```
 
-The shipped demo files contain fictional data; replace their paths with your own reviewed inputs for real use. Input defaults to stdin. These commands convert representations, check structure, inspect references and declared task state, or prepare a handoff. They do not infer natural-language meaning, run actions, contact a model, encrypt data, or save a durable execution ledger.
+Point `q` remains available when no width is asserted. Field `f` carries one or more components with `q` center, `s` default width, optional `b` lower/upper bands, and optional `w` relative peak weight. Scoring requires explicit `f`; it does not invent a width for a point.
 
-The handoff includes only referenced X bindings. This excludes unrelated context, but **every included binding is still plaintext disclosure**. Review the output before sending it.
+Public helpers include `make_field`, `activation`, `focus_field`, `shift_field`, and `rank_candidates`, alongside the existing graph/codec helpers. Candidate ranking reports every supplied score and abstains on weak or tied matches. There is no built-in lexicon, network lookup, automatic task execution, or model API call.
 
-Package exports:
+## Exact context without plaintext in the wire
 
-```python
-from src import (
-    ProtocolError, parse_packet, format_packet, validate_packet,
-    inspect_packet, make_handoff, schema,
-)
+An exact filename, quotation or name belongs in a genuinely shared X binding, not a guessed geometric neighborhood. Numeric context IDs identify an agreed namespace; they are not passwords or authenticated identities. An unknown binding produces a need control rather than a fabricated identity.
+
+For a fresh receiver, explicitly export a selected context sidecar alongside the numeric packet:
+
+```sh
+# Creates a NEW directory; parent must already exist. Never overwrites it.
+python3 -m src.codec handoff examples/continue.lh \
+  --context examples/context.demo.json --output /tmp/encode-lang-handoff-demo
 ```
 
-## Evaluate receiving behavior—not just valid JSON
+The result contains `packet.lh` and `context.private.json`. Only referenced bindings enter the sidecar. **The sidecar is readable disclosure**; inspect it and transfer it only to the intended endpoint. The numeric packet alone is not self-contained when it needs that context. The Python `make_handoff` API still returns an explicit developer bundle with selected bindings; do not mistake that bundle for an opaque packet.
 
-The [calibration corpus](calibration/probes.json) contains receiving tasks with evaluator-only expectations. The recorder distinguishes missing evidence from a pass and tracks meaning, direct response, constraints, disclosure, and decoder-tool calls.
+Numeric notation offers casual opacity, not cryptographic confidentiality. Someone with the public bootstrap can interpret its structure and approximate meaning. Sensitive transit/storage needs established encryption; sensitive processing needs a trusted endpoint. See [`docs/PRIVACY.md`](docs/PRIVACY.md).
+
+## Evidence, not claims about hidden thought
+
+[`calibration/probes.json`](calibration/probes.json) contains current receiver cases; the evaluator binds results to both the bootstrap and the corpus. Optional Python calls are recorded, not automatically marked as failure. Explicit no-tool constraints still apply.
 
 ```sh
 python3 -m src.calibration --template
-python3 -m src.calibration --receiver CASE_ID
+python3 -m src.calibration --receiver directional_field
 python3 -m src.calibration private/receiver-results.json
 ```
 
-Use a real case ID from the corpus. Run cases in fresh receiving sessions with the bootstrap and permitted context only; do not leak the expected answer to the receiver. Capture the actual response and tool trace, then record explicit reviewer judgments. See the [calibration procedure](calibration/README.md).
-
-A [recorded development pilot](calibration/RESULTS.md) met 18 of 18 shipped case expectations with no decoder-tool calls after one prompt correction; the initial 17-of-18 run is also retained. The original v1 prompt passed a matched simple-continuation control, so this is not evidence of universal v2 superiority. The pilot uses one CLI runtime and implementation-session grading, not an independent or held-out cross-model benchmark.
-
-Mechanical codec checks are not cross-model evidence. There is no claimed speedup, token saving, cryptographic confidentiality, or absence of internal reasoning merely because the new format parses. One final pilot case reported nonzero reasoning-token usage.
+The current geometry and transport checks are documented in [`calibration/RESULTS.md`](calibration/RESULTS.md). Prior V2 receiving results are historical and do not establish 2.1 performance. No hidden-reasoning-language, token-saving, latency or cross-model superiority claim follows from a successful codec check.
 
 ## Project map
 
-| Path | Responsibility |
+| Path | Role |
 | --- | --- |
-| `prompt/BOOTSTRAP.md` | Standalone agent-facing instruction and demonstrations |
-| `SPEC.md` | Current protocol and behavioral contract |
-| `semantics/basis.json` | Shared semantic anchor meanings |
-| `src/protocol.py` | Schema, graph validation, reference and handoff inspection |
-| `src/codec.py` | Strict JSON/wire conversion and optional CLI |
-| `schema/lambda_h_packet.schema.json` | Generated structural schema |
-| `src/calibration.py` | Evidence-recording behavioral evaluator |
-| `calibration/`, `examples/` | Receiving corpus, procedure, and demonstrations |
-| `docs/PRIVACY.md` | Minimization, trusted endpoints, and external encryption |
-| `MIGRATION.md` | Breaking changes and contextual v1 re-encoding |
-| `archive/v1/` | Preserved historical prototype, not an active fallback |
+| `prompt/BOOTSTRAP.md` | Standalone field/graph reader and complete numeric grammar |
+| `src/protocol.py` | Developer graph schema and exact reference/task invariants |
+| `src/wire.py` | Numeric structural tags, strict encode/decode, plaintext rejection |
+| `src/geometry.py` | Directional field activation, focus, shift and explicit-candidate ranking |
+| `src/codec.py` | CLI and separate context-sidecar export |
+| `semantics/basis.json` | Shared semantic directions, not a word dictionary |
+| `schema/lambda_h_packet.schema.json` | Generated developer-graph schema; decode the wire first |
+| `examples/` | Numeric packets and synthetic local context/candidate data |
+| `calibration/` | Version-bound receiving corpus and evidence records |
+| `docs/FIELD_MODEL.md` | Field interpretation and mathematical limits |
+| `MIGRATION.md` | Forward migration and the text-disclosure boundary |
+| `archive/v1/`, `archive/v2/` | Historical definitions and evidence, not active fallback decoders |
 
-## Migration and limits
-
-V1 packets are rejected by the current codec with a migration diagnostic. Re-encode using source context and the actual task state; missing targets, permissions, or completion evidence cannot be reconstructed reliably from old vectors alone. Historical files and tests are preserved in the archive rather than presented as v2 functionality.
-
-Prompt portability and direct response are design targets that require empirical evaluation with the intended receiving models. Precise data requires explicit representation. Genuine privacy requires control over disclosure, transport, storage, and the processing endpoint—not a secret-looking alphabet.
+The geometry is a specified communication model, not access to an LLM's internal embeddings. A correct next action and preserved meaning are the objective; avoiding a provider refusal is not an evaluation criterion.

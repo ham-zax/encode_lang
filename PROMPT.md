@@ -1,7 +1,7 @@
-# Start a Lambda H/2 conversation
+# Start a Lambda H/2.1 conversation
 
-Paste the complete contents of [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) into the receiving AI session. It is self-contained; the receiver does not need Python or repository access.
+Paste [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md) in full into the receiving session. It defines the semantic fields, directed graph and numeric tagged-array wire. Python decoding and field arithmetic are permitted when tools are available and allowed; an English reconstruction is not a required intermediate.
 
-A bare `ΛH2|` packet requests the represented response directly. `ENCODE:` requests a packet; `DECODE:` requests an explanation rather than execution. When the bootstrap includes a task, the agent should address it immediately instead of returning a readiness-only response.
+A bare `ΛH2.1|` numeric packet is the represented message. `ENCODE:` requests a packet; `DECODE:` explicitly requests a reconstruction instead of execution. Bootstrap plus a task should address the task immediately. Protocol replies stay numeric unless prose is requested by the user, task or P.reply.
 
-This file is a pointer, not another protocol definition. The v1 bootstrap is historical material under `archive/v1/`, not the current language. Encoding is not encryption; see [`docs/PRIVACY.md`](docs/PRIVACY.md).
+Readable developer JSON is an explicit diagnostic view, not normal communication. Exact text belongs in deliberately supplied context, not in an opaque-looking payload. Historical V1/V2 material remains under `archive/`. The current format does not claim encryption or control over hidden reasoning.

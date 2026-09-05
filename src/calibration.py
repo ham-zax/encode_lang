@@ -24,7 +24,7 @@ DIMENSIONS = ("meaning", "direct_response", "constraints", "disclosure")
 def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
     source = read_json(path.read_text(encoding="utf-8"))
     if not isinstance(source, dict) or source.get("protocol") != PROTOCOL:
-        raise ProtocolError("calibration corpus must identify Lambda H/2")
+        raise ProtocolError("calibration corpus must identify the current protocol")
     raw = source.get("cases")
     if not isinstance(raw, list) or not raw:
         raise ProtocolError("calibration corpus requires cases")
@@ -37,6 +37,7 @@ def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
         if not isinstance(case.get("context"), str) or not isinstance(case.get("expect"), str):
             raise ProtocolError("each case requires context and evaluator expectation")
         require_valid(case.get("packet"))
+        format_packet(case["packet"])  # corpus input must be exportable without plaintext
         cases[case["id"]] = case
     return cases
 
@@ -45,9 +46,15 @@ def bootstrap_digest() -> str:
     return hashlib.sha256(BOOTSTRAP.read_bytes()).hexdigest()
 
 
+def corpus_digest(cases: dict[str, Any]) -> str:
+    encoded = json.dumps(cases, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
 def make_template(cases: dict[str, Any]) -> dict[str, Any]:
     return {
         "protocol": PROTOCOL, "bootstrap_sha256": bootstrap_digest(),
+        "corpus_sha256": corpus_digest(cases),
         "model": None, "run": None, "grader": None,
         "observations": {case_id: {
             "session": None, "response": None, "trace": None,
@@ -66,9 +73,11 @@ def receiver_input(case: dict[str, Any]) -> str:
 
 def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[str, Any]:
     if not isinstance(results, dict) or results.get("protocol") != PROTOCOL:
-        raise ProtocolError("results must identify Lambda H/2")
+        raise ProtocolError("results must identify the current protocol")
     if results.get("bootstrap_sha256") != bootstrap_digest():
         raise ProtocolError("results belong to a different bootstrap; retain them as historical evidence, not a current pass")
+    if results.get("corpus_sha256") != corpus_digest(cases):
+        raise ProtocolError("results belong to a different corpus; old observations are not current evidence")
     observations = results.get("observations")
     if not isinstance(observations, dict) or set(observations) - set(cases):
         raise ProtocolError("observations must be an object containing only known case ids")
@@ -108,10 +117,13 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
             if session in sessions:
                 raise ProtocolError("reuse of a receiving session contaminates fresh-session calibration")
             sessions.add(session)
-        status = "missing" if absent else "pass" if calls == 0 and all(judgments.values()) else "fail"
+        tools_permitted = cases[case_id]["packet"].get("P", {}).get("tools") is not False
+        tool_permission_respected = calls == 0 or tools_permitted
+        status = "missing" if absent else "pass" if tool_permission_respected and all(judgments.values()) else "fail"
         summary[{"pass": "passed", "fail": "failed", "missing": "missing"}[status]] += 1
         reports.append({"id": case_id, "status": status, "missing": absent,
-                        "judgments": judgments, "decoder_tool_calls": calls})
+                        "judgments": judgments, "decoder_tool_calls": calls,
+                        "tool_permission_respected": tool_permission_respected if calls is not None else None})
     return {"protocol": PROTOCOL, "model": results.get("model"), "summary": summary,
             "cases": reports, "method": "explicit reviewer judgments backed by captured receiver traces; not an independent automatic semantic oracle"}
 

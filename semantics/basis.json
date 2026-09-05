@@ -1,6 +1,6 @@
 {
-  "protocol": "ΛH/2",
-  "representation": "Sparse named integer coordinates in -7..7; omit neutral zeroes. Negative is opposition, not irrelevance. u is 0..7 semantic uncertainty; omitted u is unspecified, not certainty.",
+  "protocol": "ΛH/2.1",
+  "representation": "Point q or field f, never both on a node. Sparse center coordinates are -7..7 with neutral zero omitted. Field components carry q/s, optional directional b=[lower,upper], optional relative w. Width and uncertainty are independent. Numeric wire uses structural tags; these public anchor meanings are not a lexical dictionary or learned model embedding.",
   "E": {
     "E00": "living, independently perceiving or acting",
     "E01": "human-like intentional or social actor",

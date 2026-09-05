@@ -1,65 +1,42 @@
-# Evaluate the receiving behavior
+# Evaluate fields and receiving behavior separately
 
-The primary question is whether a fresh receiving agent produces the correct useful response from the bootstrap, permitted context, and a packet. It is not whether two encoders generate similar numbers or whether JSON parses.
+The current corpus is `probes.json`, for Lambda H/2.1. It includes field breadth, separated meanings, exact direction/negation, continuation and completion, unknown conditions, known identity, no-tool/read-only constraints, minimal disclosure, stale revisions and numeric packet replies.
 
-`probes.json` is the current Lambda H/2 receiving corpus. `src/calibration.py` prepares inputs and records explicit judgments. It does not call a model or judge natural-language correctness automatically.
+## Receiver evidence
 
-[RESULTS.md](RESULTS.md) records the development pilot, including the initial failure, final 18-case run, v1 continuation control, environment warnings, and limitations. Keep that evidence separate from the illustrative expected answers.
-
-## What counts as success
-
-Each case is assessed on four dimensions:
-
-- **meaning:** preserve the intended meaning, roles, exact values and material uncertainty;
-- **direct_response:** answer or continue the task rather than explaining the codec, issuing a routine ACK, or using an unnecessary decoder;
-- **constraints:** respect negation, permissions, conditions, task completion, known revisions, and missing-context boundaries;
-- **disclosure:** do not expose unrelated information or claim that notation provides encryption.
-
-The action may correctly be to stop, ask a specific question, or return a missing-binding control. An agent that always continues does not pass merely because it is proactive.
-
-`decoder_tool_calls` counts tools used just to interpret the notation. Legitimate requested task tools are a different category. The initial corpus mostly removes the need for real task tools so that interpretation can be observed without side effects.
-
-## Procedure
-
-Create a private result template:
+Use fresh sessions with the complete `prompt/BOOTSTRAP.md` and only the emitted context/packet. Do not include evaluator expectations, another case's history, or an English paraphrase of the packet.
 
 ```sh
-mkdir -p private
-python3 -m src.calibration --template > private/receiver-results.json
-```
-
-List case IDs in `probes.json`, then prepare one actual receiver input, for example:
-
-```sh
-python3 -m src.calibration --receiver direct_explanation
-```
-
-For each case, start a fresh receiving session. Supply the complete `prompt/BOOTSTRAP.md` and only the context and packet emitted by `--receiver`. They may be supplied in the same initial message to exercise initialization-with-task behavior. Do not include the case's `expect` text, scoring rubric, original source request, an English restatement of the packet, or another case's conversation history.
-
-Capture the actual response and visible tool transcript. Record a unique receiving-session identifier per case. Do not use the encoding session to grade its own invented decoding, and do not substitute a codec round-trip for a receiving run.
-
-Fill `model`, `run`, and `grader` with actual identifying information. For each observation fill `session`, `response`, `trace`, `decoder_tool_calls`, `judge_notes`, and all four boolean judgments. `trace` names a captured transcript file; a relative path is resolved from the results file's directory.
-
-For example, `trace` could be `traces/direct_explanation.txt` when the real file is under `private/traces/`. Do not create an empty placeholder and describe it as an observed run. A value of zero for decoder tools must come from the observed trace, not an assumption.
-
-Evaluate the filled record:
-
-```sh
+python3 -m src.calibration --template
+python3 -m src.calibration --receiver directional_field
 python3 -m src.calibration private/receiver-results.json
 ```
 
-The tool reports passes, failures, and missing observations separately. It returns 0 for a complete passing record, 1 when a fully observed case fails, and 2 when evidence is missing or the input is invalid. An untouched template cannot pass. Duplicate receiving-session identifiers are rejected because they invalidate the fresh-session setup.
+The template has actual-model/run/grader fields and one observation per case. Fill the receiving session ID, actual response, captured trace path, observed decoder-tool-call count, reviewer notes, and the four boolean judgments: meaning, direct_response, constraints, disclosure. A trace path is relative to the results file unless absolute. Unknown observations remain null, never invented passes.
 
-## Evidence and limits
+**Python is permitted.** A decoder or geometric computation is not a failure by itself. `decoder_tool_calls` records actual usage. An explicit P.tools=false still prohibits such calls; the evaluator checks that boundary in addition to the reviewer's judgments. Legitimate task tools and decoder tools should be distinguished in the trace and notes.
 
-The template identifies the bootstrap by SHA-256. Results made with a different bootstrap are rejected as current evidence; retain them only as explicitly historical results. The recorder checks metadata, rating completeness, and the existence of referenced trace files. It does not authenticate those files, independently inspect the transcript's semantic correctness, prove model identity, or replace the reviewer. Capture the exact corpus and model configuration with any published experiment so results can be interpreted correctly.
+A correct response may proceed, stop, ask one material question, or request a missing binding. Always continuing is not success. For packet replies, the response must be a valid numeric packet, not readable developer JSON. For explicitly requested prose, a direct natural response is legitimate disclosure.
 
-These initial cases include demonstrations and variants also present in the bootstrap. They are a useful behavior-checking scaffold, not a claim of held-out generalization. Any comparative performance claim needs genuinely unseen tasks and a controlled comparison with the previous notation or an ordinary-language baseline. Record failures and missing runs as well as successes; do not select only favorable examples.
+Results are bound to **both bootstrap and corpus digests**. Changing the prompt, field input, permitted context or expected outcome invalidates an earlier record as current evidence. Duplicate receiving-session IDs are rejected. A complete passing record exits 0, observed failure exits 1, and missing/invalid evidence exits 2.
 
-Do not equate absence of a visible reasoning explanation with absence of internal reasoning. Tool traces can establish whether a decoder was called; they cannot establish that the model performed no internal reasoning.
+The evaluator checks metadata and explicit judgments backed by referenced trace files. It does not authenticate files, prove model identity, inspect hidden reasoning or independently decide natural-language correctness. Missing data and an untouched template must not pass. Use an actual independent reviewer and unseen tasks before claiming generalization; a development corpus is not a held-out benchmark.
 
-## Deterministic checks are separate
+## Mechanical field and transport observations
 
-A local parse/format round-trip can establish that exact literals, fields, references and structure survived serialization. A reference inspection can establish missing bindings or that a handoff excludes unused bindings. These are mechanical checks of tooling, not receiving-model outcomes, latency results, or confidentiality proofs.
+```sh
+python3 -m src.codec score examples/field.lh --node e0 \
+  --candidates examples/field-candidates.json --minimum 0.2 --margin 0.05
+python3 -m src.codec focus examples/field.lh --node e0 --scale 0.5 --axis E20
+python3 -m src.codec parse examples/field.lh | python3 -m src.codec format
+```
 
-No model runs are automatically performed by this repository. Real private material must not be used in the public corpus. The synthetic private-marker case assesses whether an answer unnecessarily repeats unrelated supplied context; it does not conceal that context from the model endpoint that already received it.
+These operations can establish directional falloff, preserved modes, round-trip structure, or plaintext rejection. They do not establish a receiving model's semantic accuracy. A field score is not a calibrated probability of a word, factual confidence or evidence that a model thinks without English.
+
+When reporting the numeric-wire property, inspect the emitted representation: every leaf after its marker must be a finite number. Do not equate the absence of plaintext in the wire with secrecy from an observer who has the bootstrap or with secrecy from an endpoint given a context sidecar.
+
+## Historical evidence
+
+The prior V2 bootstrap, corpus and pilot report are under `archive/v2/`. Their recorded 18-case result concerns that older prompt and format. It is not a 2.1 result, a demonstration of V2 superiority to V1, or evidence of zero internal reasoning. Current observations belong in `RESULTS.md` with their actual scope.
+
+No evaluation uses real secrets or scores evasion of a model provider's safety controls. Private inputs, traces and result records remain outside version-controlled source.
