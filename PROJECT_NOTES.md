@@ -2,7 +2,7 @@
 
 ## Mission
 
-Create a prompt-portable semantic interchange language that can be loaded into a fresh AI session without external model weights or a word lookup table.
+Create a semantic interchange language whose packets are produced/consumed by the project and can be understood directly by any AI session after loading a receiver bootstrap, without a word lookup table.
 
 The design is inspired by the idea of constructing task-specific representations and preserving structured state rather than relying only on surface wording. The project deliberately separates semantic kinds instead of forcing everything into one vector.
 
@@ -25,11 +25,11 @@ This separation is intentional:
 - shared references belong in `X`;
 - leftover nuance belongs in `V`.
 
-## Prompt-only tradeoff
+## Receiver-bootstrap tradeoff
 
-The basis is defined in natural language, so two AI instances will not necessarily produce bit-identical vectors. The protocol therefore targets **geometric agreement**: similar concepts should remain nearby and compositional relations should be reconstructed consistently.
+The receiver basis is described in natural language, so independent AI sessions may not reconstruct every region with identical emphasis. The protocol therefore targets **geometric agreement**: similar concepts should remain nearby and compositional relations should be reconstructed consistently.
 
-If deterministic coordinates become a requirement, the next architecture step is a shared embedding model or an explicit calibration transform.
+The receiver bootstrap is not the encoder. If deterministic project-side text→region coordinates become a requirement, use a shared embedding/projector or an explicit calibration transform in the project.
 
 ## Source of truth
 
@@ -39,15 +39,15 @@ If deterministic coordinates become a requirement, the next architecture step is
 - Canonical machine packet contract: `schema/lambda_h_packet.schema.json`
 - Stdlib validation behavior: `src/validate_packet.py`
 - Deterministic score/compact codec and region metrics: `src/lambda_h.py`
-- Cross-model calibration probes: `calibration/probes.json`
-- Cross-model calibration evaluator: `src/calibrate.py`
+- Project-side semantic calibration probes: `calibration/probes.json`
+- Semantic-geometry calibration evaluator: `src/calibrate.py`
 - `semantics.json` is retained as the earlier aggregate snapshot for compatibility.
 
 When changing anchor order or meaning, increment the affected basis version instead of silently changing `01`.
 
 ## Known limitations
 
-1. Prompt-only scoring is fuzzy across model families.
+1. Receiver interpretation can be fuzzy across model families because the shared bases are described in natural language.
 2. Session-local handles require synchronization.
 3. Relation/action/tool bases are semantic anchors, not guarantees that every model will infer exactly the same projection.
 4. Compact chat syntax is deterministic but intentionally narrower than JSON; free-form epistemic targets remain JSON-only.

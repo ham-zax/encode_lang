@@ -16,13 +16,13 @@ Decoding the 32 coordinates places the strongest positive affinity around living
 
 ## 2. Semantic proximity test
 
-In one fresh session, run:
+Using the project-side semantic encoder, encode these source concepts separately:
 
 ```text
-WORD: cat
-WORD: dog
-WORD: rat
-WORD: hat
+cat
+dog
+rat
+hat
 ```
 
 Expected qualitative geometry:
@@ -37,18 +37,16 @@ Do not require exact matching hex across sessions.
 
 ## 3. Polysemy test
 
-Run separately:
+Encode separately with the project-side encoder:
 
 ```text
-WORD: fire
-CONTEXT: Flames are spreading through dry vegetation.
+fire — Flames are spreading through dry vegetation.
 ```
 
 and:
 
 ```text
-WORD: fire
-CONTEXT: The company terminated the employee's position.
+fire — The company terminated the employee's position.
 ```
 
 The first should emphasize energetic-phenomenon/process/environment/hazard regions. The second should shift toward social actor, institution/normative structure, intentional action, relation, and state-transition regions.
@@ -98,12 +96,12 @@ The ACK confirms entity/relation structure, not exact original wording.
 
 ## 6. Tool-class tests
 
-After loading `prompt/LAMBDA_H_BOOTSTRAP.md`:
+For project-side tool-region calibration, encode these source concepts separately:
 
 ```text
-TOOL: curl
-TOOL: browser DevTools
-TOOL: session tools
+curl
+browser DevTools
+session tools
 ```
 
 Expected qualitative tool geometry:

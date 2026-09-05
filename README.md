@@ -1,6 +1,6 @@
 # encode_lang — ΛH/1 Hybrid Semantic Transfer
 
-`encode_lang` is a self-contained prototype for transferring semantic structure between AI sessions using a **prompt-only shared basis** rather than a word-to-secret-token dictionary.
+`encode_lang` is a semantic-language project built around ΛH/1. The project owns conversion between ordinary text and ΛH/1 packets. `prompt/LAMBDA_H_BOOTSTRAP.md` has a narrower role: paste it into any AI session so that session can understand bare ΛH/1 packets as semantic conversation input.
 
 The core representation is:
 
@@ -19,7 +19,7 @@ The core representation is:
 
 ## Key files
 
-- `prompt/LAMBDA_H_BOOTSTRAP.md` — single authoritative end-to-end prompt, including the normative compact/control grammar
+- `prompt/LAMBDA_H_BOOTSTRAP.md` — receiver bootstrap that teaches an AI session the normative semantic bases and compact/control grammar
 - `PROMPT.md` — compatibility redirect only; contains no protocol definition
 - `semantics/entity_basis.yaml` — `E00-E31`
 - `semantics/relation_basis.yaml` — `R00-R15`
@@ -37,7 +37,7 @@ The core representation is:
 - `src/lambda_h.py` — dependency-free score/codec CLI for compact ↔ JSON packets and region comparison
 - `src/calibrate.py` — one-session and two-session qualitative calibration evaluator
 - `calibration/probes.json` — cross-model semantic calibration prompts and qualitative checks
-- `calibration/README.md` — repeatable calibration procedure for fresh AI sessions
+- `calibration/README.md` — repeatable project-side semantic-geometry calibration procedure
 - `tests/test_validate_packet.py` — focused validator tests
 - `tests/test_lambda_h.py` — compact/K/control/round-trip regression tests
 - `tests/test_calibrate.py` — cross-model calibration regression test
@@ -46,33 +46,18 @@ The core representation is:
 
 ## Quick start with any AI
 
-1. Paste the entire contents of `prompt/LAMBDA_H_BOOTSTRAP.md` into a fresh session.
-2. A compatible session should answer only:
+1. Paste the entire contents of `prompt/LAMBDA_H_BOOTSTRAP.md` into a fresh AI session.
+2. A compatible receiver should answer only:
 
 ```text
 ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01
 ```
 
-3. Try an entity:
+3. Use the project-side semantic encoder to produce a ΛH/1 packet from the word, phrase, or sentence you want to send.
+4. Send the resulting packet to the AI **as-is**. Do not prefix it with `DECODE:` and do not restate the English source text.
+5. The AI should reconstruct the packet's semantic state internally and respond to the represented meaning.
 
-```text
-WORD: rat
-```
-
-4. Try a context-dependent word:
-
-```text
-WORD: fire
-CONTEXT: Flames are spreading through dry vegetation.
-```
-
-5. Try compositional encoding:
-
-```text
-ENCODE: the dog sees the cat
-```
-
-The result should keep multiple entities and their directional relation separate rather than flattening the sentence into one vector.
+The receiver bootstrap is intentionally not an encoder UI. It does not expose `WORD:`, `ENCODE:`, `DECODE:`, `ACTION:`, `TOOL:`, or similar natural-language commands.
 
 ## Canonical JSON packets
 
@@ -125,17 +110,17 @@ python3 -m src.lambda_h parse 'ΛH1|A=00.7777777777777DE7.2|X=02'
 python3 -m src.lambda_h compact packet.json
 ```
 
-The CLI does not invent semantic scores from English. The AI performs the semantic projection against the prompt-defined basis; the CLI makes quantization, parsing, transport, and region-distance measurement deterministic.
+The current CLI provides deterministic quantization, parsing, transport, JSON/compact conversion, and region-distance measurement. Natural-language semantic projection belongs on the project side; it is not delegated to the receiver bootstrap.
 
 ## Cross-model calibration
 
-Use `calibration/probes.json` against each fresh AI session and follow `calibration/README.md`. Interoperability is evaluated by relative semantic geometry, not exact hexadecimal equality. The calibration set checks neighborhood ordering and context-sensitive sense separation without introducing a word-to-token dictionary.
+Use `calibration/probes.json` against the project-side semantic projector and follow `calibration/README.md`. Geometry is evaluated by relative semantic neighborhoods, not exact hexadecimal equality. The calibration set checks neighborhood ordering and context-sensitive sense separation without introducing a word-to-token dictionary.
 
 Generate a fill-in result file and evaluate it with:
 
 ```bash
 python3 -m src.calibrate --template > calibration-results-a.json
-# Fill the returned q regions from one fresh AI session, then run local checks:
+# Fill the returned q regions from one project-side projector run, then run local checks:
 python3 -m src.calibrate calibration-results-a.json
 
 # For empirical cross-model checks, fill a second result file and compare both:
@@ -178,4 +163,4 @@ The same spelling can map to different regions under different contexts. Polysem
 
 ## Status
 
-This is **ΛH/1 v1.0**, a prompt-only interoperability prototype. Basis versions are `01` for E/R/A/T/V and `02` for policy; changing an anchor's order or meaning requires a new basis version.
+This is **ΛH/1 v1.0**, a semantic-interchange prototype with a receiver bootstrap for AI understanding. Basis versions are `01` for E/R/A/T/V and `02` for policy; changing an anchor's order or meaning requires a new basis version.

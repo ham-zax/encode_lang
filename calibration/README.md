@@ -1,18 +1,18 @@
 # Cross-model calibration
 
-Use this folder to check whether two fresh AI sessions reconstruct the same ΛH/1 semantic geometry closely enough to interoperate.
+Use this folder to check whether independent project-side semantic projectors produce ΛH/1 geometry consistently enough for receiver sessions to interoperate.
 
 ## Procedure
 
-1. Load `prompt/LAMBDA_H_BOOTSTRAP.md` into each AI session.
-2. Confirm each session answers `ΛH1|READY|BE=01|BR=01|BA=01|BT=01|BP=02|BV=01`.
-3. Generate a result template with `python3 -m src.calibrate --template > calibration-results-a.json`.
-4. Send the commands in `probes.json` exactly as written.
-5. Record each returned `q` region under the matching probe id in `calibration-results-a.json`.
-6. Run `python3 -m src.calibrate calibration-results-a.json` for within-session checks.
-7. Repeat with a second fresh session/model as `calibration-results-b.json`.
-8. Run `python3 -m src.calibrate calibration-results-a.json calibration-results-b.json` for empirical cross-model checks.
-9. Use `python3 -m src.lambda_h compare` for any additional same-layer pair you want to inspect manually.
+1. Generate a result template with `python3 -m src.calibrate --template > calibration-results-a.json`.
+2. Feed each `command` string in `probes.json` to the **project-side semantic projector under test**. The field name is retained for file-format compatibility; these strings are source text, not receiver-session commands.
+3. Record each returned `q` region under the matching probe id in `calibration-results-a.json`.
+4. Run `python3 -m src.calibrate calibration-results-a.json` for within-projector checks.
+5. Repeat with a second projector/model implementation as `calibration-results-b.json` if you want an empirical cross-implementation comparison.
+6. Run `python3 -m src.calibrate calibration-results-a.json calibration-results-b.json` for the pair comparison.
+7. Use `python3 -m src.lambda_h compare` for any additional same-layer pair you want to inspect manually.
+
+`prompt/LAMBDA_H_BOOTSTRAP.md` is not used to ask the receiver AI to generate these regions. Its job is only to make a receiver understand packets that the project has already produced.
 
 Example:
 

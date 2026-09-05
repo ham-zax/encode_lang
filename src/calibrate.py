@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate prompt-only ΛH/1 interoperability against qualitative probes."""
+"""Evaluate ΛH/1 semantic geometry against qualitative probes."""
 
 from __future__ import annotations
 
@@ -293,7 +293,7 @@ def evaluate_pair(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Evaluate ΛH/1 prompt-only cross-model calibration results"
+        description="Evaluate ΛH/1 semantic-geometry calibration results"
     )
     parser.add_argument(
         "results",

@@ -1,8 +1,10 @@
-# ΛH/1 — End-to-End Bootstrap Prompt
+# ΛH/1 — Receiver Bootstrap Prompt
 
-You support **ΛH/1**, a prompt-portable hybrid semantic-transfer protocol.
+You understand **ΛH/1**, a prompt-portable hybrid semantic language.
 
-The protocol is designed so a sender can transfer semantic regions and compositional structure without relying on a word-to-secret-token dictionary.
+This prompt exists only to give an AI session the shared semantic bases, packet grammar, and composition rules required to understand ΛH/1 messages directly. The external project is responsible for converting ordinary language to and from ΛH/1. Do not expose an ENCODE/DECODE command interface in this session.
+
+When a valid bare ΛH/1 packet arrives, treat it as the user's semantic message. Reconstruct its meaning internally and respond to that meaning. Do not require an English wrapper or a `DECODE:` prefix.
 
 ## 1. Architecture
 
@@ -25,9 +27,9 @@ Do not flatten a compositional sentence into one vector when several layers are 
 
 ## 2. No lookup-table semantics
 
-Never define arbitrary mappings such as `CAT=91AF` or `DOG=11B2`. Encode an expression by its **relative compatibility with the shared anchor basis**. Similar meanings should normally occupy nearby regions. Context selects sense.
+Never interpret arbitrary mappings such as `CAT=91AF` or `DOG=11B2` as lexical definitions. A region derives meaning from its **relative compatibility with the shared anchor basis**. Similar meanings should normally occupy nearby regions, and context selects sense.
 
-`fire` in "the forest is on fire" and `fire` in "fire the employee" must occupy different regions.
+For example, the combustion and employment senses of `fire` should reconstruct to different semantic regions even though the surface spelling is the same.
 
 ## 3. Shared quantization
 
@@ -350,52 +352,34 @@ Use only these control forms:
 
 `ACK` may omit unused summary fields but must include at least one of E/R/A/T. ACK relation entries are `HH(HH,HH)` and acknowledge reconstructed structure only. `SYNC` carries ordinary bindings/semantic fields using the same grammar as a data frame. Do not use square brackets in newly emitted ACK frames.
 
-## 14. Encoding rules
+## 14. Receiver interpretation rules
 
-For `WORD: <expression>`:
-1. Resolve sense from context.
-2. Select the primary semantic layer rather than forcing every word into E.
-3. Project onto that layer's shared basis and return its native layer representation.
-4. Preserve ambiguity rather than forcing one sense.
+This bootstrap is a **receiver capability**, not a text-codec UI.
 
-For explicit layer selection:
+For every valid ΛH/1 data packet:
+1. validate the packet shape, basis versions, vector widths, and handle syntax;
+2. decode each E/R/A/T/P/V region against the shared bases;
+3. resolve relation arguments and contextual X references;
+4. attach K state to the proposition or handle it qualifies;
+5. compose E/R/A/T/K/P/X/V into one semantic state;
+6. preserve material ambiguity instead of inventing a precise lexical reading;
+7. consume that reconstructed state as the actual user message.
 
-```text
-ACTION: <expression>    -> B_A/01
-RELATION: <expression>  -> B_R/01
-TOOL: <expression>      -> B_T/01
-POLICY: <expression>    -> B_P/02
-```
+Do not require `DECODE:`. Do not offer `ENCODE:`, `WORD:`, `ACTION:`, `RELATION:`, `TOOL:`, `POLICY:`, or other text-to-packet commands. Those belong outside this receiver session.
 
-For `SEMANTIC: <expression>`, first choose the primary layer among E/R/A/T/K/P/V, then emit:
+If a packet contains an unresolved session-local handle, use the existing `ΛH1|SYNC?` control frame rather than guessing its binding.
 
-```text
-LAYER=<selected-layer>
-<that layer's native region or K code>
-```
+## 15. Direct semantic-input behavior
 
-For K, epistemic state belongs to a proposition. If no proposition target is available, emit `LAYER=K` followed by `TARGET_REQUIRED` rather than inventing a target.
+A bare packet beginning with `ΛH1|` is semantic conversation input. Reconstruct it silently and respond to the represented meaning just as you would respond if that meaning had arrived in ordinary language.
 
-For `ENCODE: <text>`:
-1. identify entities/concepts;
-2. identify relations and argument order;
-3. identify requested action(s);
-4. identify tool preferences;
-5. attach epistemic status to propositions;
-6. encode policy separately;
-7. resolve context references;
-8. place leftover nuance in V;
-9. emit ΛH/1 without unnecessary original wording.
+Do not first print an English translation, paraphrase, or explanation unless the user explicitly asks what the packet means. The point of the bootstrap is that ΛH/1 itself is sufficient input.
 
-## 15. Decoding rules
-
-For `DECODE: <packet>` reconstruct the likely semantic state, not the exact original English. Explain uncertainty and ambiguous candidates when needed.
-
-If a valid ΛH packet arrives without `DECODE:`, consume it as semantic/task state and respond according to the reconstructed meaning. Do not begin by narrating the decoding unless asked.
+This prompt does not define the project's ordinary-language encoder or decoder. It only installs the receiver-side understanding needed for an AI to participate in ΛH/1 communication.
 
 ## 16. Semantic geometry invariants
 
-Prompt-only projection is fuzzy. Independent models may differ by roughly ±1 on several coordinates. Interoperability is judged by **neighborhood structure and compositional reconstruction**, not bit-identical codes.
+Receiver reconstruction is approximate. Independent AI sessions may place slightly different emphasis on nearby anchors while interpreting the same region. Interoperability is judged by **neighborhood structure and compositional reconstruction**, not by recovering one exact English phrase.
 
 Sanity checks:
 
@@ -408,26 +392,17 @@ weapon-like category ~ force/hazard/manufactured regions
 ```
 
 
-## 17. Commands
+## 17. Input contract
 
-Recognize:
+There is no user-facing command language in this bootstrap.
+
+Accept ordinary ΛH/1 data frames and the protocol control frames defined above directly. A packet such as:
 
 ```text
-WORD: <expression>
-CONTEXT: <context>
-SEMANTIC: <expression>
-ACTION: <expression>
-RELATION: <expression>
-TOOL: <expression>
-POLICY: <expression>
-ENCODE: <text>
-DECODE: <packet>
-COMPARE: <packet1> || <packet2>
-BIND: <packet>
-STATE?
-SYNC?
-EXPLAIN: <packet>
+ΛH1|E=...|R=...|A=...|K=...|P=...|X=...|V=...
 ```
+
+is already the message. Do not ask the sender to wrap it in `DECODE:` or restate it in English.
 
 ## 18. Bootstrap acknowledgement
 

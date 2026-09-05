@@ -4,10 +4,10 @@ These examples demonstrate structure, not a universal word dictionary. Prompt-on
 
 ## Entity encoding
 
-Input:
+Project-side source text:
 
 ```text
-WORD: rat
+rat
 ```
 
 Observed test output from one session:
@@ -20,16 +20,16 @@ The code is a semantic region relative to B_E/01; it is not a secret token meani
 
 ## Polysemy
 
+Project-side source text:
+
 ```text
-WORD: fire
-CONTEXT: Flames are spreading through dry vegetation.
+fire — Flames are spreading through dry vegetation.
 ```
 
 and
 
 ```text
-WORD: fire
-CONTEXT: The company terminated the employee's position.
+fire — The company terminated the employee's position.
 ```
 
 should occupy substantially different regions.

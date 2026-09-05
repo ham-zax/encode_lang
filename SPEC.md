@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-ΛH/1 is a prompt-portable semantic representation format. It is designed to let separate AI sessions exchange approximate semantic/task state using shared anchor geometries rather than a word-to-token lookup table.
+ΛH/1 is a semantic representation format for project-side text↔packet conversion and receiver-side AI understanding. The receiver bootstrap supplies shared anchor geometries so a session can consume bare ΛH/1 packets directly, without a word-to-token lookup table or an ENCODE/DECODE prompt interface.
 
 The representation is hybrid:
 
@@ -174,9 +174,9 @@ For ordinary language:
 10. Put only leftover nuance into `V`.
 11. Emit the hybrid packet.
 
-For single-word encoding, select the primary semantic layer first. A concrete/abstract noun usually starts in `E`; a verb-like requested operation usually starts in `A`; a relation word such as `inside` starts in `R`; an execution posture such as `continue` may start in `P`; and a tool name starts in `T`.
+For single-word project-side encoding, select the primary semantic layer first. A concrete/abstract noun usually starts in `E`; a verb-like operation usually starts in `A`; a relation word such as `inside` starts in `R`; an execution posture such as `continue` may start in `P`; and a tool name starts in `T`.
 
-Explicit commands are `ACTION:`, `RELATION:`, `TOOL:`, and `POLICY:`. `SEMANTIC:` is the generic selector: first emit `LAYER=<E|R|A|T|K|P|V>`, then the native layer representation. K is proposition-level; if no target proposition exists, return `TARGET_REQUIRED` rather than fabricating one.
+The receiver bootstrap does not expose these layer choices as commands. The project constructs the packet; the receiver consumes the resulting semantic structure directly.
 
 ## 8. Decoding algorithm
 
@@ -185,9 +185,9 @@ Explicit commands are `ACTION:`, `RELATION:`, `TOOL:`, and `POLICY:`. `SEMANTIC:
 3. Reconstruct each region relative to the corresponding shared basis.
 4. Resolve handles and `X` references.
 5. Compose entities, relations, actions, tools, epistemics, policy, and residual state.
-6. Act on the reconstructed meaning unless the caller explicitly requested an English projection.
+6. For an AI receiver, consume the reconstructed meaning directly as the incoming message. A project-side decoder may render an approximate ordinary-language projection when needed.
 
-Decoding is approximate. The receiver should reconstruct the semantic neighborhood and compositional structure, not claim recovery of exact original wording.
+Decoding is approximate. The receiver should reconstruct the semantic neighborhood and compositional structure, not claim recovery of exact original wording. The receiver bootstrap does not require a `DECODE:` wrapper.
 
 ## 9. Interoperability criterion
 
