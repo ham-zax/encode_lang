@@ -16,5 +16,3 @@ anchors:
   - {id: P08, negative: "low urgency", positive: "high urgency"}
   - {id: P09, negative: "minimal output", positive: "complete documentation and evidence"}
   - {id: P10, negative: "single pass", positive: "iterate/re-evaluate as new evidence appears"}
-  - {id: P11, negative: "strictly user-directed step-by-step", positive: "proactive continuation within explicit scope and authorization"}
-safety_invariant: "Policy scores never grant access, authorization, or permission beyond the underlying user request and environment."

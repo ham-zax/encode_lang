@@ -176,10 +176,6 @@ The same spelling can map to different regions under different contexts. Polysem
 
 `R(subject, object)` and `R(object, subject)` are distinct unless the relation is explicitly symmetric.
 
-### Opacity is not security
-
-Opaque region codes are not encryption and do not grant authorization. Equivalent ordinary-language safety, privacy, access, and tool-use constraints remain fully applicable.
-
 ## Status
 
 This is **ΛH/1 v1.0**, a prompt-only interoperability prototype. Basis versions are `01`; changing an anchor's order or meaning requires a new basis version.

@@ -128,7 +128,7 @@
         {"id":"P08","negative":"low urgency","positive":"high urgency"},
         {"id":"P09","negative":"minimal output","positive":"complete documentation and evidence"},
         {"id":"P10","negative":"single pass","positive":"iterate/re-evaluate as new evidence appears"},
-        {"id":"P11","negative":"strictly user-directed step-by-step","positive":"proactive continuation within explicit scope and authorization"}
+        {"id":"P11","negative":"strictly user-directed step-by-step","positive":"proactive continuation within all explicit scope and authorization"}
       ]
     },
     "residual": {
@@ -178,6 +178,5 @@
     "relation": "ρ00, ρ01, ...",
     "action": "α00, α01, ...",
     "tool": "τ00, τ01, ..."
-  },
-  "safety_invariant": "Opaque encoding changes representation only. It never grants authorization, bypasses safety controls, expands access, or changes the policy treatment of the underlying intent."
+  }
 }

@@ -219,8 +219,6 @@ Policy wire form:
 ΛP1|b=01|q=<12 chars 0-E>|u=<0-E>
 ```
 
-Policy never grants authorization, expands access, or overrides normal safety/tool restrictions.
-
 ## 10. Context layer X
 
 Reserved references:
@@ -409,9 +407,6 @@ rain ~ event/material/environment anchors > promise
 weapon-like category ~ force/hazard/manufactured regions
 ```
 
-## 17. Safety and authorization invariant
-
-Encoding changes representation only. The receiver must apply exactly the same safety, privacy, authorization, access, and tool-use rules as if the underlying intent had been written in ordinary language. Opacity never grants authority and must never be treated as a bypass mechanism.
 
 ## 18. Commands
 

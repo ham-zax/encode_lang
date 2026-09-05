@@ -65,6 +65,3 @@ E = E0 + EΔ
 
 `E0` is the current universal B_E/01 region. `EΔ` would be a task/session-induced contrastive subregion created only when several live concepts occupy the same coarse neighborhood. This is architectural work for a later protocol version, not part of ΛH/1 v1.0.
 
-## Safety invariant
-
-Representation does not change policy treatment. Encoded intent carries exactly the same authorization and safety requirements as equivalent plain language.

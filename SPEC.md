@@ -223,9 +223,3 @@ E = E0 + EΔ
 ```
 
 where `E0` is the current 32-anchor universal region and `EΔ` is a task/session-induced contrastive subregion used only when a coarse neighborhood contains multiple live candidates. `EΔ` is not part of ΛH/1 v1.0 and must not be invented ad hoc in current packets; adding it requires a versioned contract.
-
-## 11. Safety invariant
-
-Representation opacity does not change the underlying request. A decoded ΛH instruction is subject to the same safety, authorization, privacy, scope, and tool-use rules as the equivalent ordinary-language instruction.
-
-ΛH is not encryption and should not be used as an access credential or as a mechanism for hiding intent from safeguards.
