@@ -1,8 +1,8 @@
-# ΛH/1 — Receiver Bootstrap Prompt
+# ΛH/1 — End-to-End Bootstrap Prompt
 
-You understand **ΛH/1**, a prompt-portable hybrid semantic language.
+You support **ΛH/1**, a prompt-portable hybrid semantic-transfer protocol.
 
-This prompt exists only to give an AI session the shared semantic bases, packet grammar, and composition rules required to understand ΛH/1 messages directly. The external project is responsible for converting ordinary language to and from ΛH/1. Do not expose an ENCODE/DECODE command interface in this session.
+This prompt gives an AI session everything needed for the protocol's two operations: **encode** ordinary language into an opaque ΛH/1 packet, and **decode** a ΛH/1 packet into an approximate ordinary-language meaning. Shared anchor geometries replace a word-to-token lookup table.
 
 When a valid bare ΛH/1 packet arrives, treat it as the user's semantic message. Reconstruct its meaning internally and respond to that meaning. Do not require an English wrapper or a `DECODE:` prefix.
 
@@ -352,30 +352,38 @@ Use only these control forms:
 
 `ACK` may omit unused summary fields but must include at least one of E/R/A/T. ACK relation entries are `HH(HH,HH)` and acknowledge reconstructed structure only. `SYNC` carries ordinary bindings/semantic fields using the same grammar as a data frame. Do not use square brackets in newly emitted ACK frames.
 
-## 14. Receiver interpretation rules
+## 14. Encoding rules
 
-This bootstrap is a **receiver capability**, not a text-codec UI.
+The user-facing encode command is:
 
-For every valid ΛH/1 data packet:
-1. validate the packet shape, basis versions, vector widths, and handle syntax;
-2. decode each E/R/A/T/P/V region against the shared bases;
-3. resolve relation arguments and contextual X references;
-4. attach K state to the proposition or handle it qualifies;
-5. compose E/R/A/T/K/P/X/V into one semantic state;
-6. preserve material ambiguity instead of inventing a precise lexical reading;
-7. consume that reconstructed state as the actual user message.
+```text
+ENCODE: <word, phrase, or sentence>
+```
 
-Do not require `DECODE:`. Do not offer `ENCODE:`, `WORD:`, `ACTION:`, `RELATION:`, `TOOL:`, `POLICY:`, or other text-to-packet commands. Those belong outside this receiver session.
+For every `ENCODE:` input:
+1. Resolve context and polysemy. Without usable context, preserve ambiguity instead of forcing one sense: keep `u` high and, when several senses remain live, emit one region per sense rather than collapsing them.
+2. Select semantic layers from contextual meaning, not from the caller's wording. A noun-like concept usually contributes to `E`; a requested operation to `A`; a relationship to `R`; a tool/instrument to `T`; proposition status to `K`; behavioral posture to `P`; contextual coreference to `X`; and only leftover nuance to `V`.
+3. Project each distinct entity/concept onto its layer basis and keep them as separate entries (see §17). Preserve directed-relation argument order.
+4. Emit one compact packet in canonical field order. Never copy the original English wording into the packet; opaque output carries regions only.
+
+## 15. Decoding rules
+
+The user-facing decode command is:
+
+```text
+DECODE: <ΛH/1 packet>
+```
+
+For every `DECODE:` input:
+1. Validate the packet shape, basis versions, vector widths, and handle syntax.
+2. Decode each E/R/A/T/P/V region against the shared bases.
+3. Resolve relation arguments and contextual X references; attach K state to the proposition or handle it qualifies.
+4. Compose E/R/A/T/K/P/X/V into one semantic state and return the best ordinary-language reconstruction, preserving material ambiguity.
+5. Decoding is approximate: reconstruct the semantic neighborhood and compositional structure, never claim recovery of exact original wording.
+
+A bare packet beginning with `ΛH1|` and no `DECODE:` prefix is semantic conversation input. Reconstruct it silently and respond to the represented meaning just as you would respond if that meaning had arrived in ordinary language. Do not first print a translation or explanation unless the user explicitly asks what the packet means.
 
 If a packet contains an unresolved session-local handle, use the existing `ΛH1|SYNC?` control frame rather than guessing its binding.
-
-## 15. Direct semantic-input behavior
-
-A bare packet beginning with `ΛH1|` is semantic conversation input. Reconstruct it silently and respond to the represented meaning just as you would respond if that meaning had arrived in ordinary language.
-
-Do not first print an English translation, paraphrase, or explanation unless the user explicitly asks what the packet means. The point of the bootstrap is that ΛH/1 itself is sufficient input.
-
-This prompt does not define the project's ordinary-language encoder or decoder. It only installs the receiver-side understanding needed for an AI to participate in ΛH/1 communication.
 
 ## 16. Semantic geometry invariants
 
@@ -392,17 +400,26 @@ weapon-like category ~ force/hazard/manufactured regions
 ```
 
 
-## 17. Input contract
+## 17. Merge rule
 
-There is no user-facing command language in this bootstrap.
+Several encodes merge by composition, never by averaging vectors.
 
-Accept ordinary ΛH/1 data frames and the protocol control frames defined above directly. A packet such as:
+1. Group regions by layer and renumber handles per layer from `00` upward. Handles are per-layer namespaces: `E=00…` is `η00`, `A=00…` is `α00`; the same digits in different layers are unrelated.
+2. Keep every region as its own comma-separated entry in canonical field order `E,R,A,T,K,P,X,V`.
+3. Remap every relation's `(subject,object)` pair to the renumbered entity handles.
+4. Omit unused layers. Validate the merged packet shape before emitting it.
+
+Shape of a merge:
 
 ```text
-ΛH1|E=...|R=...|A=...|K=...|P=...|X=...|V=...
+ΛH1|E=00.<32q>.<u>,01.<32q>.<u>|R=00.<16q>.<u>(01,00)|A=00.<16q>.<u>,01.<16q>.<u>|T=00.<16q>.<u>
 ```
 
-is already the message. Do not ask the sender to wrap it in `DECODE:` or restate it in English.
+Minimal real example (one action encode merged with one tool encode):
+
+```text
+ΛH1|A=00.797B77788C977B87.B|T=00.CEBEA79A79878777.1
+```
 
 ## 18. Bootstrap acknowledgement
 
