@@ -1,9 +1,10 @@
 """Directional semantic activation fields, not a word dictionary or encryption.
 
-A field is a weighted sum of Gaussian-shaped bumps, normalized by total peak
-weight. Lower/upper half-widths can differ along each anchor axis. Scores are
-compatibility with supplied coordinates, NOT a calibrated probability or an
-embedding learned from a model. Hard graph constraints remain exact.
+A field is the max-envelope of Gaussian-shaped components whose peak weights
+are normalized relative to the strongest component. Lower/upper half-widths
+can differ along each anchor axis. Scores are compatibility with supplied
+coordinates, NOT a calibrated probability or an embedding learned from a
+model. Hard graph constraints remain exact.
 """
 from __future__ import annotations
 
@@ -39,12 +40,12 @@ def make_field(center: dict[str, float], *, layer: str, width: float = 2.0,
 
 
 def _activation(field: list[dict[str, Any]], point: dict[str, float], layer: str) -> float:
-    # Scale weights first so a valid very small relative peak does not underflow
-    # merely because all components use the same tiny weight.
+    # Normalize relative peak weights without summing overlapping alternatives:
+    # summation can manufacture a higher-scoring midpoint that no component owns.
     largest = max(lobe.get("w", 1) for lobe in field)
-    weights = [lobe.get("w", 1) / largest for lobe in field]
     terms = []
-    for lobe, weight in zip(field, weights):
+    for lobe in field:
+        weight = lobe.get("w", 1) / largest
         distance = 0.0
         for i in range(LAYERS[layer]):
             axis = f"{layer}{i:02d}"
@@ -55,7 +56,7 @@ def _activation(field: list[dict[str, Any]], point: dict[str, float], layer: str
             if distance > 1500:  # already below floating-point exp resolution
                 break
         terms.append(weight * math.exp(-0.5 * distance))
-    return math.fsum(terms) / math.fsum(weights)
+    return max(terms)
 
 
 def activation(field: list[dict[str, Any]], point: dict[str, float], *, layer: str) -> float:

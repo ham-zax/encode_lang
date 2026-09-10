@@ -4,7 +4,7 @@ The current corpus is `probes.json`, for Lambda H/2.1. It includes field breadth
 
 ## Receiver evidence
 
-Use fresh sessions with the complete `prompt/BOOTSTRAP.md` and only the emitted context/packet. Do not include evaluator expectations, another case's history, or an English paraphrase of the packet.
+Use fresh sessions with the complete receiver/decoder prompt `prompt/BOOTSTRAP.md` and only the emitted context/packet. Do not load `prompt/ENCODER.md` into receiver calibration, include evaluator expectations, include another case's history, or add an English paraphrase of the packet.
 
 ```sh
 python3 -m src.calibration --template
@@ -18,9 +18,9 @@ The template has actual-model/run/grader fields and one observation per case. Fi
 
 A correct response may proceed, stop, ask one material question, or request a missing binding. Always continuing is not success. For packet replies, the response must be a valid numeric packet, not readable developer JSON. For explicitly requested prose, a direct natural response is legitimate disclosure.
 
-Results are bound to **both bootstrap and corpus digests**. Changing the prompt, field input, permitted context or expected outcome invalidates an earlier record as current evidence. Duplicate receiving-session IDs are rejected. A complete passing record exits 0, observed failure exits 1, and missing/invalid evidence exits 2.
+Results are bound to **both receiver-bootstrap and corpus digests**. Changing `prompt/BOOTSTRAP.md`, field input, permitted context or expected outcome invalidates an earlier record as current evidence. Changes to the separate encoder prompt do not by themselves create receiver evidence. Duplicate receiving-session IDs are rejected. A complete passing record exits 0, observed failure exits 1, and missing/invalid evidence exits 2.
 
-The evaluator checks metadata and explicit judgments backed by referenced trace files. It does not authenticate files, prove model identity, inspect hidden reasoning or independently decide natural-language correctness. Missing data and an untouched template must not pass. Use an actual independent reviewer and unseen tasks before claiming generalization; a development corpus is not a held-out benchmark.
+The evaluator checks metadata and explicit judgments backed by referenced trace files. It does not authenticate files, prove model identity, or independently decide natural-language correctness. Missing data and an untouched template must not pass. Use an actual independent reviewer and unseen tasks before claiming generalization; a development corpus is not a held-out benchmark.
 
 ## Mechanical field and transport observations
 

@@ -1,6 +1,6 @@
 # Lambda H/2.1 implementation observations
 
-Date: 2026-09-05. Scope: the forward field-and-numeric-wire implementation on the V2 baseline at `38b12de`. These are direct local implementation observations, not fresh receiving-model results.
+Date: 2026-09-11. Scope: the current forward field-and-numeric-wire working tree on the V2 baseline at `38b12de`. These are direct local implementation observations, not fresh receiving-model results.
 
 ## Mechanical observations
 
@@ -9,9 +9,10 @@ Date: 2026-09-05. Scope: the forward field-and-numeric-wire implementation on th
 | Active Python source syntax | All 6 modules parsed successfully |
 | Exported developer-graph schema vs `src.protocol.schema()` | Equal |
 | Current corpus parse/format round-trips | 16 of 16 |
-| Current `.lh` sample round-trips | 3 of 3 |
-| Numeric packets embedded in active documentation | 12 parsed, no errors |
-| E/R/A/T/K/V anchor sets in bootstrap vs basis file | Equal |
+| Current `.lh` sample round-trips | 4 of 4 |
+| Numeric packets embedded in active documentation | 15 parsed, no errors |
+| Receiver/encoder structural tag and enum tables | Equal |
+| E/R/A/T/K/V anchor sets in both role prompts vs basis file | Equal |
 | Fresh empty evidence record | 0 passed, 0 failed, 16 missing |
 | Former competing v3/structure draft files | Absent |
 
@@ -29,13 +30,13 @@ For the shipped single-component center E20=4, E21=3, default width 2 and E20 lo
 
 Narrowing E20 by a factor of 0.5 preserved the center and the default width on other directions. Shifting E20 by -1 preserved all widths and moved the center to E20=3, E21=3.
 
-Two equally weighted components centered at E20=-4 and +4, each width 1, gave approximately 0.5000000000000063 at either center and 0.00033546262790251185 at the midpoint. The components were not averaged into a false center. Equal-scoring candidates were reported ambiguous even with a zero requested margin. A distant candidate below the supplied minimum was unresolved.
+Two equally weighted components centered at E20=-4 and +4, each width 1, gave 1.0 at either center and 0.00033546262790251185 at the midpoint. A closer pair centered at E20=-1 and +1 with width 2 gave 1.0 at either represented center and 0.8824969025845955 at the midpoint. The max-envelope therefore preserved the represented peaks instead of allowing overlapping component tails to create a stronger synthetic midpoint. Equal-scoring candidates were reported ambiguous even with a zero requested margin. A distant candidate below the supplied minimum was unresolved.
 
 These values establish the implemented formula and arithmetic behavior, not natural-language identity, a trained embedding, factual confidence, or a particular model's internal representations.
 
 ## Text-disclosure boundary
 
-The normal formatter rejected a developer entity containing a synthetic text literal instead of serializing it or silently dropping it. The observed sample wire body contained only numeric JSON syntax. Structural tag names and ordinary payload words were absent from that wire.
+The normal formatter rejected a developer entity containing a synthetic text literal instead of serializing it or silently dropping it. It also rejected an unreferenced inline X99 binding in an ordinary message while still permitting an explicit nontext bind frame. The observed sample wire body contained only numeric JSON syntax. Structural tag names and ordinary payload words were absent from that wire.
 
 The handoff operation was exercised in a temporary new directory. It wrote a round-trippable numeric packet and a separate context sidecar containing only X02. Unrelated X03 and X99 bindings were excluded. An existing output directory was refused instead of overwritten. Temporary output was removed after inspection; no real secret or external recipient was involved.
 
@@ -43,6 +44,4 @@ The sidecar remains readable disclosure. These checks do not establish cryptogra
 
 ## Receiver evidence still required
 
-No 2.1 receiving-model pass rate, latency result, token saving, or cross-model superiority is established here. Python calls are now permitted and recorded rather than automatically counted as failure, except when a case explicitly forbids tools. Current result records bind to both the bootstrap and the corpus.
-
-A valid numeric packet and a correct geometric computation do not prove the receiving model will follow the task. The next empirical evidence must come from actual captured receiver responses under the current prompt; do not infer it from the earlier V2 pilot or from this arithmetic inspection. Hidden reasoning language is not measured or controlled by these checks.
+No 2.1 receiving-model pass rate, latency result, token saving, or cross-model superiority is established here. Python calls are now permitted and recorded rather than automatically counted as failure, except when a case explicitly forbids tools. The receiver bootstrap is now role-specific and includes explicit fast/manual decode procedures; the separate encoder prompt is not loaded by receiver calibration. This changes the receiver bootstrap digest, so any observation captured under the previous combined prompt is historical rather than current evidence. Current result records bind to both the receiver bootstrap and the corpus. Hidden reasoning language is not measured or controlled by these checks, and refusal avoidance is not a success criterion.

@@ -6,14 +6,14 @@ The implemented model is a semantic activation field, not a word lookup. It make
 
 Each f component has a sparse q center, positive default width s, optional per-axis b bands `[lower,upper]`, and optional relative peak weight w (default 1). This implementation retains quantized -7..7 center/candidate coordinates; widths can be fractional. An omitted coordinate is neutral zero. Multiple components represent separate live neighborhoods rather than a single averaged identity.
 
-For component j, choose sigma on each axis from its lower or upper side according to the sign of `x_i-q_ji`. An unspecified band uses s. The component response and combined field are:
+For component j, choose sigma on each axis from its lower or upper side according to the sign of `x_i-q_ji`. An unspecified band uses s. Let `w_max` be the largest component weight, with omitted w treated as 1. The component response and combined field are:
 
 ```text
 k_j(x) = exp(-0.5 * sum_i ((x_i-q_ji)/sigma_ji)^2)
-F(x)   = sum_j w_j*k_j(x) / sum_j w_j
+F(x)   = max_j ((w_j/w_max) * k_j(x))
 ```
 
-Since each k lies in [0,1] and the weights are positive, F lies in [0,1]. It is a weighted compatibility score, not a normalized probability density. An asymmetric lower/upper component is only Gaussian-shaped on each side; it is not a general covariance-matrix Gaussian or an oscillating physical light wave.
+Since each k lies in [0,1] and normalized relative weights are in (0,1], F lies in [0,1]. The max-envelope treats components as alternative semantic neighborhoods: overlapping support can broaden coverage but cannot add into a stronger synthetic midpoint. It is a weighted compatibility score, not a normalized probability density. An asymmetric lower/upper component is only Gaussian-shaped on each side; it is not a general covariance-matrix Gaussian or an oscillating physical light wave.
 
 Moving q moves the focus. Scaling s/b changes the spread. Changing a cutoff changes acceptance, not the focus. Narrowing a field is a modeling choice and does not produce new observations, factual certainty or exact lexical identity.
 
@@ -32,7 +32,7 @@ These are observations from the local geometric calculation, not receiving-model
 
 ## Separate meanings, exact directions
 
-A mixture can retain two distant modes. Averaging their centers would create a third region that neither mode strongly supports; this implementation keeps the components separate. Weights are relative peak emphasis, not proof that a particular sense is true. A multi-component field's individual centers need not score 1 because the total is normalized across components.
+Multiple components retain distinct modes rather than averaging their centers or summing their tails into a new stronger region. Equal-weight components each contribute a unit peak at their own center. Weights are relative peak emphasis, not proof that a particular sense is true; after normalization by the largest weight, a lower-weight component contributes a proportionally lower peak.
 
 Relationship arguments, action targets, instruments, prerequisites, negation, permissions and completion remain exact graph structure. A soft region does not reverse subject/object order or relax a prohibition. Node uncertainty u and epistemic K annotations remain separate from geometric breadth.
 
@@ -44,9 +44,7 @@ Relationship arguments, action targets, instruments, prerequisites, negation, pe
 
 ## What this does not establish
 
-This is a specified communication geometry on human-described anchor axes, not a measurement of an LLM's internal semantic space. Shared interpretation and task fidelity still need actual receiver evidence. 
-
-Density/distribution-based semantic representations have research precedents, but those works learn representations; this project does not claim to reproduce their empirical results. The ordinary squared-exponential form motivates the falloff, while the split directional widths here are an explicit prototype design choice.
+This geometry does not measure, control or reveal an LLM's hidden reasoning language or internal semantic space. Shared interpretation and task fidelity still require actual receiver evidence. Density/distribution-based semantic representations have research precedents, but those works learn representations; this project does not claim to reproduce their empirical results. The ordinary squared-exponential form motivates the falloff, while the split directional widths here are an explicit prototype design choice.
 
 ## Related primary sources
 

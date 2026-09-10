@@ -65,5 +65,3 @@ The handoff contains a numeric packet and a separate context sidecar with X02 on
 ## More exact-graph cases
 
 The current corpus in `calibration/probes.json` includes separated semantic modes, relation direction, negation, hypotheses, unknown conditions, an already-satisfied stop condition, completed/stale task snapshots, exact identity through known context, hard read-only constraints, and packet-form replies. `python3 -m src.calibration --receiver CASE_ID` emits only the permitted context and numeric packet, not the expected answer.
-
-No case scores refusal avoidance, asks for hidden chain-of-thought, or claims that numerical notation forces a model to think in a particular language.

@@ -1,6 +1,6 @@
 # Privacy: communicate less, protect the transport, choose the endpoint
 
-Lambda H/2.1 is a semantic notation, not a cipher. Its normal wire contains numeric structure and semantic regions, not readable labels or literal text. That provides casual opacity; it does not encrypt meaning, authenticate a sender, or stop a host from retaining what it processes. Readable developer JSON and explicitly transferred context are distinct from the numeric wire.
+Lambda H/2.1 is a semantic notation, not a cipher. Its normal wire carries numeric structure and semantic regions; readable labels and literal text are not part of it. That is an opacity/minimal-disclosure property, not cryptographic encryption, anonymity, authentication, or secrecy from the receiving endpoint.
 
 The default recommendation for information that must not reach a model provider is **local inference on a controlled device, with cloud tools disabled and only necessary data supplied**. For transfer between trusted devices, wrap the packet in an established encryption tool. Do not try to invent a prompt-decodable encryption scheme.
 
@@ -46,7 +46,7 @@ A context file has this shape (the values below are fictional):
 }
 ```
 
-A packet may reference `X10` without copying either value. The `inspect` command reports required or missing IDs without their values. The `handoff --output NEW_DIRECTORY` command writes a numeric `packet.lh` and a separate `context.private.json` containing only referenced bindings. The new directory's parent must exist; existing destinations are not overwritten. The wire alone does not supply the text in that sidecar.
+A packet may reference `X10` without copying either value. The `inspect` command reports required or missing IDs without their values. Ordinary message/handoff encoding rejects unreferenced inline X bindings instead of carrying unnecessary context; an explicit bind frame may intentionally establish nontext bindings. The `handoff --output NEW_DIRECTORY` command writes a numeric `packet.lh` and a separate `context.private.json` containing only referenced bindings. The new directory's parent must exist; existing destinations are not overwritten. The wire alone does not supply the text in that sidecar.
 
 **Selective handoff is minimization, not redaction.** A required binding in the sidecar is readable disclosure to its recipient. Review both output files before sending. The numerical formatter rejects text rather than encoding it as bytes or silently dropping it. An agent cannot use a withheld identity, filename, measurement or secret merely because an alias exists; it must request the binding or solve only the abstract portion that does not need it.
 
@@ -102,7 +102,7 @@ Using a remote chat interface to inspect files on a local machine does not make 
 
 ## 6. Operational limits
 
-The optional encode_lang codec does not execute packet actions, call model APIs, create keys, or install encryption software. Its schema/inspection output is not a security audit. Permission and sender authentication remain responsibilities of the surrounding application and the human controlling it.
+The optional encode_lang codec does not execute packet actions, call model APIs, create keys, or install encryption software. Permission and sender authentication remain responsibilities of the surrounding application and the human controlling it.
 
 Task IDs and revisions help identify snapshots; they do not provide durable replay prevention, exactly-once effects, or authentication. A receiver must compare a snapshot with its actual ledger before repeating a consequential action. A copied packet is not a reason to repeat a payment, send a message twice, or overwrite an artifact.
 

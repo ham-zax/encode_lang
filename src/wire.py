@@ -10,7 +10,7 @@ import math
 import re
 from typing import Any
 
-from .protocol import LAYERS, PROTOCOL, ProtocolError, require_valid
+from .protocol import LAYERS, PROTOCOL, ProtocolError, references, require_valid
 
 MAX_INDEX = 9007199254740991
 REF_PREFIXES = ("e", "r", "a", "t", "c", "X")
@@ -226,6 +226,11 @@ def _numeric_tree(value: Any) -> None:
 
 def encode_graph(packet: dict[str, Any]) -> list[Any]:
     require_valid(packet)
+    if packet.get("mode") != "bind":
+        required = {ref for _, ref in references(packet) if ref.startswith("X")}
+        unused = sorted(set(packet.get("X", {})) - required)
+        if unused:
+            raise ProtocolError("numeric wire refuses unreferenced inline context bindings: " + ", ".join(unused))
     result = _to_record(packet, "root")
     _numeric_tree(result)
     return result

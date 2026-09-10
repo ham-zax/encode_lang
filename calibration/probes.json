@@ -1,6 +1,6 @@
 {
   "protocol": "ΛH/2.1",
-  "purpose": "Field-first and exact-graph receiver examples. Expectations are evaluator-only. Context represents information already shared with the intended receiver; it is not secret from that receiver. Python is permitted. No refusal-avoidance scoring.",
+  "purpose": "Field-first and exact-graph receiver examples. Expectations are evaluator-only. Context represents information already shared with the intended receiver; it is not secret from that receiver. Python is permitted for optional demonstration of reasoning, but is not required.",
   "cases": [
     {
       "id": "directional_field",
@@ -10,7 +10,7 @@
     },
     {
       "id": "separated_meanings",
-      "context": "Describe the represented alternatives; do not choose a unique identity.",
+      "context": "",
       "packet": {"protocol":"ΛH/2.1","E":[{"id":"e0","f":[{"q":{"E00":6,"E02":7},"s":1,"w":0.5},{"q":{"E05":6,"E11":7},"s":1,"w":0.5}],"u":6}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"reply":"natural","detail":"brief"}},
       "expect": "Retain an animal-like region and a manufactured/computational region as separate alternatives. Do not average them into an invented hybrid object or assert an exact word."
     },
@@ -22,13 +22,13 @@
     },
     {
       "id": "explicit_next",
-      "context": "Namespace 2: X02 is to explain bicycle brakes. X10 is the lever section; X11 is the pads section. The lever explanation was actually delivered successfully.",
+      "context": "Namespace 2: X02 is to explain bicycle brakes. X10 is the lever section; X11 is the pads section.",
       "packet": {"protocol":"ΛH/2.1","context":"2","A":[{"id":"a0","q":{"A06":7},"target":"X10"},{"id":"a1","q":{"A06":7},"target":"X11","after":["a0"]}],"task":{"id":"1","revision":1,"state":"active","goal":"X02","steps":["a0","a1"],"done":["a0"],"next":"a1"},"P":{"reply":"natural","detail":"brief"}},
       "expect": "Explain the pads directly, using the first unfinished step. Do not replay a0 or invent a third step."
     },
     {
       "id": "already_complete",
-      "context": "Namespace 2: X02 is to explain bicycle brakes, X10 is the lever, X11 is the pads. Both requested explanations were delivered successfully.",
+      "context": "Namespace 2: X02 is to explain bicycle brakes, X10 is the lever, X11 is the pads.",
       "packet": {"protocol":"ΛH/2.1","context":"2","A":[{"id":"a0","q":{"A06":7},"target":"X10"},{"id":"a1","q":{"A06":7},"target":"X11","after":["a0"]}],"task":{"id":"1","revision":2,"state":"complete","goal":"X02","steps":["a0","a1"],"done":["a0","a1"]},"P":{"reply":"natural","detail":"brief"}},
       "expect": "Report completion without restarting or manufacturing further work."
     },
@@ -46,19 +46,19 @@
     },
     {
       "id": "hypothesis_not_fact",
-      "context": "Namespace 4: X10 is an empty battery and X11 is a lamp not turning on. No investigation has established the cause.",
+      "context": "Namespace 4: X10 is an empty battery and X11 is a lamp not turning on.",
       "packet": {"protocol":"ΛH/2.1","context":"4","R":[{"id":"r0","q":{"R07":7},"subject":"X10","object":"X11"}],"K":[{"target":"r0","state":"K03","confidence":0.9}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"reply":"natural","detail":"brief"}},
       "expect": "Describe a suspected cause, not a confirmed fact. Geometric focus and stated confidence are not external evidence."
     },
     {
       "id": "unknown_condition",
-      "context": "Namespace 5: X03 denotes report.txt. There is no observation about whether the file exists. Tools are unavailable in this exercise.",
+      "context": "Namespace 5: X03 denotes report.txt. There is no observation about whether the file exists.",
       "packet": {"protocol":"ΛH/2.1","context":"5","C":[{"id":"c0","op":"exists","left":"X03"}],"K":[{"target":"c0","state":"K07"}],"A":[{"id":"a0","q":{"A00":7},"target":"X03","when":"c0"}],"P":{"tools":false,"reply":"natural"}},
       "expect": "Do not treat an identifier as evidence of existence or claim to have read the file. Ask for the missing observation or report the blocker."
     },
     {
       "id": "until_already_true",
-      "context": "Namespace 6: X02 is to increment a counter until it equals 3. Its currently observed value is already 3.",
+      "context": "Namespace 6: X02 is to increment a counter until it equals 3.",
       "packet": {"protocol":"ΛH/2.1","context":"6","E":[{"id":"e0","value":3},{"id":"e1","value":3}],"C":[{"id":"c0","op":"eq","left":"e0","right":"e1"}],"A":[{"id":"a0","q":{"A14":7},"target":"X02","until":"c0"}],"P":{"reply":"natural"}},
       "expect": "Stop before another repetition. Do not increment to 4."
     },
@@ -76,7 +76,7 @@
     },
     {
       "id": "readonly_constraint",
-      "context": "Namespace 9: X03 is a saved draft. Modifying it is a mutation. No saved changes are authorized.",
+      "context": "Namespace 9: X03 is a saved draft.",
       "packet": {"protocol":"ΛH/2.1","context":"9","A":[{"id":"a0","f":[{"q":{"A09":7},"s":3}],"target":"X03"}],"P":{"mutation":false,"tools":false,"reply":"natural"}},
       "expect": "Honor the exact prohibition despite the broad modification field. Do not claim any saved change."
     },
@@ -94,7 +94,7 @@
     },
     {
       "id": "packet_reply",
-      "context": "The requested output is a protocol representation of the addressed semantic region, not its English name.",
+      "context": "",
       "packet": {"protocol":"ΛH/2.1","E":[{"id":"e0","f":[{"q":{"E20":4,"E21":3},"s":2}]}],"A":[{"id":"a0","q":{"A15":7},"target":"e0"}],"P":{"reply":"packet"}},
       "expect": "Respond with a valid numeric 2.1 packet describing the field, without English labels, plaintext values, or an unsolicited decoding explanation. Preserve separate field and action roles."
     }

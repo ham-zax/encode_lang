@@ -8,7 +8,9 @@ This is a forward development of the V2 graph—not a rollback to V1. Python may
 
 ## Start here
 
-Give the receiving agent the complete [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md). Then send a bare packet. For example, with namespace 1 and X02 already bound to an unfinished goal:
+Lambda H/2.1 now uses two role-specific standalone prompts. Give a receiving/acting agent [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md). Give a sending/encoding agent [`prompt/ENCODER.md`](prompt/ENCODER.md). Do not make a weak receiver spend context learning the general encoding workflow unless that session genuinely needs both roles.
+
+For a receiver, load `prompt/BOOTSTRAP.md` and then send a bare packet. For example, with namespace 1 and X02 already bound to an unfinished goal:
 
 ```text
 ΛH2.1|[[0,1],[4,[[[0,0],[1,[[14,7]]],[4,[5,2]]]]],[8,[[3,0],[4,0]]]]
@@ -16,7 +18,7 @@ Give the receiving agent the complete [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.m
 
 The receiver should continue the unfinished work, not explain this notation. The last policy record explicitly requests a brief natural-language response. Protocol replies otherwise stay in numeric form unless the user or requested output asks for prose. A completed goal must not be restarted.
 
-`ENCODE:` asks for a packet. `DECODE:` explicitly asks for a reconstruction. Loading the bootstrap with a task should address the task immediately, not spend a turn on READY.
+The receiver bootstrap treats a bare packet as the represented task and contains an explicit mechanical decode-and-act procedure. `DECODE:` explicitly asks that receiver for a reconstruction instead of execution. The encoder bootstrap treats its source message/task as material to represent and emits a packet rather than carrying out that task.
 
 ## What changed
 
@@ -68,8 +70,6 @@ python3 -m src.codec handoff examples/continue.lh \
 
 The result contains `packet.lh` and `context.private.json`. Only referenced bindings enter the sidecar. **The sidecar is readable disclosure**; inspect it and transfer it only to the intended endpoint. The numeric packet alone is not self-contained when it needs that context. The Python `make_handoff` API still returns an explicit developer bundle with selected bindings; do not mistake that bundle for an opaque packet.
 
-Numeric notation is casual opacity, not confidentiality; anyone with the public bootstrap can interpret it. Use established encryption for transit/storage and a trusted endpoint for sensitive processing. See [`docs/PRIVACY.md`](docs/PRIVACY.md).
-
 ## Evidence, not claims about hidden thought
 
 [`calibration/probes.json`](calibration/probes.json) contains current receiver cases; the evaluator binds results to both the bootstrap and the corpus. Optional Python calls are recorded, not automatically marked as failure. Explicit no-tool constraints still apply.
@@ -80,13 +80,12 @@ python3 -m src.calibration --receiver directional_field
 python3 -m src.calibration private/receiver-results.json
 ```
 
-The current geometry and transport checks are documented in [`calibration/RESULTS.md`](calibration/RESULTS.md). Prior V2 receiving results are historical and do not establish 2.1 performance. No hidden-reasoning-language, token-saving, latency or cross-model superiority claim follows from a successful codec check.
-
 ## Project map
 
 | Path | Role |
 | --- | --- |
-| `prompt/BOOTSTRAP.md` | Standalone field/graph reader and complete numeric grammar |
+| `prompt/BOOTSTRAP.md` | Standalone receiver/decoder: mechanical unpacking, semantic interpretation, task execution |
+| `prompt/ENCODER.md` | Standalone sender/encoder: semantic graph construction and numeric serialization |
 | `src/protocol.py` | Developer graph schema and exact reference/task invariants |
 | `src/wire.py` | Numeric structural tags, strict encode/decode, plaintext rejection |
 | `src/geometry.py` | Directional field activation, focus, shift and explicit-candidate ranking |
@@ -99,4 +98,4 @@ The current geometry and transport checks are documented in [`calibration/RESULT
 | `MIGRATION.md` | Forward migration and the text-disclosure boundary |
 | `archive/v1/`, `archive/v2/` | Historical definitions and evidence, not active fallback decoders |
 
-The geometry is a specified communication model, not access to an LLM's internal embeddings. A correct next action and preserved meaning are the objective; avoiding a provider refusal is not an evaluation criterion.
+The geometry is a specified communication model, not access to an LLM's internal embeddings. A correct next action and preserved meaning are the objective.

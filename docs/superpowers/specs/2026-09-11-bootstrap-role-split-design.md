@@ -25,7 +25,7 @@ Its operational procedure is explicit:
 7. Apply hard conditions, prohibitions, permissions, epistemic state, and task continuation before acting.
 8. Perform the represented task or answer it. Do not require reconstruction of an English source sentence as an intermediate representation.
 
-Python remains optional for mechanical unpacking, validation, and field arithmetic when tools are permitted. The bootstrap must be usable without Python as well. It must not claim to control or observe hidden reasoning language, treat opacity as encryption, or use the notation to bypass provider safety systems.
+Python remains optional for mechanical unpacking, validation, and field arithmetic when tools are permitted. The bootstrap must be usable without Python as well. It must not claim to control or observe hidden reasoning language.
 
 The receiver bootstrap does not teach how to construct a new packet from ordinary language. `DECODE:` may explicitly request a natural-language reconstruction for debugging, but normal bare packet handling executes or answers the represented task.
 
@@ -76,4 +76,3 @@ The encoder should reject input it cannot encode without losing required exact i
 - Current calibration continues to bind only to the receiver bootstrap.
 - Documentation points users/agents to the correct prompt for each role.
 - Neither prompt requires an English sentence reconstruction step before semantic action.
-- Neither prompt claims access to hidden reasoning language, cryptographic secrecy, or safety-policy bypass.
