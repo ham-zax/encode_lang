@@ -21,6 +21,7 @@ AMBIENT_ROLES = MappingProxyType({
     "output": "X09",
 })
 AMBIENT_REFS = frozenset(AMBIENT_ROLES.values())
+CURRENT_CONTEXT = "0"
 _NAMESPACE = re.compile(r"(?:0|[1-9][0-9]*)")
 _XREF = re.compile(XREF)
 
@@ -40,6 +41,15 @@ class HostContext:
         if invalid:
             raise ValueError("host context binding keys must be canonical X references")
         object.__setattr__(self, "bindings", MappingProxyType(copied))
+
+    @classmethod
+    def current(cls, bindings: Mapping[str, Any]) -> "HostContext":
+        """Build context 0 from values already grounded by the active host session.
+
+        Callers supply the current bindings; this API never searches the filesystem
+        or enumerates candidate repositories to discover X08.
+        """
+        return cls(CURRENT_CONTEXT, bindings)
 
 
 @dataclass(frozen=True)
@@ -80,8 +90,10 @@ def resolve_context(packet: dict[str, Any], host_context: HostContext | None = N
     """Resolve exact X references without mutating or serializing host state.
 
     Packet-inline bindings have precedence. Host-local values are fallback only
-    when the packet and host namespaces match exactly. A different namespace is
-    treated as unavailable context, never as permission to retarget the packet.
+    when the packet and host namespaces match exactly. Context 0 is the reserved
+    receiver-current namespace, normally represented by HostContext.current().
+    A different nonzero namespace is unavailable context, never permission to
+    retarget the packet.
     """
     require_valid(packet)
     required = _required_x(packet)

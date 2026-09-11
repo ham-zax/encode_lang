@@ -1,6 +1,6 @@
 {
   "protocol": "ΛH/2.2",
-  "purpose": "Numeric-only Receiver/Doer cases. Expectations are evaluator-only and are never sent to the receiving model.",
+  "purpose": "Receiver/Doer cases; current success-output probes explicitly request P.reply=packet, while pre-handoff failure cases use protocol controls. Expectations are evaluator-only and are never sent to the receiving model.",
   "cases": [
     {
       "id": "directional_field",

@@ -12,7 +12,7 @@
 - Do not reintroduce Lambda H/2.1 compatibility or the retired combined bootstrap.
 - Human-facing Encoder may emit `PACKET` plus a separate English `AUDIT`; only `PACKET` is transport.
 - Human-facing Decoder returns English explanation and never executes represented actions.
-- Doer transport replies remain numeric Lambda H by default.
+- Historical note: this repair originally kept Doer replies numeric by default. The later native semantic-handoff correction supersedes that rule: omission of `P.reply` means normal host-native output, while `P.reply=packet` is explicit opt-in.
 - When codec tooling is available, models must not manually serialize or rewrite numeric rows.
 - The symbolic IR is model-facing/local only and must not carry arbitrary source wording or become a second transport protocol.
 - Preserve all current E/R/A/T/C/K/P/task/V/q/f semantics and 2.2 numeric row bytes for equivalent graphs.
@@ -69,7 +69,7 @@
 
 **Interfaces:**
 - Encoder: English/source meaning -> symbolic IR -> codec -> numeric `PACKET` + English `AUDIT`.
-- Doer: numeric packet -> codec -> symbolic IR -> execute -> symbolic response IR -> codec -> numeric packet.
+- Historical Doer path at the time: numeric packet -> codec -> symbolic IR -> execute -> symbolic response IR -> codec -> numeric packet. This output requirement is superseded by the later native semantic-handoff rule.
 - Decoder: numeric packet -> codec -> symbolic IR -> English explanation only.
 
 **Steps:**
@@ -77,11 +77,11 @@
 - [ ] Keep manual row construction/parsing only as the explicit no-codec fallback.
 - [ ] Restore Encoder `PACKET` + `AUDIT` output and explicitly mark audit as non-transport.
 - [ ] Restore Decoder English reconstruction of represented semantics, structure, ambiguity, controls, and missing X context without executing actions.
-- [ ] Keep Doer numeric-only response contract and no-English-intermediate execution behavior.
+- [ ] Historical requirement: keep Doer numeric-only response contract and no-English-intermediate execution behavior. Superseded: only the no-required-English-intermediate part remains; successful post-handoff output is native unless `P.reply=packet` is explicit.
 - [ ] Make root router select Decoder for `decode:`/`explain` and allow human-facing English there without weakening transport opacity.
 
 **Acceptance criteria:**
-- `encode:` gives the human a numeric packet and readable audit; `decode:` gives the human a readable explanation; bare numeric packet still routes to Doer and produces numeric protocol output.
+- Historical acceptance at the time: `encode:` gives the human a numeric packet and readable audit; `decode:` gives the human a readable explanation; bare numeric packet routes to Doer. The later semantic-handoff correction supersedes the numeric-output requirement for Doer.
 
 ### Task 4: Synchronize active contract documentation
 

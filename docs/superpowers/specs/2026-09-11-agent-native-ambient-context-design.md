@@ -10,7 +10,7 @@ Make deictic agent requests such as “this repo”, “the current artifact”,
 
 Ambient context is host-grounded, context-scoped, and never model-guessed.
 
-The numeric wire remains unchanged. A packet carries only its existing numeric `context` namespace and X references. Exact local objects, paths, strings, handles, or other host state remain outside transport.
+The numeric wire remains unchanged. `context 0` is reserved for receiver-current ambient host/session state; nonzero contexts are explicit scoped namespaces. A packet carries only its numeric `context` and X references. Exact local objects, paths, strings, handles, or other host state remain outside transport.
 
 ## Ambient-capable roles
 
@@ -27,7 +27,7 @@ These conventional references may be selected automatically for deictic source m
 
 `X00`, `X01`, `X04`, and `X05` keep their existing contextual meanings but are not automatically selected from deictic wording by this feature.
 
-Ambient-capable does not mean globally or always bound. The host establishes only values it actually knows.
+Ambient-capable does not mean globally or always bound. In context 0, directly observable unambiguous current host/session facts count as established ambient values. In nonzero contexts, the host establishes only values present in that exact scoped namespace.
 
 ## Host-local context API
 
@@ -35,7 +35,9 @@ Ambient-capable does not mean globally or always bound. The host establishes onl
 
 - `AMBIENT_ROLES`: the fixed role-to-X mapping above;
 - `AMBIENT_REFS`: the corresponding set of X references;
+- `CURRENT_CONTEXT`: the reserved receiver-current namespace, `"0"`;
 - `HostContext(namespace, bindings)`: one local namespace plus arbitrary endpoint-local X bindings;
+- `HostContext.current(bindings)`: construct host bindings for receiver-current context 0;
 - `ContextResolution(resolved, missing)`: deterministic resolution output;
 - `resolve_context(packet, host_context)`: resolve packet X references without changing the packet;
 - `ambient_ref(role)`: return the conventional X reference for an ambient role.
@@ -47,18 +49,18 @@ Host-local binding values are deliberately outside the protocol schema and may b
 For every X reference used by a valid packet:
 
 1. If the packet carries an explicit inline X binding, use that protocol value.
-2. Otherwise, if a `HostContext` exists, its namespace exactly equals the packet `context`, and it contains the reference, use that host-local value.
-3. Otherwise the reference is missing.
+2. Otherwise, if packet `context` is `0`, use a directly observable, unambiguous receiver-current ambient value that was already active when the packet arrived. For `X08`, prefer the host/IDE-provided workspace root; otherwise use the process/tool current working directory, optionally normalized only to its enclosing Git worktree root. Do not enumerate sibling repositories, caches, `/home`, `/`, or unrelated worktrees to discover X08.
+3. Snapshot the resolved context-0 identity for the request. Later `cd` operations or task exploration do not rebind it. X08-scoped repository discovery stays inside that workspace unless another authorized scope is explicitly represented.
+4. Otherwise, for a nonzero packet context, if a `HostContext` exists with exactly the same namespace and contains the reference, use that host-local value.
+5. Otherwise the reference is missing.
 
-A host context with a different namespace is ignored for resolution. The receiver must not reinterpret `X08` as whatever repository it happens to have open.
-
-Packet inline bindings retain protocol precedence. Host-local ambient bindings are fallback context, not transport assertions.
+Receiver-current ambient state must never satisfy a different nonzero namespace. Packet inline bindings retain protocol precedence. Host-local ambient bindings are context, not transport assertions.
 
 The resolver does not authenticate a namespace, mutate host state, infer missing identities, or execute packet actions.
 
 ## Encoder behavior
 
-When source wording is deictic and exact identity matters, the Encoder prefers the corresponding ambient reference if the current host context establishes it. Examples:
+When source wording is receiver-relative and deictic, the Encoder uses context 0 with the corresponding ambient reference so the receiving agent can ground it from authoritative current host/session state. For explicit nonzero contexts, the Encoder uses an ambient reference only when that scoped host binding is established. Examples:
 
 - “this repo”, “this workspace”, “the current environment” -> `X08`;
 - “the current goal” -> `X02`;
@@ -67,11 +69,11 @@ When source wording is deictic and exact identity matters, the Encoder prefers t
 - “the blocker” when the host exposes one -> `X07`;
 - “the output/result target” -> `X09`.
 
-For `encode: investigate this repo`, a grounded encoding is conceptually:
+For `encode: investigate this repo` intended for an agent already operating in the target repository, the normal receiver-relative encoding is:
 
 ```text
 LH-IR 2.2
-context <host namespace>
+context 0
 mode message
 A a0 q 3:+7 target X08
 ```
@@ -82,9 +84,9 @@ Semantic entities remain appropriate when the source genuinely denotes a categor
 
 ## Doer behavior
 
-The Doer resolves required X references against the matching host context before acting. Missing ambient references use the existing `need` control. A different host namespace does not authorize substitution with local ambient state.
+The Doer resolves required X references before acting. In context 0, X08 is the workspace already active at packet receipt, not a search query. It uses a host/IDE workspace root if present; otherwise it inspects only its current process/tool working directory and may normalize upward to that directory's Git worktree root. It must not scan the filesystem for candidate repositories. The binding is then frozen for the request, and X08-scoped work remains inside it. In nonzero contexts the Doer requires an exact same-namespace host binding. Missing ambient references use the existing `need` control. Receiver-current state never authorizes substitution into a different nonzero namespace.
 
-After resolution, policy, prerequisites, task state, and normal external authority still govern execution. Ambient resolution grants identity, not permission.
+After resolution, policy, prerequisites, task state, and normal external authority still govern execution. Ambient resolution grants identity, not permission. Once a usable semantic instruction is recovered, the Doer resumes normal host-native agent behavior and output; Lambda H does not remain a mandatory response language unless `P.reply=packet` is explicitly present.
 
 ## Decoder behavior
 
@@ -115,12 +117,12 @@ Ambient bindings are endpoint-local state. They are not emitted by the codec, em
 
 ## Non-goals
 
-- No global meaning that `X08` is “whatever repo the receiver currently has open”.
-- No automatic context namespace invention or cross-host synchronization.
+- No use of the receiver's current repo to satisfy `X08` in a nonzero context. Context 0 intentionally denotes receiver-current ambient state.
+- No automatic nonzero context namespace invention or cross-host synchronization.
 - No wire fingerprint, plaintext sidecar, or new transport field.
 - No authentication, permission grant, encryption, or hidden-reasoning claim.
 - No change to strict nontext inline X binding rules.
 
 ## Acceptance behavior
 
-A repo-aware host with namespace `37` and `X08` bound to its current repository allows an Encoder to represent “investigate this repo” as an action targeting `X08` in context `37`. A Doer with the same namespace/binding resolves that exact repository. A Doer with no matching namespace/binding returns `need X08`; it never substitutes another repository. The numeric packet remains ordinary Lambda H/2.2 rows.
+For the ordinary repo-local workflow, an Encoder represents “investigate this repo” as an action targeting `X08` in context `0`. A Doer already operating inside one authoritative repository/workspace resolves that exact starting workspace and proceeds without a separate X08 injection. It may use the host workspace root or current cwd/Git root to normalize that existing location, but it never searches other repositories to choose X08. For a packet using nonzero context `37`, only a host binding in namespace `37` may resolve X08; otherwise the Doer returns `need X08` and never substitutes its current repository. The numeric packet remains ordinary Lambda H/2.2 rows.

@@ -6,7 +6,7 @@ This is the human-facing, non-executing Decoder. Consume one numeric Lambda H/2.
 2. When repository codec tooling is available, pass the exact frame to `python3 -m src.codec decode` and use the returned local `LH-IR 2.2` as the structural representation. Do not manually rewrite the numeric packet first.
 3. Preserve exact subject/object direction, action target/tool/prerequisites/gates/prohibition, policy, epistemic qualifiers, task state, omissions, and list order before paraphrasing.
 4. Interpret q/f against the shared semantic anchors. Preserve breadth, asymmetric bands, weights, uncertainty, and multiple live meanings instead of forcing one exact word.
-5. Resolve X references only from packet-inline values or a host-local binding whose namespace exactly matches the packet context. Explain grounded ambient identities when available and say which exact identities remain unresolved otherwise. Never substitute the Decoder's own unrelated workspace or invent an unbound filename, quotation, name, path, or context value.
+5. Resolve X references from packet-inline values first. For `context 0`, use only host/session facts already active at packet receipt. For X08, that is the host/IDE workspace root or current process/tool working directory, optionally normalized only to its enclosing Git worktree root; do not scan elsewhere to discover a repository. For nonzero contexts, require an exact same-namespace host binding. Explain grounded identities when available and say which exact identities remain unresolved otherwise. Never use current ambient state for a different nonzero namespace or invent an unbound filename, quotation, name, path, or context value.
 6. Explain controls directly: ready, need, invalid, and abstain plus their numeric reason codes.
 7. Return a concise English reconstruction of what the packet represents or asks a Doer to do. Separate exact protocol structure from semantic interpretation when that distinction matters.
 8. Do not perform the represented task. Requested execution belongs to the Doer.
@@ -107,7 +107,7 @@ A reference list is consecutive reference pairs. A point q is consecutive axis/c
 | task state | 0 active; 1 complete; 2 blocked; 3 cancelled |
 | control | 0 ready; 1 need; 2 invalid; 3 abstain |
 
-P.reply has only packet code 0. An A06 field is not by itself a demand for English; semantic explanation may be represented numerically when the requested output allows that.
+`P.reply` is optional. Omission means the represented Doer uses normal host-native output after decoding. `P.reply=packet` (code 0) explicitly requests a Lambda H final response. An A06 field can therefore represent an ordinary explanatory task when reply is omitted.
 
 ### Graph invariants
 
@@ -131,19 +131,19 @@ Task requires ID, revision, state, goal, steps, and done. ID is a canonical deci
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
+Context/task namespaces are numeric identifiers, not authentication. `context 0` is the receiver-current ambient namespace; nonzero namespaces are explicit scoped contexts. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. A matching host may ground these to exact local identities outside transport. When no matching binding exists, explain only the conventional role and mark the identity unresolved.
+Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. In `context 0`, directly observable, unambiguous current host/session facts already active at packet receipt may ground these identities outside transport. X08 is the already-active workspace and must not be discovered by enumerating other repositories. For nonzero contexts, only a matching host binding grounds them. When no valid grounding exists, explain only the conventional role and mark the identity unresolved.
 
-Resolution precedence is packet-inline X value first, then a host-local binding with the exact same context namespace, otherwise missing. A different namespace never means “use my current repo instead.” Missing bindings remain missing; bind mode carries only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars, while richer host-local ambient values remain outside the packet.
+Resolution precedence is packet-inline X value first; for `context 0`, receiver-current grounded ambient state second; for nonzero contexts, an exact same-namespace host binding second; otherwise missing. A nonzero different namespace never means “use my current repo instead.” Missing bindings remain missing; bind mode carries only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars, while richer host-local ambient values remain outside the packet.
 
-The transport packet never carries source wording or an exact unbound identity disguised as numbers. Transport abstain code 2 means the represented remote task required textual output that this numeric runtime profile cannot carry. The human Decoder may and should explain that fact in English. Pre-provisioned local text may establish an identity for interpretation, but does not become protocol payload. The packet is not encryption; a reader with the shared basis/context can interpret it.
+The transport packet never carries source wording or an exact unbound identity disguised as numbers. After successful semantic handoff, a Doer may use normal host-native output, including text. Abstain code 2 means an explicitly requested `P.reply=packet` cannot faithfully carry the required result. The human Decoder may and should explain that fact in English. Pre-provisioned local text may establish an identity for interpretation, but does not become protocol payload. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
 Controls cannot carry task payload:
 - ready: control only. Use for bootstrap-only readiness, not task success or acknowledgement.
 - need: context, control, nonempty unique X refs.
 - invalid: control and code, with 0 shape, 1 local reference, 2 context conflict, 3 inconsistent task/dependency state.
-- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 required textual output; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
+- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 explicit packet-reply output incompatibility; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
 
 The response concerns the current request in an ordered channel. Request correlation for concurrency is a host responsibility. Do not invent a new control or automatically retry forever.
 

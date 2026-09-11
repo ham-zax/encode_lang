@@ -10,9 +10,10 @@
 
 - Keep `ΛH2.2|` numeric rows byte-compatible and version unchanged.
 - Ambient context is host-grounded, context-scoped, and never model-guessed.
+- Lambda H constrains instruction transport, not normal Doer behavior after semantic handoff; native output is default and `P.reply=packet` is explicit opt-in.
 - Ambient-capable roles are `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` only.
 - Host-local bindings may contain arbitrary endpoint-local objects/text but are never serialized by the protocol merely because they exist.
-- Exact namespace mismatch never falls back to the receiver's current environment.
+- `context 0` intentionally resolves from receiver-current grounded ambient state already active at packet receipt; X08 is a frozen starting workspace, never a filesystem/repository search. Nonzero namespace mismatch never falls back to the receiver's current environment.
 - Existing inline X bindings retain protocol precedence.
 - Missing exact ambient identity uses existing `need` behavior; do not replace it with a generic semantic entity when identity matters.
 - Do not add or run tests unless separately authorized. Use focused non-test checks only at candidate-final state.
@@ -31,12 +32,12 @@
 **Steps:**
 - [x] Define canonical ambient role mappings.
 - [x] Validate host namespace and X binding keys without constraining local binding value types.
-- [x] Resolve required X references using packet-inline value first, then exact-namespace host binding, otherwise mark missing.
+- [x] Resolve required X references using packet-inline value first, then context-appropriate host grounding: receiver-current ambient state for context 0 or exact-namespace host binding for nonzero contexts, otherwise mark missing.
 - [x] Keep resolution side-effect free and independent of codec serialization.
 - [x] Export the context API lazily from `src`.
 
 **Acceptance criteria:**
-- Matching host namespace resolves ambient/local X references without changing the packet; different namespace leaves them missing; no local object is serialized.
+- Context 0 can represent receiver-current ambient values through `HostContext.current`; matching nonzero host namespaces resolve scoped X references; different nonzero namespaces leave them missing; no local object is serialized.
 
 ### Task 2: Make role prompts agent-native
 
@@ -55,12 +56,12 @@
 - [x] Define ambient-capable role table in each standalone role prompt.
 - [x] In Encoder, map “this repo/workspace/environment” to grounded `X08` and analogous deictic roles to their ambient refs.
 - [x] Prohibit replacing a missing exact deictic identity with a generic semantic `E` solely to avoid `need`.
-- [x] In Doer, require exact context namespace match before host-local resolution and preserve normal authority/policy after identity resolution.
+- [x] In Doer, ground context-0 ambient references from authoritative receiver-current host/session facts, bind X08 only from the already-active host/IDE workspace or cwd/enclosing Git root without global/lateral repository search, freeze it for the request, require exact namespace matches for nonzero host-local resolution, preserve normal authority/policy after identity resolution, and hand successful decoding into normal native agent execution/output unless `P.reply=packet` is explicit.
 - [x] In Decoder, report host-grounded identity only when actually available; otherwise explain the conventional X role and missing context.
 - [x] Make root router state that repo-aware host context is local setup, not protocol payload.
 
 **Acceptance criteria:**
-- A grounded “investigate this repo” uses `X08`; the same packet on a different/unbound host does not silently target another repository.
+- A grounded “investigate this repo” uses `X08`, stays inside the already-active workspace, and then behaves like the equivalent ordinary-language agent instruction; the same packet on a different/unbound host does not silently target another repository.
 
 ### Task 3: Synchronize active architecture documentation
 

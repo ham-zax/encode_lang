@@ -18,10 +18,11 @@ source meaning
     -> Receiver/Doer
     -> codec
     -> local symbolic IR
-    -> authorized semantic action
-    -> response IR
-    -> codec
-    -> shallow numeric packet
+    -> semantic handoff
+    -> normal authorized agent action/output
+
+optional only when P.reply=packet:
+    response IR -> codec -> shallow numeric packet
 ```
 
 Python is optional. With repository tooling, models operate on the local symbolic IR and the deterministic codec owns IR <-> numeric transport conversion. Without tooling, the standalone prompts retain the complete numeric fallback grammar.
@@ -34,7 +35,7 @@ The design separates three claims:
 |---|---|
 | Structural fidelity | A conforming parser recovers the same supported graph, scalar types, field presence, arrays, constraints, and task state. Deterministic round-trips can prove this. |
 | Semantic fidelity | A model selected the intended meaning and acts at the required precision. Only behavioral evidence can support this. |
-| Numeric-only transport | Observable agent-to-agent protocol output contains one numeric frame and no English text, labels, audit, or developer JSON. Human Decoder/Audit text is outside that transport. |
+| Numeric instruction transport | Each Lambda H packet itself contains one numeric frame and no English text, labels, audit, or developer JSON. Successful Doer execution is host-native by default; only explicit `P.reply=packet` constrains the final response back to Lambda H. |
 
 The system cannot guarantee arbitrary meaning recovery for every model or observe the language of hidden reasoning. “Direct semantic action” describes the input/output workflow; it does not claim access to or control of internal model embeddings.
 
@@ -74,7 +75,7 @@ Runtime packets contain only:
 - genuine numeric, boolean, and null scalar data;
 - the fixed version marker and whitespace framing.
 
-The format excludes source wording, English field labels, human audits, developer JSON, text sidecars, word-token dictionaries, base64, and character-number disguises. Text-producing tasks receive abstention code 2.
+The format excludes source wording, English field labels, human audits, developer JSON, text sidecars, word-token dictionaries, base64, and character-number disguises. That restriction applies to Lambda H packets, not ordinary Doer output after semantic handoff. Code 2 is reserved for an explicitly requested packet reply whose required result cannot be represented faithfully.
 
 Opacity is an interface property, not cryptographic confidentiality. An observer with the shared anchors and relevant context can infer meaning. Packet length, row shape, repeated identifiers, and traffic metadata also leak information. Confidential transfers require established authenticated encryption outside Lambda H.
 
@@ -109,11 +110,11 @@ Encoder:
 Receiver/Doer:
 
 1. Check the version, frame, row ownership, and graph invariants.
-2. Resolve required context in the same namespace.
-3. Interpret q/f against the shared anchors without sentence reconstruction.
+2. Resolve required context under the context-0/nonzero grounding rules.
+3. Interpret q/f against the shared anchors without requiring sentence reconstruction.
 4. Apply policy, conditions, epistemic state, prerequisites, and task progress.
-5. Act only at supported precision and existing authority.
-6. Emit numeric result/state or a numeric control.
+5. Hand the recovered intent to normal authorized agent execution and use the same workflow/output conventions as equivalent ordinary-language input.
+6. Encode a numeric final response only when `P.reply=packet` is explicitly present; protocol controls remain available when a usable instruction cannot be recovered.
 
 Decoder:
 
@@ -138,9 +139,9 @@ A successful encode/decode/format proves structural conversion only, not semanti
 
 ## Context discipline
 
-X references are namespace-scoped handles. `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, artifact, plan, blocker, workspace/environment/repository, and output/result target. A role is usable ambiently only when the host has actually established it in the packet's context namespace. See [Agent-native ambient context](2026-09-11-agent-native-ambient-context-design.md).
+X references are namespace-scoped handles. `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, artifact, plan, blocker, workspace/environment/repository, and output/result target. `context 0` is the receiver-current ambient namespace, so directly observable unambiguous current host/session facts may establish these roles there; nonzero contexts require explicit same-namespace host grounding. See [Agent-native ambient context](2026-09-11-agent-native-ambient-context-design.md).
 
-Resolution uses packet-inline values first, then a matching host-local binding, otherwise missing. Host-local values may be richer endpoint objects/text because they never become Lambda H transport. A receiver with a different context namespace must not substitute its own current environment. Bind frames still carry only genuine numeric, boolean, or null values.
+Resolution uses packet-inline values first; context 0 then uses receiver-current grounded ambient state already active at packet receipt, while nonzero contexts use only matching host-local bindings; otherwise the reference is missing. For X08, use the host/IDE workspace root or current cwd/enclosing Git worktree root and never scan elsewhere to discover a candidate repository. Freeze the context-0 binding for the request. Host-local values may be richer endpoint objects/text because they never become Lambda H transport. Receiver-current state must never satisfy a different nonzero namespace. Bind frames still carry only genuine numeric, boolean, or null values.
 
 A missing required binding produces need with exactly the missing X references. Context conflict code 2 remains for contradictory established state, not simple namespace absence. An exact identity that is unavailable cannot be reconstructed from coordinates or replaced by a generic E node solely to avoid missing context.
 
@@ -159,7 +160,7 @@ Valid requests that cannot be satisfied faithfully use abstain:
 
 - 0: material semantic ambiguity;
 - 1: meaning not representable by the shared contract;
-- 2: required textual output;
+- 2: explicit packet-reply output incompatibility;
 - 3: missing/incompatible shared contract or basis;
 - 4: endpoint capacity, capability, or required permission unavailable.
 
@@ -177,7 +178,7 @@ Need is reserved for known missing X bindings. Ready is only bootstrap readiness
 | `src/geometry.py` | Field calculations |
 | `semantics/basis.json` | Shared semantic directions |
 | `prompt/ENCODER.md` | Source meaning to numeric packet plus separate human audit |
-| `prompt/DOER.md` | Numeric packet to action and numeric response |
+| `prompt/DOER.md` | Numeric packet to semantic handoff and normal authorized agent execution/output; optional explicit packet reply |
 | `prompt/DECODER.md` | Numeric packet to human English explanation without execution |
 | `PROMPT.md` | Role selection |
 

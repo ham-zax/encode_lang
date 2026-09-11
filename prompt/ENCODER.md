@@ -15,13 +15,14 @@ AUDIT
 1. Identify intended concepts and their distinct graph roles directly.
 2. Preserve direction, negation, targets/tools, prerequisites, conditional gates, authority, and actual task state exactly.
 3. Choose q for a point with no asserted width, or f for breadth/asymmetry/separate meanings. Never fabricate a lexical match or shrink uncertainty to claim precision.
-4. For exact identities, use packet bindings or host-grounded context only. Deictic source phrases should use an ambient-capable X reference when the host has established it in the active namespace; if exact identity matters and that binding is unavailable, use need rather than inventing a generic E node.
+4. For exact identities, use packet bindings or host-grounded context only. For receiver-relative deictics such as “this repo” intended for an agent already operating in its target workspace, use `context 0` plus the ambient-capable X reference. This denotes the receiver's workspace already active when the packet arrives, not a repository for the receiver to search for. For explicit nonzero contexts, require the matching host binding. If exact identity matters and no valid grounding exists, use need rather than inventing a generic E node.
 5. Express the graph in local symbolic `LH-IR 2.2`. Do not calculate row kinds, structural tags, row counts, or numeric reference namespaces yourself when the codec is available.
 6. When repository tooling is permitted and available, pass the exact IR to `python3 -m src.codec encode` and copy its numeric output unchanged into `PACKET`. Never compact, normalize, or rewrite codec output.
-7. Produce `AUDIT` from the semantic graph/IR, not by paraphrasing the numeric row stream. State both the protocol semantics and the expected conforming-receiver interpretation, including material ambiguity or missing X context.
-8. When source meaning cannot be encoded faithfully, return the appropriate numeric abstention in `PACKET` and explain the reason in `AUDIT`. No successful-looking approximation.
+7. Do not add `P.reply=packet` by default. Omission means the receiving Doer should behave and respond exactly as it normally would for the equivalent ordinary-language instruction. Encode `P.reply=packet` only when the source explicitly requires a Lambda H final response.
+8. Produce `AUDIT` from the semantic graph/IR, not by paraphrasing the numeric row stream. State both the protocol semantics and the expected conforming-receiver interpretation, including material ambiguity or missing X context.
+9. When source meaning cannot be encoded faithfully, return the appropriate numeric abstention in `PACKET` and explain the reason in `AUDIT`. No successful-looking approximation.
 
-A source task asking the remote Doer to emit text is outside this numeric runtime profile and therefore maps to abstain code 2. The Encoder's own `AUDIT` is different: it is local human-facing control-plane text and is never forwarded as protocol payload.
+A source task may request ordinary textual, tool, artifact, or other native agent output. That does not require abstention. Abstain code 2 applies only when the source explicitly requires `P.reply=packet` but the required result cannot be represented faithfully in Lambda H. The Encoder's own `AUDIT` is local human-facing control-plane text and is never forwarded as protocol payload.
 
 ## Shared contract
 
@@ -117,7 +118,7 @@ A reference list is consecutive reference pairs. A point q is consecutive axis/c
 | task state | 0 active; 1 complete; 2 blocked; 3 cancelled |
 | control | 0 ready; 1 need; 2 invalid; 3 abstain |
 
-P.reply has only packet code 0. An A06 field is not by itself a demand for English; semantic explanation may be represented numerically when the requested output allows that.
+`P.reply` is optional. Omission means normal host-native Doer output. The only encoded override is `P.reply=packet` (code 0), which must be present only when the source explicitly asks for a Lambda H final response. An A06 field may therefore produce ordinary explanatory text when reply is omitted.
 
 ### Graph invariants
 
@@ -141,19 +142,19 @@ Task requires ID, revision, state, goal, steps, and done. ID is a canonical deci
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
+Context/task namespaces are numeric identifiers, not authentication. `context 0` is the receiver-current ambient namespace; nonzero namespaces are explicit scoped contexts. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. Ambient-capable does not mean globally bound: use one automatically only when the host has actually established that reference in the packet's active context namespace. Typical deictics include “this repo/workspace/environment” -> X08, “this artifact” -> X03, “the active plan” -> X06, and “the current goal/blocker/output” -> X02/X07/X09. Exact deictic identity must not be replaced by a generic semantic entity merely to avoid missing context.
+Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. For receiver-relative deictics, `context 0` lets the receiving agent ground these from directly observable, unambiguous host/session state that is already active at packet receipt. “this repo/workspace/environment” -> X08 means that already-active workspace; it never instructs the receiver to scan for candidate repositories. Other mappings include “this artifact” -> X03, “the active plan” -> X06, and “the current goal/blocker/output” -> X02/X07/X09. Exact deictic identity must not be replaced by a generic semantic entity merely to avoid missing context.
 
-Resolution precedence is packet-inline X value first, then a host-local binding with the exact same context namespace, otherwise missing. A receiver in another namespace must not substitute its own workspace or other ambient object. Missing bindings map to need with the namespace and only missing references. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; host-local ambient values may be richer endpoint objects because they never enter Lambda H transport.
+Resolution precedence is packet-inline X value first; for `context 0`, receiver-current grounded ambient state second; for nonzero contexts, an exact same-namespace host binding second; otherwise missing. Receiver-current ambient state must never satisfy a different nonzero namespace. Missing bindings map to need with the namespace and only missing references. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; host-local ambient values may be richer endpoint objects because they never enter Lambda H transport.
 
-Do not emit source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. If required output is textual, abstain code 2. Pre-provisioned local text may establish an identity, but cannot become an automatic English output channel. The packet is not encryption; a reader with the shared basis/context can interpret it.
+Do not put source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers inside the Lambda H packet. This restriction is on transport construction, not on the receiving Doer's normal post-decode output. Abstain code 2 is reserved for explicit `P.reply=packet` output incompatibility. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
 Controls cannot carry task payload:
 - ready: control only. Use for bootstrap-only readiness, not task success or acknowledgement.
 - need: context, control, nonempty unique X refs.
 - invalid: control and code, with 0 shape, 1 local reference, 2 context conflict, 3 inconsistent task/dependency state.
-- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 required textual output; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
+- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 explicit packet-reply output incompatibility; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
 
 The response concerns the current request in an ordered channel. Request correlation for concurrency is a host responsibility. Do not invent a new control or automatically retry forever.
 

@@ -6,7 +6,7 @@ The active source implements shallow numeric transport rows, local symbolic IR, 
 
 ## Mechanical evidence
 
-Final focused observations are recorded here only after the completion checks run. These observations can establish syntax, schema, IR/wire round-trip fidelity, prompt-table agreement, and numeric transport output. They cannot establish semantic accuracy, Doer action quality, Encoder semantic choice, or human Decoder reconstruction quality.
+Final focused observations are recorded here only after the completion checks run. These observations can establish syntax, schema, IR/wire round-trip fidelity, prompt-table agreement, and structural packet behavior. They cannot establish semantic accuracy, Doer action quality, native post-handoff output quality, Encoder semantic choice, or human Decoder reconstruction quality.
 
 ## Model evidence
 
@@ -16,6 +16,7 @@ Final focused observations are recorded here only after the completion checks ru
 | Tool-assisted Receiver/Doer | Unmeasured |
 | Encoder semantic fidelity | Unmeasured |
 | Agent-native ambient deictic selection/resolution | Unmeasured |
+| Native post-handoff Doer execution/output | Unmeasured |
 | Human-facing Decoder reconstruction | Unmeasured |
 
 No pass rate, latency, token saving, cross-model advantage, confidentiality, or hidden-reasoning claim is established.

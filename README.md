@@ -5,19 +5,21 @@ Lambda H/2.2 is a numeric semantic communication format for language-model endpo
 The transport goal is direct semantic action while keeping the human control plane usable:
 
 ```text
-human source -> Encoder -> numeric packet -> Receiver/Doer -> action -> numeric packet
-                  |                                      |
-                  +-> English audit                      +-> human Decoder -> English explanation
+human source -> Encoder -> numeric packet -> Receiver/Doer -> normal agent execution/output
+                  |
+                  +-> English audit
+
+numeric packet -> human Decoder -> English explanation
 ```
 
-Agent-to-agent transport is exactly one `ΛH2.2|` numeric frame. Source wording, field labels, developer JSON, code fences, and human audits are excluded from that packet. Human-facing Encoder audits and Decoder explanations are outside the transport boundary. A remote task that itself requires textual output receives numeric abstention code 2.
+A Lambda H instruction is exactly one `ΛH2.2|` numeric frame. Source wording, field labels, developer JSON, code fences, and human audits are excluded from that packet. Once a Doer recovers a usable semantic instruction, it resumes the same native tools, workflow, artifacts, progress reporting, and response style it would use for equivalent ordinary-language input. Only explicit `P.reply=packet` requests a Lambda H final response.
 
 ## Roles
 
 | Prompt | Responsibility |
 |---|---|
 | `prompt/ENCODER.md` | Source meaning -> numeric packet plus separate human audit; never execute it |
-| `prompt/DOER.md` | Numeric packet -> authorized action -> numeric packet |
+| `prompt/DOER.md` | Numeric packet -> semantic handoff -> normal authorized agent execution/output; packet reply only when explicitly requested |
 | `prompt/DECODER.md` | Numeric packet -> English explanation for the human; never execute it |
 | `PROMPT.md` | Select one role from user intent |
 
@@ -57,13 +59,13 @@ Python is optional. It owns deterministic structural conversion when available; 
 
 Repo-aware hosts may ground deictic references without copying exact identities onto the wire. The ambient-capable conventions are `X02` active goal, `X03` active artifact, `X06` active plan, `X07` current blocker, `X08` current workspace/environment/repository, and `X09` output/result target.
 
-A host binding is usable only when its numeric context namespace exactly matches the packet context. Packet-inline X values take precedence; matching host-local bindings are fallback; otherwise the reference is missing and normal `need` behavior applies. A receiver must never reinterpret `X08` as whatever different repository it currently has open. Host-local bindings may contain richer objects or text because `src.context` never serializes them into Lambda H transport.
+`context 0` is the receiver-current ambient namespace. Packet-inline X values take precedence; then directly observable, unambiguous host/session facts already active at packet receipt may ground ambient-capable references. For `X08`, use the host/IDE workspace root if exposed, otherwise the current process/tool working directory, optionally normalized only to its enclosing Git worktree root. Do not search the machine or enumerate other repositories to identify X08. Freeze the resulting workspace for the request, and keep X08-scoped exploration inside it. For nonzero contexts, only an exact same-namespace host-local binding may resolve the reference. A receiver must never use its current workspace to satisfy a different nonzero context. Host-local bindings may contain richer objects or text because `src.context` never serializes them into Lambda H transport.
 
 ## Meaning and exact structure
 
 A point `q` marks a semantic location. A field `f` holds one or more components with center `q`, default width `s`, optional directional bands `b`, and optional relative weight `w`. Separate components stay separate. Width and uncertainty are independent.
 
-Subject/object direction, action target/tool, prerequisites, negation, prohibitions, conditions, policy, epistemic state, and task state remain exact. Missing context produces a numeric need control. Material ambiguity, unrepresentable meaning, incompatible text output, missing contract, or insufficient capability produces numeric abstention.
+Subject/object direction, action target/tool, prerequisites, negation, prohibitions, conditions, policy, epistemic state, and task state remain exact. Failures that prevent a usable semantic handoff may produce protocol controls. Ordinary post-handoff text or artifact output is allowed; abstain code 2 is only for incompatibility when `P.reply=packet` was explicitly requested.
 
 The public anchors in `semantics/basis.json` make the numbers interpretable. Lambda H is opaque in the limited sense that ordinary wording is absent from packets. It is not encryption: an observer with the basis and context can infer meaning.
 
@@ -77,7 +79,7 @@ The public anchors in `semantics/basis.json` make the numbers interpretable. Lam
 | `src/rows.py` | Public shallow numeric row parser/formatter |
 | `src/ir.py` | Local model-facing symbolic IR parser/formatter |
 | `src/codec.py` | IR <-> numeric transport boundary and numeric canonicalizer |
-| `src/context.py` | Host-local ambient context conventions and exact namespace resolution |
+| `src/context.py` | Receiver-current context-0 conventions and strict nonzero host-context resolution |
 | `src/geometry.py` | Field activation and numeric candidate helpers |
 | `semantics/basis.json` | Shared semantic directions |
 | `schema/lambda_h_packet.schema.json` | Generated local graph schema |

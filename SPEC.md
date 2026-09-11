@@ -4,7 +4,7 @@
 
 Lambda H/2.2 is the only active runtime protocol. `src/protocol.py` owns the graph and invariants, `src/wire.py` owns structural mappings, `src/rows.py` owns public numeric row framing, `src/ir.py` owns the local symbolic model-facing representation, `src/geometry.py` owns field arithmetic, and `semantics/basis.json` owns semantic directions. `src/codec.py` owns deterministic conversion between local symbolic IR and numeric transport.
 
-The agent-to-agent runtime protocol contains one numeric packet and no prose, developer JSON, audit, code fence, or natural-language reconstruction. Human-facing Encoder audits and Decoder explanations are outside this protocol boundary and are never protocol payload.
+A Lambda H instruction transport contains one numeric packet and no prose, developer JSON, audit, code fence, or natural-language reconstruction. After a Doer successfully decodes and grounds that instruction, normal host-native agent execution and output resume. `P.reply=packet` is an explicit opt-in to a Lambda H final response; omission leaves response format unconstrained by Lambda H. Human-facing Encoder audits and Decoder explanations are outside packet transport and are never protocol payload.
 
 The three standalone role prompts reproduce the numeric fallback contract for endpoints without tools. When codec tooling is available, Encoder/Doer/Decoder models operate on local `LH-IR 2.2` and let the codec derive or recover numeric rows instead of hand-authoring transport structure.
 
@@ -14,7 +14,7 @@ The protocol does not infer meaning, execute actions, authenticate senders, pers
 
 `LH-IR 2.2` is a local structural representation of the same developer graph, not a second transport protocol. It may contain fixed structural names such as `E`, `A`, `target`, `q`, and `TASK`, but no arbitrary source sentence or exact textual identity. `python3 -m src.codec encode` converts IR to canonical numeric rows; `python3 -m src.codec decode` converts numeric rows to local IR. Equivalent graphs must produce the same numeric Lambda H/2.2 packet regardless of whether they were assembled through IR or directly by trusted code.
 
-Models should not calculate transport row kinds, structural tags, list positions, reference namespaces, or row counts when the codec is available. Codec-produced numeric transport is immutable model output: pass it unchanged.
+Models should not calculate transport row kinds, structural tags, list positions, reference namespaces, or row counts when the codec is available. Encoder-produced packets, and Doer responses only when `P.reply=packet` is explicitly requested, should use codec-produced numeric transport unchanged.
 
 Canonical symbolic directives are:
 
@@ -138,17 +138,17 @@ Binary C operators require right. Exists and done omit right; done references an
 
 K states retain observed, reported, assumed, hypothesized, inferred, multiply supported, contradicted, unknown, and confirmed-to-required-standard. Confidence is 0..1. Truth applies only to R/C. Packet assertions are not independent evidence.
 
-P false flags prohibit mutation or external task-tool use by the represented task. `P.tools` does not disable local protocol parsing/serialization by the codec. True stays within external authority. Scope can narrow but never expand authority. Effort and initiative are -7..7 preferences. Reply has only packet output.
+P false flags prohibit mutation or external task-tool use by the represented task. `P.tools` does not disable local protocol parsing/serialization by the codec. True stays within external authority. Scope can narrow but never expand authority. Effort and initiative are -7..7 preferences. `P.reply` is optional: omission means normal host-native output after semantic handoff; `reply=packet` explicitly requests a Lambda H final response.
 
 Task requires canonical numeric ID, revision, state, goal, ordered steps, and done. Active requires the first unfinished step as next. Complete accounts for all steps. Blocked requires blocker. Non-active tasks have no next. Done steps include completed prerequisites. Stop is checked before more execution.
 
 ## 7. Context and opacity
 
-Context IDs identify scoped state; they do not authenticate it. X00..X09 mean subject, previous subject, goal, artifact, hypothesis, result, plan, blocker, environment, and output.
+Context IDs identify scoped state; they do not authenticate it. `context 0` is reserved for the receiver's current ambient host/session context. Nonzero context IDs identify explicit scoped state. X00..X09 mean subject, previous subject, goal, artifact, hypothesis, result, plan, blocker, environment, and output.
 
-`X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, active artifact, active plan, current blocker, current workspace/environment/repository, and output/result target. Ambient-capable means a repo-aware host may establish the exact value locally; it does not create a global or automatic binding. Deictic source meaning should use the corresponding X reference when that host binding is grounded, rather than inventing a generic semantic entity for a specific current object.
+`X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, active artifact, active plan, current blocker, current workspace/environment/repository, and output/result target. In context 0, a directly observable and unambiguous host/session fact already active at packet receipt may establish the corresponding ambient identity without a separate protocol binding. For X08, the authoritative value is the workspace root supplied by the host/IDE when available, otherwise the process/tool current working directory, optionally normalized only to its enclosing Git worktree root. X08 is a snapshot of the already-active workspace, not an instruction to discover repositories: implementations must not enumerate sibling repositories, caches, `/home`, `/`, or unrelated worktrees to choose it.
 
-Resolution precedence is explicit packet X value, then host-local binding with an exactly matching context namespace, otherwise missing. A different host namespace is not a conflict by itself and must never cause substitution with the receiver's current workspace or artifact. Missing required references produce `need`. Host-local values may be arbitrary endpoint objects or text because they remain outside `src.rows`, `src.ir`, and `src.codec` transport serialization.
+Resolution precedence is explicit packet X value first; for context 0, receiver-current grounded ambient state second; for a nonzero context, a host-local binding with exactly the same namespace second; otherwise missing. A context-0 binding is frozen for the request, so later working-directory changes do not retarget it. Once X08 is resolved, X08-scoped repository exploration remains inside that workspace unless another scope is explicitly represented and authorized. Receiver-current state must never satisfy a different nonzero context. Missing required references produce `need`. Host-local values may be arbitrary endpoint objects or text because they remain outside `src.rows`, `src.ir`, and `src.codec` transport serialization.
 
 Bind mode contains only protocol, mode, context, and nonempty nontext X values. Ordinary packets reject unreferenced inline bindings. Exact text is neither carried by the wire nor disguised as numbers. Context conflict code 2 remains for contradictory established context, not for the mere absence of a matching host namespace.
 
@@ -163,7 +163,7 @@ Controls carry no task payload:
 | ready | control | none |
 | need | context, control, refs | exact missing X references |
 | invalid | control, code | shape=0, local-reference=1, context-conflict=2, state=3 |
-| abstain | control, code | ambiguity=0, unrepresentable=1, text-output=2, contract=3, capacity/capability=4 |
+| abstain | control, code | ambiguity=0, unrepresentable=1, explicit-packet-reply-output-incompatibility=2, contract=3, capacity/capability=4 |
 
 Ready is bootstrap readiness, not execution success. Abstention reports inability to continue faithfully; it does not label a valid input malformed.
 

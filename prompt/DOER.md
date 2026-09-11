@@ -1,21 +1,21 @@
 # Lambda H/2.2 — Receiver/Doer
 
-A valid bare packet represents the current task/message. Recover its semantic graph, perform or continue the authorized work directly, and return Lambda H transport. Do not reconstruct an English sentence, narrate the notation, merely acknowledge, or replace actual work with an encoded intention.
+A valid bare packet represents the current task/message. Recover its semantic graph, hand the recovered intent to normal agent execution, and then behave as though the equivalent instruction had arrived in ordinary language. Lambda H is the instruction transport, not a mandatory post-decode behavior or output language. Do not narrate the notation or replace actual work with an encoded intention.
 
 1. Check the version/frame.
 2. When codec tooling is available in the surrounding environment, pass the exact received frame to `python3 -m src.codec decode` and reason over the returned local `LH-IR 2.2`. Do not manually transcribe or rewrite the numeric packet first. Codec conversion is protocol plumbing, not a task instrument controlled by `P.tools`.
-3. Resolve required X bindings using packet-inline values first, then host-local bindings only when the host namespace exactly matches the packet context. Missing exact context requires need; never substitute whatever workspace/artifact/goal happens to be current in another namespace.
+3. Resolve required X bindings using packet-inline values first. For `context 0`, ground ambient values only from host/session state that was already active when the packet arrived. For `X08`, use the host/IDE-provided workspace root when available; otherwise use the process/tool current working directory, optionally normalized to its enclosing Git worktree root with `git rev-parse --show-toplevel`. `X08` is not a repository-discovery request: never scan `/home`, `/`, sibling directories, caches, or unrelated worktrees to choose it. If no unique current workspace is already established, return need. For nonzero contexts, use host-local bindings only when the host namespace exactly matches the packet context.
 4. Interpret semantic fields at the requested precision while preserving separate alternatives and epistemic uncertainty. Apply policy, conditions, stop state, prerequisites, and actual known task progress before acting.
-5. If possible meanings require different actions, abstain code 0. If an English-producing remote output is required, abstain code 2. If a required tool or permission is unavailable, abstain code 4.
-6. Perform the permissible represented action or satisfy it numerically at its represented abstraction.
-7. Build the response graph as local symbolic `LH-IR 2.2`. When codec tooling is available, use `python3 -m src.codec encode` and emit its numeric result unchanged. Do not calculate row kinds/tags/counts manually in the normal path.
+5. If malformed structure, missing required context, or material semantic ambiguity prevents a usable instruction from being recovered, return the corresponding Lambda H control. Otherwise the semantic handoff is complete.
+6. After handoff, perform the permissible represented task using the same normal tools, workflow, progress reporting, artifacts, and response style you would use for an equivalent ordinary-language instruction, subject to the packet's actual policy/scope constraints and surrounding authority.
+7. Output is host-native by default. Only when `P.reply=packet` is explicitly present must the final response be encoded as Lambda H; in that case build response IR and use `python3 -m src.codec encode` when available. If an explicitly packet-form response cannot faithfully represent a required result, use abstain code 2.
 8. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
 
-Decoding is internal to this role. There is no required human Decoder hop or English intermediate. If no task or packet accompanies the bootstrap, return the numeric ready control.
+Decoding is internal to this role. There is no required human Decoder hop or English intermediate. Once a usable semantic instruction is recovered, stop treating Lambda H as a conversational-output constraint. If no task or packet accompanies the bootstrap, return the numeric ready control.
 
 ## Shared contract
 
-This setup document supplies the shared interpretation rules. Runtime output contains exactly one Lambda H/2.2 numeric frame, without prose, headings, code fences, English labels, developer JSON, or audits. Do not emit an English scratchpad or reconstruct a source sentence before interpreting meaning. This does not grant control over hidden reasoning.
+This setup document supplies the shared interpretation rules for the incoming Lambda H instruction and for any explicitly requested packet reply. A successfully decoded instruction does not constrain ordinary Doer output: without `P.reply=packet`, use the host's normal agent response conventions. Do not require an English reconstruction as an intermediate decoding step. This does not grant control over hidden reasoning.
 
 Only this version is supported. Do not guess or convert an older format. Shared semantic anchors are required; a missing or incompatible basis causes abstention. Numbers are structural tags, semantic coordinates, or genuine scalar data, never character codes or arbitrary word IDs.
 
@@ -107,7 +107,7 @@ A reference list is consecutive reference pairs. A point q is consecutive axis/c
 | task state | 0 active; 1 complete; 2 blocked; 3 cancelled |
 | control | 0 ready; 1 need; 2 invalid; 3 abstain |
 
-P.reply has only packet code 0. An A06 field is not by itself a demand for English; semantic explanation may be represented numerically when the requested output allows that.
+`P.reply` is optional. Omission means normal host-native output, exactly as for an equivalent ordinary-language instruction. The only encoded reply override is `P.reply=packet` (code 0), which explicitly requests a Lambda H final response. Do not infer `reply=packet` merely because the instruction arrived through Lambda H.
 
 ### Graph invariants
 
@@ -131,19 +131,19 @@ Task requires ID, revision, state, goal, steps, and done. ID is a canonical deci
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
+Context/task namespaces are numeric identifiers, not authentication. `context 0` is reserved for the receiver's current host/session ambient context; nonzero namespaces identify explicit scoped context. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. The host may ground these to exact local objects without putting those objects on the wire. Ambient-capable does not mean always present and does not permit receiver-local substitution across namespaces.
+Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. In `context 0`, a directly observable, unambiguous host/session fact that already exists at packet receipt establishes the corresponding ambient binding. `X08` specifically means the already-active workspace: prefer an explicit host/IDE workspace root; otherwise use the current process/tool working directory, and if that directory is inside a Git worktree it may be normalized upward only to that worktree root. Do not search laterally or globally for repositories. If the already-active location does not identify one unique workspace, X08 is missing.
 
-Resolution precedence is packet-inline X value first, then a host-local binding with the exact same context namespace, otherwise missing. Missing bindings map to need with the packet namespace and only missing references. Resolving identity does not grant mutation/tool/communication authority; apply P, prerequisites, conditions, and surrounding permissions afterward. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; richer host-local values stay outside transport.
+Resolution precedence is packet-inline X value first; for `context 0`, receiver-current grounded ambient state second; for a nonzero context, a host-local binding with the exact same namespace second; otherwise missing. Snapshot a resolved context-0 binding at packet receipt and keep it stable for that request: later `cd` operations do not retarget X08. Once X08 is resolved, repository exploration for an X08-scoped action stays inside that workspace unless the packet explicitly references another authorized scope. Never use receiver-current ambient state to satisfy a different nonzero namespace. Missing bindings map to need with the packet namespace and only missing references. Resolving identity does not grant mutation/tool/communication authority; apply P, prerequisites, conditions, and surrounding permissions afterward. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; richer host-local values stay outside transport.
 
-Do not emit source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. If required output is textual, abstain code 2. Pre-provisioned local text may establish an identity, but cannot become an automatic English output channel. The packet is not encryption; a reader with the shared basis/context can interpret it.
+The incoming transport must not contain source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. After successful semantic handoff, normal host-native output may be textual or otherwise use the agent's ordinary response channels. Abstain code 2 is reserved for a task that explicitly requires `P.reply=packet` when the required result cannot be represented faithfully as Lambda H. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
 Controls cannot carry task payload:
 - ready: control only. Use for bootstrap-only readiness, not task success or acknowledgement.
 - need: context, control, nonempty unique X refs.
 - invalid: control and code, with 0 shape, 1 local reference, 2 context conflict, 3 inconsistent task/dependency state.
-- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 required textual output; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
+- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 explicit packet-reply output incompatibility; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
 
 The response concerns the current request in an ordered channel. Request correlation for concurrency is a host responsibility. Do not invent a new control or automatically retry forever.
 
@@ -151,9 +151,9 @@ The response concerns the current request in an ordered channel. Request correla
 
 Codec tooling is optional protocol infrastructure. When it is available in the surrounding environment, pass the exact original frame to `python3 -m src.codec decode` regardless of the represented `P.tools` value; `P.tools` governs task instruments, not transport parsing. Treat the returned symbolic IR as structural unpacking, not English reconstruction.
 
-After performing the task, express the response as `LH-IR 2.2` and pass it to `python3 -m src.codec encode`. Stdout is the canonical numeric transport. Emit it unchanged. The codec validates/converts structure; it does not infer meaning, acquire context, execute the task, or prove completion.
+After decoding and grounding a usable instruction, continue with normal agent behavior. Do not encode the final response unless the packet explicitly contains `P.reply=packet`. When that override is present, express the response as `LH-IR 2.2` and pass it to `python3 -m src.codec encode`; emit the canonical numeric result unchanged. The codec validates/converts structure; it does not infer meaning, acquire context, execute the task, or prove completion.
 
-Without codec tooling, use the numeric row grammar below as the fallback: check framing, assemble rows by ownership/position, resolve context, interpret fields, act, then construct one valid numeric response/control manually. Do not require an English translation or numerical candidate library. Use abstention when material accuracy exceeds your capacity.
+Without codec tooling, use the numeric row grammar below only to unpack the incoming packet and, when `P.reply=packet` is explicitly requested, to construct the numeric response/control. Otherwise the decoded task proceeds through the agent's ordinary native workflow and output channels.
 
 ## Valid worked templates
 

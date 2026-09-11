@@ -1,6 +1,6 @@
 # Historical Lambda H/2.2 Direct-Row Migration Plan
 
-> Historical record of the `4dab29a` direct-row migration. It is superseded for the active architecture by `2026-09-11-human-decoder-ir-codec-repair.md`, which restores human Encoder/Decoder surfaces and codec-owned symbolic IR serialization.
+> Historical record of the `4dab29a` direct-row migration. It is superseded for the active architecture by `2026-09-11-human-decoder-ir-codec-repair.md` and the later agent-native semantic-handoff/context corrections. Numeric-only Doer output described below is historical, not the current contract.
 
 **Goal:** Record the earlier direct-row migration that made shallow numeric Lambda H/2.2 the only model/runtime representation.
 
