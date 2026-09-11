@@ -1,4 +1,4 @@
-"""Numeric transport for the public 2.1 graph, not a cipher or word codebook.
+"""Structural tags and numeric record mapping for the 2.2 row codec.
 
 Only fixed structural tags, references, coordinates, enum indices and typed
 nontext scalars are represented. Text is deliberately rejected, not disguised
@@ -15,13 +15,13 @@ from .protocol import LAYERS, PROTOCOL, ProtocolError, references, require_valid
 MAX_INDEX = 9007199254740991
 REF_PREFIXES = ("e", "r", "a", "t", "c", "X")
 ENUMS = {
-    "mode": ("message", "handoff", "bind"),
+    "mode": ("message", "bind"),
     "op": ("eq", "ne", "lt", "le", "gt", "ge", "exists", "done"),
     "epistemic": tuple(f"K{i:02d}" for i in range(9)),
     "detail": ("brief", "normal", "full"),
-    "reply": ("natural", "packet"),
+    "reply": ("packet",),
     "state": ("active", "complete", "blocked", "cancelled"),
-    "control": ("ready", "need", "invalid"),
+    "control": ("ready", "need", "invalid", "abstain"),
 }
 # The position in each table is a STRUCTURAL field tag, never a word identity.
 RECORDS = {

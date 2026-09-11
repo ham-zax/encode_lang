@@ -1,127 +1,97 @@
-# Lambda H/2.1 Three-Role Prompt Architecture Implementation Plan
+# Lambda H/2.2 Clean Migration Implementation Plan
 
-**Goal:** Migrate Lambda H/2.1 from the ambiguous two-role prompt split to standalone Doer, Encoder, and Decoder prompts, with a repo-aware `PROMPT.md` router.
+**Goal:** Make shallow numeric Lambda H/2.2 the only active runtime, with three standalone prompts, optional deterministic validation, and explicit numeric failure behavior.
 
-**Architecture:** `prompt/DOER.md` consumes Lambda H and performs represented work; `prompt/ENCODER.md` converts source language/state into a numeric packet plus a separate human semantic audit; `prompt/DECODER.md` converts Lambda H into human-readable explanation without execution. `PROMPT.md` routes repo-aware agents to one or more of those role prompts rather than duplicating the protocol tables.
+**Architecture:** Models and tools consume the same numeric rows. `src.protocol` owns semantics, `src.wire` owns structural mappings, and `src.rows` owns the public frame. Runtime output is numeric-only; Python is optional.
 
-**Tech Stack:** Markdown role prompts, existing Python Lambda H/2.1 codec/protocol implementation, calibration metadata.
+**Spec:** [Direct numeric semantics architecture](../specs/2026-09-11-model-facing-ir-opaque-wire-design.md)
 
-## Global Constraints
+## Constraints
 
-- Do not change the Lambda H/2.1 wire format merely to support role separation.
-- Do not require natural-language sentence reconstruction before Doer execution.
-- Encoder audit must distinguish exact protocol semantics from expected receiver interpretation.
-- Decoder must explain, not execute.
-- Existing Doer-style calibration ultimately binds to `prompt/DOER.md`.
-- Do not restore, reset, overwrite, or recreate concurrent human deletions/edits.
-- Before editing a shared existing file, read its current content and apply only the smallest still-required migration.
-- Files currently marked human/other-pass-owned by `docs/REWRITE_COORDINATION.md` remain read-only during this pass; record incomplete migration rather than racing that owner.
-- No unit-test creation or execution is authorized. Candidate-final validation is limited to focused non-test contract checks.
+- No legacy runtime parser, conversion command, combined bootstrap, natural reply, or readable sidecar.
+- No source wording, developer JSON, audit, code fence, or English explanation in runtime output.
+- No claim to control hidden reasoning or guarantee arbitrary semantic recovery.
+- Exact graph structure remains authoritative over approximate geometry.
+- Tool-free operation is complete; tool-assisted and tool-free evidence remain distinct.
+- Preserve the Git index and concurrent work. No tests, model runs, commit, or deployment without independent authorization.
 
-### Task 1: Create the standalone Doer prompt
+## Task 1: Active graph and numeric mapping
 
-**Files:**
-- Create: `prompt/DOER.md`
+**Files:** `src/protocol.py`, `src/wire.py`, `semantics/basis.json`, generated schema.
 
-**Interfaces:**
-- Consumes: current Lambda H/2.1 wire/field tables and semantic anchors as represented by the current receiver bootstrap and implementation authorities.
-- Produces: a standalone Lambda H-native execution prompt.
+- [x] Set the sole active protocol to Lambda H/2.2.
+- [x] Add abstention and its bounded numeric codes.
+- [x] Restrict developer literals to number/boolean/null.
+- [x] Restrict context/task IDs to canonical decimal namespaces.
+- [x] Restrict reply to packet and modes to message/bind.
+- [x] Retain E/R/A/T/C/K/P/task/V and q/f/s/b/w semantics.
+- [x] Regenerate the local graph schema from the active contract.
 
-**Steps:**
-- [ ] Copy the current active protocol tables, field contract, context roles, and semantic anchors without changing their values.
-- [ ] Make the operational path packet -> structural graph -> semantic interpretation -> hard constraints/task state -> action -> Lambda H response.
-- [ ] Retain deterministic `src.codec parse` as the preferred bookkeeping path when tools are permitted, plus a complete manual path.
-- [ ] Remove the human-facing `DECODE:` reconstruction exception and any general source-to-packet encoding workflow.
+**Acceptance:** text and natural replies cannot validate; every active field has one fixed numeric mapping.
 
-**Acceptance criteria:**
-- `DOER.md` is standalone, acts on represented work, defaults protocol replies to Lambda H when prose is not required, and never requires sentence-level reconstruction.
+## Task 2: Shallow row parser and formatter
 
-### Task 2: Create the standalone Decoder prompt
+**Files:** `src/rows.py`.
 
-**Files:**
-- Create: `prompt/DECODER.md`
+- [x] Parse the exact marker and row-count frame.
+- [x] Enforce numeric lexical rules, 1 MiB, and 16384 rows.
+- [x] Assemble root, nodes, records, fields, components, bindings, and choices by explicit owner/position.
+- [x] Reject duplicate ownership and noncontiguous positions.
+- [x] Delegate graph meaning/invariants to the existing semantic validator.
+- [x] Canonically format by root, node, field, component, and item order.
+- [x] Preserve arrays, omissions, booleans/null, numeric values, and component order.
 
-**Interfaces:**
-- Consumes: the same Lambda H/2.1 wire/field tables and semantic anchors as the Doer.
-- Produces: a standalone packet-to-human reconstruction prompt.
+**Acceptance:** graph and canonical-text round-trips hold for supported graphs; malformed input is never repaired.
 
-**Steps:**
-- [ ] Reuse the exact structural tables, field contract, context roles, and semantic anchors.
-- [ ] Define packet -> structural graph -> semantic interpretation -> human reconstruction as the only normal workflow.
-- [ ] Explain exact graph roles, q/f breadth/components, policy/task state, X dependencies, and unresolved ambiguity.
-- [ ] Explicitly prohibit executing represented actions merely because they appear in the packet.
+## Task 3: Optional deterministic codec
 
-**Acceptance criteria:**
-- `DECODER.md` is standalone, explains Lambda H accurately to a human, and does not execute the represented task.
+**Files:** `src/codec.py`, `src/__init__.py`.
 
-### Task 3: Upgrade the Encoder output contract
+- [x] Accept only the 2.2 row format.
+- [x] Validate and canonicalize with a parse-format-parse comparison.
+- [x] Emit only numeric output on stdout.
+- [x] Create only new private artifacts and leave stdout empty on successful file output.
+- [x] Map structural/capacity failures to numeric controls and exit 2.
+- [x] Remove compatibility conversion and context-sidecar commands/APIs.
 
-**Files:**
-- Modify: `prompt/ENCODER.md`
+**Acceptance:** the codec cannot become a textual runtime path or overwrite a destination.
 
-**Interfaces:**
-- Consumes: ordinary/source meaning and the existing encoder construction workflow.
-- Produces: `PACKET` plus a separate `AUDIT` by default.
+## Task 4: Standalone role prompts
 
-**Steps:**
-- [ ] Preserve the existing source -> graph -> q/f -> numeric-wire construction flow.
-- [ ] Change default output to a machine-separable `PACKET` section followed by a human `AUDIT` section.
-- [ ] Make the audit cover principal concepts, exact directed structure, field geometry where material, conditions/policy/task state, X dependencies, deliberately preserved ambiguity, exact protocol semantics, and expected conforming-receiver interpretation.
-- [ ] State that the audit is outside the wire and must not be forwarded automatically to a Doer.
-- [ ] Preserve the safety/non-encryption/hidden-reasoning boundaries.
+**Files:** `prompt/ENCODER.md`, `prompt/DOER.md`, `prompt/DECODER.md`, `PROMPT.md`.
 
-**Acceptance criteria:**
-- The encoder does not execute its source task and emits an inspectable semantic portrayal after the numeric packet.
+- [x] Give each role the complete grammar, tables, invariants, controls, anchors, and no-tool procedure.
+- [x] Encoder emits one packet/control and never executes source work.
+- [x] Doer acts directly from represented meaning and returns numeric state/result/control.
+- [x] Decoder canonicalizes structure without action or English explanation.
+- [x] Router selects one role from intent and defaults a bare frame to Doer.
+- [x] Remove the combined bootstrap and PACKET/AUDIT workflow.
 
-### Task 4: Make `PROMPT.md` the repo-aware universal router
+**Acceptance:** the prompts share one contract and can operate without Python.
 
-**Files:**
-- Modify: `PROMPT.md`
+## Task 5: Active docs, examples, and calibration
 
-**Interfaces:**
-- Consumes: user intent plus repository access.
-- Produces: role selection or explicit role chaining.
+**Files:** README, SPEC, MIGRATION, privacy/field docs, examples, calibration source/corpus/docs/results.
 
-**Steps:**
-- [ ] Route source -> Lambda H to `prompt/ENCODER.md`.
-- [ ] Route Lambda H -> human explanation to `prompt/DECODER.md`.
-- [ ] Route Lambda H -> execution/continuation to `prompt/DOER.md`.
-- [ ] Explain explicit chaining for mixed workflows and keep the router compact by relying on repo files as authoritative references.
+- [x] Migrate checked-in packet examples to rows.
+- [x] Remove readable context-sidecar examples and obsolete plans/designs.
+- [x] Replace active docs with the sole 2.2 entrypoints and limits.
+- [x] Bind calibration to the actual Doer prompt and semantic basis.
+- [x] Replace English-output/context cases with numeric-only cases.
+- [ ] Complete final documentation cross-reference and stale-contract scan.
 
-**Acceptance criteria:**
-- A repo-aware agent can perform or chain all three roles without treating `PROMPT.md` as a fourth protocol definition.
+**Acceptance:** no active doc/corpus directs a user to old syntax, bootstrap, natural output, sidecar, or conversion.
 
-### Task 5: Migrate protected callers when their owner boundary is available
+## Task 6: Focused non-test completion checks
 
-**Files:**
-- Modify when no longer protected: `src/calibration.py`, `calibration/README.md`, `calibration/RESULTS.md`, `README.md`, `SPEC.md`, and any directly affected active role-selection documentation.
-- Retire or historicalize: `prompt/BOOTSTRAP.md` only according to the current human-owned migration state.
+- [ ] Parse/canonicalize all checked-in `.lh` packets.
+- [ ] Validate every calibration graph and generated schema equality.
+- [ ] Check all prompt packet examples and anchor blocks.
+- [ ] Exercise all control packets and representative full-field/task packets.
+- [ ] Exercise malformed frame, duplicate field, missing position, invalid reference, inconsistent state, text, unsupported version, and capacity paths.
+- [ ] Confirm stdout contains one numeric frame and successful artifact output leaves stdout empty.
+- [ ] Run Python syntax compilation without executing a test suite.
+- [ ] Run `git diff --check` and inspect the attributable diff.
+- [ ] Record mechanical evidence and mark model behavior unmeasured.
 
-**Interfaces:**
-- Consumes: three-role prompt paths.
-- Produces: one active role vocabulary with existing receiver calibration bound to `DOER.md`.
-
-**Steps:**
-- [ ] Re-read every shared file immediately before editing.
-- [ ] Migrate calibration bootstrap binding from `BOOTSTRAP.md` to `DOER.md` without changing the corpus.
-- [ ] Mark prior combined-bootstrap observations historical after the new Doer digest.
-- [ ] Replace active two-role documentation references with Doer/Encoder/Decoder terminology.
-- [ ] Do not recreate any section already removed or rewritten compatibly by the human/other pass.
-
-**Acceptance criteria:**
-- No active calibration or role-selection documentation treats `BOOTSTRAP.md` as the current execution/decoder role, unless a concurrent owner boundary prevents completion and that remaining work is reported explicitly.
-
-### Task 6: Candidate-final non-test contract verification
-
-**Files:**
-- Read-only verification of the three role prompts and direct callers.
-
-**Steps:**
-- [ ] Confirm Doer, Encoder, and Decoder structural tag/enum tables are identical.
-- [ ] Confirm E/R/A/T/K/V anchor blocks agree across all three prompts and with `semantics/basis.json`.
-- [ ] Parse every bracketed Lambda H example embedded in the three role prompts with the current codec.
-- [ ] Confirm role-specific prohibitions: Doer has no general source encoding/reconstruction workflow; Decoder does not execute; Encoder emits packet plus audit and does not execute.
-- [ ] Run `git diff --check HEAD`.
-
-**Acceptance criteria:**
-- The three prompts are structurally compatible with one Lambda H/2.1 protocol contract and the implementation contains no accidental dual-role fallback introduced by this migration.
+**Acceptance:** active structural behavior is falsifiably verified, while tool-free/model semantic reliability remains explicitly unmeasured.

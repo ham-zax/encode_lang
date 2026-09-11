@@ -1,4 +1,4 @@
-"""Lambda H/2.1 contract, structural validation, and disclosure inspection.
+"""Lambda H/2.2 semantic graph and structural validation.
 
 This module does not infer meaning, execute actions, authenticate senders, or
 persist task state. Its schema checker implements only the vocabulary emitted
@@ -9,17 +9,16 @@ from __future__ import annotations
 import json
 import math
 import re
-from copy import deepcopy
 from typing import Any
 
-PROTOCOL = "ΛH/2.1"
-PREFIX = "ΛH2.1|"
+PROTOCOL = "ΛH/2.2"
+PREFIX = "ΛH2.2|"
 LAYERS = {"E": 32, "R": 16, "A": 16, "T": 16, "V": 8}
 NODE_LAYERS = ("E", "R", "A", "T", "C")
 REF = r"^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
 XREF = r"^X(?:0[0-9]|[1-9A-F][0-9A-F])$"
-NAME = {"type": "string", "minLength": 1, "maxLength": 128}
-LITERAL = {"type": ["string", "number", "boolean", "null"]}
+NAMESPACE = {"type": "string", "pattern": r"^(?:0|[1-9][0-9]*)$"}
+LITERAL = {"type": ["number", "boolean", "null"]}
 REFERENCE = {"type": "string", "pattern": REF}
 XREFERENCE = {"type": "string", "pattern": XREF}
 ACTION = {"type": "string", "pattern": r"^a[0-9]+$"}
@@ -107,13 +106,13 @@ def schema() -> dict[str, Any]:
         "mutation": {"type": "boolean"}, "tools": {"type": "boolean"},
         "scope": array_shape(REFERENCE, unique=True),
         "detail": choices("brief", "normal", "full"),
-        "reply": choices("natural", "packet"),
+        "reply": choices("packet"),
         "effort": {"type": "integer", "minimum": -7, "maximum": 7},
         "initiative": {"type": "integer", "minimum": -7, "maximum": 7},
     })
     policy["minProperties"] = 1
     task = object_shape({
-        "id": NAME, "revision": {"type": "integer", "minimum": 0},
+        "id": NAMESPACE, "revision": {"type": "integer", "minimum": 0},
         "state": choices("active", "complete", "blocked", "cancelled"),
         "goal": REFERENCE, "steps": array_shape(ACTION, unique=True),
         "done": array_shape(ACTION, empty=True, unique=True), "next": ACTION,
@@ -122,8 +121,8 @@ def schema() -> dict[str, Any]:
     bindings = {"type": "object", "minProperties": 1,
                 "propertyNames": {"pattern": XREF}, "additionalProperties": LITERAL}
     data = object_shape({
-        "protocol": {"const": PROTOCOL}, "context": NAME,
-        "mode": choices("message", "handoff", "bind"),
+        "protocol": {"const": PROTOCOL}, "context": NAMESPACE,
+        "mode": choices("message", "bind"),
         "E": array_shape(entity), "R": array_shape(relation),
         "A": array_shape(action), "T": array_shape(tool),
         "C": array_shape(condition), "K": array_shape(epistemic),
@@ -132,14 +131,17 @@ def schema() -> dict[str, Any]:
     data["anyOf"] = [{"required": [key]} for key in (*NODE_LAYERS, "K", "P", "X", "V", "task")]
     ready = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "ready"}}, ("protocol", "control"))
     need = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "need"},
-                         "context": NAME, "refs": array_shape(XREFERENCE, unique=True)},
+                         "context": NAMESPACE, "refs": array_shape(XREFERENCE, unique=True)},
                         ("protocol", "control", "context", "refs"))
     invalid = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "invalid"},
                             "code": {"type": "integer", "minimum": 0, "maximum": 3}},
+                            ("protocol", "control", "code"))
+    abstain = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "abstain"},
+                            "code": {"type": "integer", "minimum": 0, "maximum": 4}},
                            ("protocol", "control", "code"))
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
-            "title": "Lambda H/2.1 developer graph (numeric wire decoded first; graph validation also required)",
-            "oneOf": [data, ready, need, invalid]}
+            "title": "Lambda H/2.2 developer graph (numeric rows decoded first; graph validation also required)",
+            "oneOf": [data, ready, need, invalid, abstain]}
 
 
 def _matches_type(value: Any, kind: str) -> bool:
@@ -267,9 +269,6 @@ def validate_packet(packet: Any) -> list[str]:
     external = {ref for _, ref in refs if ref.startswith("X")}
     if (external or "X" in packet) and "context" not in packet:
         errors.append("context: required whenever scoped X references or bindings are present")
-    if packet.get("mode") == "handoff":
-        for ref in sorted(external - packet.get("X", {}).keys()):
-            errors.append(f"X: handoff is missing {ref}")
     if packet.get("mode") == "bind":
         if "X" not in packet or set(packet) - {"protocol", "mode", "context", "X"}:
             errors.append("mode: bind carries only protocol, mode, context, and nonempty X")
@@ -337,56 +336,6 @@ def require_valid(packet: Any) -> None:
     errors = validate_packet(packet)
     if errors:
         raise ProtocolError("; ".join(errors))
-
-
-def inspect_packet(packet: dict[str, Any], context: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Check disclosure/reference closure; report declared next, never execute it."""
-    require_valid(packet)
-    if "control" in packet:
-        return {"control": packet["control"]}
-    known: dict[str, Any] = {}
-    if context is not None:
-        context_shape = object_shape({"context": NAME, "X": {"type": "object", "propertyNames": {"pattern": XREF}, "additionalProperties": LITERAL}}, ("context", "X"))
-        errors = _shape_errors(context, context_shape, "context file")
-        if errors:
-            raise ProtocolError("; ".join(errors))
-        if context["context"] != packet.get("context"):
-            raise ProtocolError("context namespace mismatch; never reuse bindings across namespaces")
-        known.update(context["X"])
-    for key, value in packet.get("X", {}).items():
-        if key in known and not _same_json(known[key], value):
-            raise ProtocolError(f"conflicting binding for {key}; use a new context namespace")
-        known[key] = value
-    required = sorted({ref for _, ref in references(packet) if ref.startswith("X")})
-    missing = [ref for ref in required if ref not in known]
-    task = packet.get("task", {})
-    return {
-        "context": packet.get("context"), "required": required, "missing": missing,
-        "unused_inline_bindings": sorted(set(packet.get("X", {})) - set(required)),
-        "declared_task_state": task.get("state"),
-        "declared_next": task.get("next") if not missing else None,
-        "note": "Structure and supplied state only; not meaning, evidence, permission, or execution verification.",
-    }
-
-
-def make_handoff(packet: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-    """Include exactly referenced bindings, never dump the rest of a context."""
-    require_valid(packet)
-    if "control" in packet or packet.get("mode") == "bind":
-        raise ProtocolError("handoff requires an ordinary message, not a control/binding frame")
-    report = inspect_packet(packet, context)
-    if report["missing"]:
-        raise ProtocolError("missing bindings: " + ", ".join(report["missing"]))
-    result = deepcopy(packet)
-    result["mode"] = "handoff"
-    values = context["X"] | packet.get("X", {})
-    selected = {ref: values[ref] for ref in report["required"]}
-    if selected:
-        result["X"] = selected
-    else:
-        result.pop("X", None)
-    require_valid(result)
-    return result
 
 
 if __name__ == "__main__":

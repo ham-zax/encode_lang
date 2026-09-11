@@ -1,101 +1,76 @@
-# encode_lang — Lambda H/2.1
+# encode_lang — Lambda H/2.2
 
-**Semantic fields, directed task structure, and a numeric communication wire.**
+Lambda H/2.2 is a numeric semantic communication format for language-model endpoints. It combines shallow row framing, semantic fields, exact graph relationships, policy, epistemic state, and task progress.
 
-A concept need not resolve to one word. Represent its center of emphasis, the falloff around it, and separate regions for distinct live meanings. Keep who acts on what, prerequisites, negation, permissions and progress exact.
-
-This is a forward development of the V2 graph—not a rollback to V1. Python may unpack and score the representation. There is no compulsory English reconstruction between receiving a packet and using its meaning.
-
-## Start here
-
-Lambda H/2.1 now uses two role-specific standalone prompts. Give a receiving/acting agent [`prompt/BOOTSTRAP.md`](prompt/BOOTSTRAP.md). Give a sending/encoding agent [`prompt/ENCODER.md`](prompt/ENCODER.md). Do not make a weak receiver spend context learning the general encoding workflow unless that session genuinely needs both roles.
-
-For a receiver, load `prompt/BOOTSTRAP.md` and then send a bare packet. For example, with namespace 1 and X02 already bound to an unfinished goal:
+The runtime goal is direct semantic action:
 
 ```text
-ΛH2.1|[[0,1],[4,[[[0,0],[1,[[14,7]]],[4,[5,2]]]]],[8,[[3,0],[4,0]]]]
+source meaning -> Encoder -> numeric packet -> Receiver/Doer -> action -> numeric packet
 ```
 
-The receiver should continue the unfinished work, not explain this notation. The last policy record explicitly requests a brief natural-language response. Protocol replies otherwise stay in numeric form unless the user or requested output asks for prose. A completed goal must not be restarted.
+English reconstruction is not a runtime stage. Runtime output is exactly one `ΛH2.2|` numeric frame. Text, field labels, source wording, developer JSON, code fences, and human audits are excluded. A request that requires textual output receives numeric abstention code 2.
 
-The receiver bootstrap treats a bare packet as the represented task and contains an explicit mechanical decode-and-act procedure. `DECODE:` explicitly asks that receiver for a reconstruction instead of execution. The encoder bootstrap treats its source message/task as material to represent and emits a packet rather than carrying out that task.
+## Roles
 
-## What changed
+| Prompt | Responsibility |
+|---|---|
+| `prompt/ENCODER.md` | Encode source meaning; never execute it |
+| `prompt/DOER.md` | Interpret numeric meaning and perform authorized work |
+| `prompt/DECODER.md` | Validate/canonicalize numeric structure; never execute or explain in English |
+| `PROMPT.md` | Select one role from user intent |
 
-The default wire has **no readable object keys, ordinary words, literal text, or descriptive task names**. After `ΛH2.1|`, it contains arrays and finite numbers only. Fixed structural tags identify fields; they are not a word-to-code dictionary. The formatter rejects text instead of silently omitting it or hiding it as byte codes. Readable developer JSON is available deliberately for inspection, not as the normal wire.
+Each role prompt contains the complete row grammar, graph invariants, semantic anchors, valid controls, worked packets, and a path that requires no Python.
 
-Semantic fields add actual geometric behavior, beyond renaming metadata. A field can have multiple weighted centers and different lower/upper widths on each axis. Focus can be moved, narrowed or broadened without collapsing separate meanings. A single component peaks at its center and fades with distance. Thresholds determine acceptance; they do not create lexical identity or evidence.
+## Numeric rows
 
-The V2 direction, action/tool binding, conditions, exact policy limits and task snapshots remain. A broader action field never softens a read-only constraint. An unknown stop condition is not permission to continue. Progress and revisions are still supplied state, not a durable execution ledger.
+A frame begins with `ΛH2.2|`, declares its data-row count with row kind 8, and closes with row kind 9 and the same count:
 
-## Python is allowed
+```text
+ΛH2.2|
+8 1
+0 12 0
+9 1
+```
 
-From the repository root, using Python 3.10 or later and only the standard library:
+That packet is the ready control. Data rows use only finite JSON numbers separated by spaces. The format rejects brackets, strings, comments, blank lines, unknown fields, duplicate ownership, missing list positions, invalid references, inconsistent state, and inputs beyond the declared limits.
+
+Row counts detect truncation, while graph validation checks semantic structure. Neither proves that a sender chose the intended meaning.
+
+## Optional deterministic validation
+
+Python 3.10+ and the standard library can validate and canonicalize a packet:
 
 ```sh
-# Readable developer inspection, explicitly requested.
-python3 -m src.codec parse examples/field.lh
-
-# Normal wire output; rejects plaintext payloads and descriptive namespaces.
 python3 -m src.codec format examples/field.lh
-
-# Score explicit numeric candidates; thresholds are caller policy.
-python3 -m src.codec score examples/field.lh --node e0 \
-  --candidates examples/field-candidates.json --minimum 0.2 --margin 0.05
-
-# Narrow one direction; output remains a numeric packet.
-python3 -m src.codec focus examples/field.lh --node e0 --scale 0.5 --axis E20
-
-# Move the center without changing the widths.
-python3 -m src.codec focus examples/field.lh --node e0 --shift E20=-1
-
-python3 -m src.codec inspect examples/continue.lh --context examples/context.demo.json
+python3 -m src.codec format examples/field.lh --output /tmp/canonical-field.lh
 ```
 
-Point `q` remains available when no width is asserted. Field `f` carries one or more components with `q` center, `s` default width, optional `b` lower/upper bands, and optional `w` relative peak weight. Scoring requires explicit `f`; it does not invent a width for a point.
+With no `--output`, stdout is numeric packet data only. With `--output`, the destination must be new; success writes a private file and leaves stdout empty. Failures return a numeric invalid or abstain control and exit 2.
 
-Public helpers include `make_field`, `activation`, `focus_field`, `shift_field`, and `rank_candidates`, alongside the existing graph/codec helpers. Candidate ranking reports every supplied score and abstains on weak or tied matches. There is no built-in lexicon, network lookup, automatic task execution, or model API call.
+Python is optional. It checks serialization and graph invariants; it does not infer meaning, execute tasks, acquire context, or make model-only behavior reliable.
 
-## Exact context without plaintext in the wire
+## Meaning and exact structure
 
-An exact filename, quotation or name belongs in a genuinely shared X binding, not a guessed geometric neighborhood. Numeric context IDs identify an agreed namespace; they are not passwords or authenticated identities. An unknown binding produces a need control rather than a fabricated identity.
+A point `q` marks a semantic location. A field `f` holds one or more components with center `q`, default width `s`, optional directional bands `b`, and optional relative weight `w`. Separate components stay separate. Width and uncertainty are independent.
 
-For a fresh receiver, explicitly export a selected context sidecar alongside the numeric packet:
+Subject/object direction, action target/tool, prerequisites, negation, prohibitions, conditions, policy, epistemic state, and task state remain exact. Missing context produces a numeric need control. Material ambiguity, unrepresentable meaning, incompatible text output, missing contract, or insufficient capability produces numeric abstention.
 
-```sh
-# Creates a NEW directory; parent must already exist. Never overwrites it.
-python3 -m src.codec handoff examples/continue.lh \
-  --context examples/context.demo.json --output /tmp/encode-lang-handoff-demo
-```
-
-The result contains `packet.lh` and `context.private.json`. Only referenced bindings enter the sidecar. **The sidecar is readable disclosure**; inspect it and transfer it only to the intended endpoint. The numeric packet alone is not self-contained when it needs that context. The Python `make_handoff` API still returns an explicit developer bundle with selected bindings; do not mistake that bundle for an opaque packet.
-
-## Evidence, not claims about hidden thought
-
-[`calibration/probes.json`](calibration/probes.json) contains current receiver cases; the evaluator binds results to both the bootstrap and the corpus. Optional Python calls are recorded, not automatically marked as failure. Explicit no-tool constraints still apply.
-
-```sh
-python3 -m src.calibration --template
-python3 -m src.calibration --receiver directional_field
-python3 -m src.calibration private/receiver-results.json
-```
+The public anchors in `semantics/basis.json` make the numbers interpretable. Lambda H is opaque in the limited sense that ordinary wording is absent from packets. It is not encryption: an observer with the basis and context can infer meaning.
 
 ## Project map
 
 | Path | Role |
-| --- | --- |
-| `prompt/BOOTSTRAP.md` | Standalone receiver/decoder: mechanical unpacking, semantic interpretation, task execution |
-| `prompt/ENCODER.md` | Standalone sender/encoder: semantic graph construction and numeric serialization |
-| `src/protocol.py` | Developer graph schema and exact reference/task invariants |
-| `src/wire.py` | Numeric structural tags, strict encode/decode, plaintext rejection |
-| `src/geometry.py` | Directional field activation, focus, shift and explicit-candidate ranking |
-| `src/codec.py` | CLI and separate context-sidecar export |
-| `semantics/basis.json` | Shared semantic directions, not a word dictionary |
-| `schema/lambda_h_packet.schema.json` | Generated developer-graph schema; decode the wire first |
-| `examples/` | Numeric packets and synthetic local context/candidate data |
-| `calibration/` | Version-bound receiving corpus and evidence records |
-| `docs/FIELD_MODEL.md` | Field interpretation and mathematical limits |
-| `MIGRATION.md` | Forward migration and the text-disclosure boundary |
-| `archive/v1/`, `archive/v2/` | Historical definitions and evidence, not active fallback decoders |
+|---|---|
+| `SPEC.md` | Active 2.2 contract |
+| `src/protocol.py` | Developer graph and invariants |
+| `src/wire.py` | Numeric structural mapping used by row assembly |
+| `src/rows.py` | Public shallow row parser/formatter |
+| `src/codec.py` | Optional canonicalization CLI |
+| `src/geometry.py` | Field activation and numeric candidate helpers |
+| `semantics/basis.json` | Shared semantic directions |
+| `schema/lambda_h_packet.schema.json` | Generated local graph schema |
+| `examples/` | Numeric packets and numeric candidate data |
+| `calibration/` | Version-bound behavioral evidence framework |
+| `docs/PRIVACY.md` | Opacity and security boundary |
 
-The geometry is a specified communication model, not access to an LLM's internal embeddings. A correct next action and preserved meaning are the objective.
+Older formats are outside the active runtime. There is no compatibility parser or conversion command.

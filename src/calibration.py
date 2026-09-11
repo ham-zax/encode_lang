@@ -1,4 +1,4 @@
-"""Evidence-recording receiver calibration; never fabricates model outcomes.
+"""Evidence recording for the Lambda H/2.2 Receiver/Doer.
 
 Judgments are explicit human/reviewer assessments, not an automatic semantic
 oracle. A parsed packet or an empty template cannot count as a behavior pass.
@@ -17,8 +17,9 @@ from .protocol import PROTOCOL, ProtocolError, require_valid
 
 ROOT = Path(__file__).resolve().parents[1]
 PROBES = ROOT / "calibration" / "probes.json"
-BOOTSTRAP = ROOT / "prompt" / "BOOTSTRAP.md"
-DIMENSIONS = ("meaning", "direct_response", "constraints", "disclosure")
+DOER = ROOT / "prompt" / "DOER.md"
+BASIS = ROOT / "semantics" / "basis.json"
+DIMENSIONS = ("meaning", "direct_action", "constraints", "numeric_output")
 
 
 def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
@@ -34,16 +35,20 @@ def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
             raise ProtocolError("each case requires an id")
         if case["id"] in cases:
             raise ProtocolError("duplicate calibration case id")
-        if not isinstance(case.get("context"), str) or not isinstance(case.get("expect"), str):
-            raise ProtocolError("each case requires context and evaluator expectation")
+        if not isinstance(case.get("expect"), str) or not case["expect"].strip():
+            raise ProtocolError("each case requires an evaluator expectation")
         require_valid(case.get("packet"))
         format_packet(case["packet"])  # corpus input must be exportable without plaintext
         cases[case["id"]] = case
     return cases
 
 
-def bootstrap_digest() -> str:
-    return hashlib.sha256(BOOTSTRAP.read_bytes()).hexdigest()
+def prompt_digest() -> str:
+    return hashlib.sha256(DOER.read_bytes()).hexdigest()
+
+
+def basis_digest() -> str:
+    return hashlib.sha256(BASIS.read_bytes()).hexdigest()
 
 
 def corpus_digest(cases: dict[str, Any]) -> str:
@@ -53,12 +58,13 @@ def corpus_digest(cases: dict[str, Any]) -> str:
 
 def make_template(cases: dict[str, Any]) -> dict[str, Any]:
     return {
-        "protocol": PROTOCOL, "bootstrap_sha256": bootstrap_digest(),
+        "protocol": PROTOCOL, "prompt_sha256": prompt_digest(),
+        "basis_sha256": basis_digest(),
         "corpus_sha256": corpus_digest(cases),
         "model": None, "run": None, "grader": None,
         "observations": {case_id: {
             "session": None, "response": None, "trace": None,
-            "decoder_tool_calls": None,
+            "tool_calls": None,
             "judgments": {dimension: None for dimension in DIMENSIONS},
             "judge_notes": None,
         } for case_id in cases},
@@ -67,15 +73,16 @@ def make_template(cases: dict[str, Any]) -> dict[str, Any]:
 
 def receiver_input(case: dict[str, Any]) -> str:
     # Deliberately exclude the source/expectation, case label, and scoring rubric.
-    context = case["context"].strip()
-    return (context + "\n\n" if context else "") + format_packet(case["packet"])
+    return format_packet(case["packet"])
 
 
 def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[str, Any]:
     if not isinstance(results, dict) or results.get("protocol") != PROTOCOL:
         raise ProtocolError("results must identify the current protocol")
-    if results.get("bootstrap_sha256") != bootstrap_digest():
-        raise ProtocolError("results belong to a different bootstrap; retain them as historical evidence, not a current pass")
+    if results.get("prompt_sha256") != prompt_digest():
+        raise ProtocolError("results belong to a different Doer prompt")
+    if results.get("basis_sha256") != basis_digest():
+        raise ProtocolError("results belong to a different semantic basis")
     if results.get("corpus_sha256") != corpus_digest(cases):
         raise ProtocolError("results belong to a different corpus; old observations are not current evidence")
     observations = results.get("observations")
@@ -94,16 +101,16 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
             raise ProtocolError(f"{case_id}: unknown judgment dimension")
         if any(value is not None and type(value) is not bool for value in judgments.values()):
             raise ProtocolError(f"{case_id}: judgments must be boolean or null")
-        calls = item.get("decoder_tool_calls")
+        calls = item.get("tool_calls")
         if calls is not None and (type(calls) is not int or calls < 0):
-            raise ProtocolError(f"{case_id}: decoder_tool_calls must be nonnegative integer or null")
+            raise ProtocolError(f"{case_id}: tool_calls must be nonnegative integer or null")
         absent = []
         for key in ("session", "response", "trace", "judge_notes"):
             if not isinstance(item.get(key), str) or not item[key].strip():
                 absent.append(key)
         absent += [key for key in DIMENSIONS if judgments.get(key) is None]
         if calls is None:
-            absent.append("decoder_tool_calls")
+            absent.append("tool_calls")
         if not metadata_ready:
             absent.append("run_metadata")
         if isinstance(item.get("trace"), str) and item["trace"].strip():
@@ -122,7 +129,7 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
         status = "missing" if absent else "pass" if tool_permission_respected and all(judgments.values()) else "fail"
         summary[{"pass": "passed", "fail": "failed", "missing": "missing"}[status]] += 1
         reports.append({"id": case_id, "status": status, "missing": absent,
-                        "judgments": judgments, "decoder_tool_calls": calls,
+                        "judgments": judgments, "tool_calls": calls,
                         "tool_permission_respected": tool_permission_respected if calls is not None else None})
     return {"protocol": PROTOCOL, "model": results.get("model"), "summary": summary,
             "cases": reports, "method": "explicit reviewer judgments backed by captured receiver traces; not an independent automatic semantic oracle"}

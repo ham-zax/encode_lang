@@ -1,5 +1,18 @@
-# Lambda H/2.1 examples
+# Lambda H/2.2 examples
 
-Start with [worked conversations](conversations.md). The current wire samples are `field.lh`, `continue.lh`, and `privacy.lh`. `field-candidates.json` and `context.demo.json` contain explicitly local, fictional demonstration data; they are not the communication wire.
+All `.lh` files in this directory use the active shallow numeric row format:
 
-The standalone receiver is `../prompt/BOOTSTRAP.md`. Historical V2 examples are under `../archive/v2/examples/` and must not be interpreted as the current wire grammar.
+- `field.lh`: asymmetric semantic field and numeric communication action.
+- `continue.lh`: continuation action targeting a scoped X reference.
+- `privacy.lh`: abstract communication action with no text in the packet.
+- `bounty-continue.lh`: field, relation, condition, policy, and active task snapshot.
+
+`field-candidates.json` is local numeric geometry input for the Python API. It is not a runtime packet or hidden vocabulary.
+
+Load `prompt/DOER.md` before sending a packet for action. Load `prompt/DECODER.md` only for non-executing numeric canonicalization. Tools are optional.
+
+```sh
+python3 -m src.codec format examples/field.lh
+```
+
+The command emits a canonical numeric packet. These examples demonstrate syntax and structure; they are not receiver-model results.

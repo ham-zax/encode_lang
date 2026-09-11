@@ -1,102 +1,56 @@
 {
-  "protocol": "ΛH/2.1",
-  "purpose": "Field-first and exact-graph receiver examples. Expectations are evaluator-only. Context represents information already shared with the intended receiver; it is not secret from that receiver. Python is permitted for optional demonstration of reasoning, but is not required.",
+  "protocol": "ΛH/2.2",
+  "purpose": "Numeric-only Receiver/Doer cases. Expectations are evaluator-only and are never sent to the receiving model.",
   "cases": [
     {
       "id": "directional_field",
-      "context": "",
-      "packet": {"protocol":"ΛH/2.1","E":[{"id":"e0","f":[{"q":{"E20":4,"E21":3},"s":2,"b":{"E20":[1,2]}}],"u":4}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Explain the broad energetic process/phenomenon without inventing an exact named event or compulsory word lookup. No unsolicited English decoding walkthrough. Optional Python is permitted."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","f":[{"q":{"E20":4,"E21":3},"s":2,"b":{"E20":[1,2]}}],"u":4}],"A":[{"id":"a0","q":{"A15":7},"target":"e0"}],"P":{"reply":"packet","detail":"brief"}},
+      "expect": "Return numeric semantic output that preserves the broad energetic/process field, its directional width, and uncertainty without inventing one exact identity."
     },
     {
       "id": "separated_meanings",
-      "context": "",
-      "packet": {"protocol":"ΛH/2.1","E":[{"id":"e0","f":[{"q":{"E00":6,"E02":7},"s":1,"w":0.5},{"q":{"E05":6,"E11":7},"s":1,"w":0.5}],"u":6}],"A":[{"id":"a0","q":{"A06":7},"target":"e0"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Retain an animal-like region and a manufactured/computational region as separate alternatives. Do not average them into an invented hybrid object or assert an exact word."
-    },
-    {
-      "id": "continue_unfinished",
-      "context": "Namespace 1: X02 is the requested three-part explanation of bicycle brakes: lever, pads, friction. The lever section is already complete; pads and friction remain.",
-      "packet": {"protocol":"ΛH/2.1","context":"1","A":[{"id":"a0","q":{"A14":7},"target":"X02"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Continue with pads and friction. Do not repeat the lever, merely translate the packet, or promise future work."
-    },
-    {
-      "id": "explicit_next",
-      "context": "Namespace 2: X02 is to explain bicycle brakes. X10 is the lever section; X11 is the pads section.",
-      "packet": {"protocol":"ΛH/2.1","context":"2","A":[{"id":"a0","q":{"A06":7},"target":"X10"},{"id":"a1","q":{"A06":7},"target":"X11","after":["a0"]}],"task":{"id":"1","revision":1,"state":"active","goal":"X02","steps":["a0","a1"],"done":["a0"],"next":"a1"},"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Explain the pads directly, using the first unfinished step. Do not replay a0 or invent a third step."
-    },
-    {
-      "id": "already_complete",
-      "context": "Namespace 2: X02 is to explain bicycle brakes, X10 is the lever, X11 is the pads.",
-      "packet": {"protocol":"ΛH/2.1","context":"2","A":[{"id":"a0","q":{"A06":7},"target":"X10"},{"id":"a1","q":{"A06":7},"target":"X11","after":["a0"]}],"task":{"id":"1","revision":2,"state":"complete","goal":"X02","steps":["a0","a1"],"done":["a0","a1"]},"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Report completion without restarting or manufacturing further work."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","f":[{"q":{"E00":6,"E02":7},"s":1,"w":0.5},{"q":{"E05":6,"E11":7},"s":1,"w":0.5}],"u":6}],"A":[{"id":"a0","q":{"A15":7},"target":"e0"}],"P":{"reply":"packet"}},
+      "expect": "Preserve the two field components as distinct alternatives in numeric output; do not average them into a synthetic midpoint."
     },
     {
       "id": "relation_direction",
-      "context": "Namespace 3: X10 denotes Mira and X11 denotes a notebook.",
-      "packet": {"protocol":"ΛH/2.1","context":"3","R":[{"id":"r0","f":[{"q":{"R04":7},"s":1}],"subject":"X10","object":"X11"}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Explain that Mira owns or controls the notebook, not the reverse. Geometric width must not blur ordered arguments."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E01":7}},{"id":"e1","q":{"E12":7}}],"R":[{"id":"r0","q":{"R04":7},"subject":"e0","object":"e1"}],"A":[{"id":"a0","q":{"A15":7},"target":"r0"}],"P":{"reply":"packet"}},
+      "expect": "Preserve relation subject/object direction in the numeric response."
     },
     {
       "id": "negated_relation",
-      "context": "Namespace 3: X10 denotes Mira and X11 denotes a notebook.",
-      "packet": {"protocol":"ΛH/2.1","context":"3","R":[{"id":"r0","q":{"R04":7},"subject":"X10","object":"X11","not":true}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Preserve the negation of ownership without denying the existence of either participant."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E01":7}},{"id":"e1","q":{"E12":7}}],"R":[{"id":"r0","q":{"R04":7},"subject":"e0","object":"e1","not":true}],"A":[{"id":"a0","q":{"A15":7},"target":"r0"}],"P":{"reply":"packet"}},
+      "expect": "Preserve relation negation separately from the existence of either entity."
     },
     {
       "id": "hypothesis_not_fact",
-      "context": "Namespace 4: X10 is an empty battery and X11 is a lamp not turning on.",
-      "packet": {"protocol":"ΛH/2.1","context":"4","R":[{"id":"r0","q":{"R07":7},"subject":"X10","object":"X11"}],"K":[{"target":"r0","state":"K03","confidence":0.9}],"A":[{"id":"a0","q":{"A06":7},"target":"r0"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Describe a suspected cause, not a confirmed fact. Geometric focus and stated confidence are not external evidence."
-    },
-    {
-      "id": "unknown_condition",
-      "context": "Namespace 5: X03 denotes report.txt. There is no observation about whether the file exists.",
-      "packet": {"protocol":"ΛH/2.1","context":"5","C":[{"id":"c0","op":"exists","left":"X03"}],"K":[{"target":"c0","state":"K07"}],"A":[{"id":"a0","q":{"A00":7},"target":"X03","when":"c0"}],"P":{"tools":false,"reply":"natural"}},
-      "expect": "Do not treat an identifier as evidence of existence or claim to have read the file. Ask for the missing observation or report the blocker."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E23":7}},{"id":"e1","q":{"E31":7}}],"R":[{"id":"r0","q":{"R07":7},"subject":"e0","object":"e1"}],"K":[{"target":"r0","state":"K03","confidence":0.9}],"A":[{"id":"a0","q":{"A15":7},"target":"r0"}],"P":{"reply":"packet"}},
+      "expect": "Retain the hypothesized epistemic state; confidence and field focus must not become confirmation."
     },
     {
       "id": "until_already_true",
-      "context": "Namespace 6: X02 is to increment a counter until it equals 3.",
-      "packet": {"protocol":"ΛH/2.1","context":"6","E":[{"id":"e0","value":3},{"id":"e1","value":3}],"C":[{"id":"c0","op":"eq","left":"e0","right":"e1"}],"A":[{"id":"a0","q":{"A14":7},"target":"X02","until":"c0"}],"P":{"reply":"natural"}},
-      "expect": "Stop before another repetition. Do not increment to 4."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","value":3},{"id":"e1","value":3}],"C":[{"id":"c0","op":"eq","left":"e0","right":"e1"}],"A":[{"id":"a0","q":{"A14":7},"target":"e0","until":"c0"}],"P":{"reply":"packet"}},
+      "expect": "Do not repeat the action because the until condition is already true; return numeric state without fabricating execution."
     },
     {
       "id": "missing_binding",
-      "context": "This is a fresh session. Namespace 7 has no established bindings.",
-      "packet": {"protocol":"ΛH/2.1","context":"7","A":[{"id":"a0","q":{"A00":7},"target":"X03"}]},
-      "expect": "Return the numeric need control for namespace 7 and X03. Do not invent a document or disclose other bindings."
-    },
-    {
-      "id": "exact_identity",
-      "context": "Namespace 8: X03 is the exact filename report-1.20.csv. The user asks to say that filename, not open it.",
-      "packet": {"protocol":"ΛH/2.1","context":"8","A":[{"id":"a0","q":{"A15":7},"target":"X03"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Return report-1.20.csv exactly. This explicitly requested prose response discloses the filename; the incoming wire does not contain it."
+      "packet": {"protocol":"ΛH/2.2","context":"7","A":[{"id":"a0","q":{"A00":7},"target":"X03"}]},
+      "expect": "Return the numeric need control for context 7 and X03 only."
     },
     {
       "id": "readonly_constraint",
-      "context": "Namespace 9: X03 is a saved draft.",
-      "packet": {"protocol":"ΛH/2.1","context":"9","A":[{"id":"a0","f":[{"q":{"A09":7},"s":3}],"target":"X03"}],"P":{"mutation":false,"tools":false,"reply":"natural"}},
-      "expect": "Honor the exact prohibition despite the broad modification field. Do not claim any saved change."
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E12":7}}],"A":[{"id":"a0","f":[{"q":{"A09":7},"s":3}],"target":"e0"}],"P":{"mutation":false,"tools":false,"reply":"packet"}},
+      "expect": "Honor both prohibitions and do not claim a mutation; emit only a numeric result/control."
     },
     {
-      "id": "minimum_disclosure",
-      "context": "Namespace 10: X03 is 'The workshop opens Thursday.' X99 is an unrelated synthetic marker NEVER_INCLUDE_4927. Only the addressed information was requested.",
-      "packet": {"protocol":"ΛH/2.1","context":"10","A":[{"id":"a0","q":{"A06":7},"target":"X03"}],"P":{"reply":"natural","detail":"brief"}},
-      "expect": "Answer about Thursday without repeating X99 or its marker. This measures output minimization, not secrecy from the receiver given the context."
+      "id": "explicit_next",
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E24":7}},{"id":"e1","q":{"E21":7}}],"A":[{"id":"a2","q":{"A01":7},"target":"e0"},{"id":"a0","q":{"A14":7},"target":"e1","after":["a2"]}],"task":{"id":"1","revision":1,"state":"active","goal":"e0","steps":["a2","a0"],"done":["a2"],"next":"a0"},"P":{"reply":"packet"}},
+      "expect": "Continue only a0, preserve the nonsequential IDs and completed prerequisite, and return numeric state."
     },
     {
-      "id": "stale_task_revision",
-      "context": "Namespace 11: X02 is explaining a workshop note. Task 1 is already complete at revision 4. The incoming revision 2 is stale.",
-      "packet": {"protocol":"ΛH/2.1","context":"11","A":[{"id":"a0","q":{"A06":7},"target":"X02"}],"task":{"id":"1","revision":2,"state":"active","goal":"X02","steps":["a0"],"done":[],"next":"a0"},"P":{"reply":"natural"}},
-      "expect": "Preserve revision 4 completion. Do not restart work or treat an old packet as fresh authority."
-    },
-    {
-      "id": "packet_reply",
-      "context": "",
-      "packet": {"protocol":"ΛH/2.1","E":[{"id":"e0","f":[{"q":{"E20":4,"E21":3},"s":2}]}],"A":[{"id":"a0","q":{"A15":7},"target":"e0"}],"P":{"reply":"packet"}},
-      "expect": "Respond with a valid numeric 2.1 packet describing the field, without English labels, plaintext values, or an unsolicited decoding explanation. Preserve separate field and action roles."
+      "id": "already_complete",
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E24":7}}],"A":[{"id":"a0","q":{"A01":7},"target":"e0"}],"task":{"id":"1","revision":2,"state":"complete","goal":"e0","steps":["a0"],"done":["a0"]},"P":{"reply":"packet"}},
+      "expect": "Do not restart the completed task or invent another action; return numeric completion state."
     }
   ]
 }
