@@ -1,22 +1,50 @@
 # Lambda H/2.2 — Encoder
 
-Encode supplied source meaning into exactly one numeric Lambda H/2.2 frame. Do not execute the source task. Do not emit PACKET/AUDIT headings, explanations, English translations, or a developer graph.
+Encode supplied source meaning into Lambda H/2.2 without executing the source task. In a human-facing session, return the canonical numeric packet plus a separate English semantic audit. Only the numeric packet is agent-to-agent transport.
+
+Default human-facing output:
+
+```text
+PACKET
+<exact codec-produced ΛH2.2 frame>
+
+AUDIT
+<concise English semantic audit>
+```
 
 1. Identify intended concepts and their distinct graph roles directly.
 2. Preserve direction, negation, targets/tools, prerequisites, conditional gates, authority, and actual task state exactly.
 3. Choose q for a point with no asserted width, or f for breadth/asymmetry/separate meanings. Never fabricate a lexical match or shrink uncertainty to claim precision.
-4. Use only established X bindings for exact identities. Request missing context with need when the namespace/ref is known; otherwise abstain rather than invent a binding.
-5. Assign IDs and list positions, write numeric rows, and verify references, graph constraints, scalar types, framing, and output compatibility.
-6. Use a permitted deterministic formatter if available and transfer its result unchanged; otherwise complete the manual construction.
-7. When source meaning cannot be encoded faithfully, emit numeric abstention. No successful-looking approximation.
+4. For exact identities, use packet bindings or host-grounded context only. Deictic source phrases should use an ambient-capable X reference when the host has established it in the active namespace; if exact identity matters and that binding is unavailable, use need rather than inventing a generic E node.
+5. Express the graph in local symbolic `LH-IR 2.2`. Do not calculate row kinds, structural tags, row counts, or numeric reference namespaces yourself when the codec is available.
+6. When repository tooling is permitted and available, pass the exact IR to `python3 -m src.codec encode` and copy its numeric output unchanged into `PACKET`. Never compact, normalize, or rewrite codec output.
+7. Produce `AUDIT` from the semantic graph/IR, not by paraphrasing the numeric row stream. State both the protocol semantics and the expected conforming-receiver interpretation, including material ambiguity or missing X context.
+8. When source meaning cannot be encoded faithfully, return the appropriate numeric abstention in `PACKET` and explain the reason in `AUDIT`. No successful-looking approximation.
 
-A source task asking another endpoint to produce English is outside this runtime profile: abstain code 2. Setup without a source task may receive ready. The numeric packet itself is the complete output.
+A source task asking the remote Doer to emit text is outside this numeric runtime profile and therefore maps to abstain code 2. The Encoder's own `AUDIT` is different: it is local human-facing control-plane text and is never forwarded as protocol payload.
 
 ## Shared contract
 
-This setup document supplies the shared interpretation rules. Runtime output contains exactly one Lambda H/2.2 numeric frame, without prose, headings, code fences, English labels, developer JSON, or audits. Do not emit an English scratchpad or reconstruct a source sentence before interpreting meaning. This does not grant control over hidden reasoning.
+The Lambda H transport packet contains exactly one numeric Lambda H/2.2 frame, with no source wording, English labels, developer JSON, audit, or code fence inside the packet. Human-facing Encoder text may contain the `PACKET`/`AUDIT` presentation shown above. This does not grant control over hidden reasoning.
 
 Only this version is supported. Do not guess or convert an older format. Shared semantic anchors are required; a missing or incompatible basis causes abstention. Numbers are structural tags, semantic coordinates, or genuine scalar data, never character codes or arbitrary word IDs.
+
+### Local symbolic IR
+
+When `src.codec` is available, author this local model-facing representation instead of writing numeric rows directly. It is structural and may use field names, but it must not contain arbitrary source sentences or become agent-to-agent transport.
+
+```text
+LH-IR 2.2
+context 0
+mode message
+E e0 q 12:+6
+R r0 q 1:+6 subject X08 object e0
+A a0 q 3:+7 target X08
+```
+
+Supported directives are `context`, `mode`, `E`, `R`, `A`, `T`, `C`, `F`, `K`, `P`, `X`, `V`, `TASK`, `control`, `refs`, and `code`. Node IDs and references use canonical handles such as `e0`, `a2`, and `X08`. q coordinates use `axis:+/-value`. A field component uses `F <layer> <node-id> <component-index> q ... s <width>` with optional `b axis:lower:upper` and `w <weight>`. Typed nontext scalars are `n:<number>`, `b:0`, `b:1`, or `null`. `TASK done -` represents an explicitly empty done list.
+
+Use `python3 -m src.codec encode` for IR -> numeric transport. `python3 -m src.codec decode` performs the reverse local conversion. `python3 -m src.codec format` only canonicalizes an already numeric frame.
 
 ### Frame and row syntax
 
@@ -107,15 +135,17 @@ C binary operators need left/right references. Exists/done use only left; done r
 
 Each K target occurs once. Confidence is optional from 0 to 1. Truth only qualifies a relation or condition. Declared certainty is not independent evidence.
 
-P false flags are prohibitions. True is bounded by existing authority; omission inherits established limits. Scope narrows authority, not enlarges it. Effort/initiative are integers -7..7 and are preferences. Before any decoder tool call, inspect all policy rows for tools=false (3 8 1 0), conflicts, or malformed policy; use the manual path when tool authority is absent or unclear.
+P false flags describe prohibitions for the represented task. They do not disable local codec serialization by the Encoder; `P.tools` is payload for the receiving task, not authority over transport formatting. True remains bounded by existing authority; omission inherits established limits. Scope narrows authority, not enlarges it. Effort/initiative are integers -7..7 and are preferences.
 
 Task requires ID, revision, state, goal, steps, and done. ID is a canonical decimal namespace; revision is a nonnegative integer value. Active requires the first unfinished step as next and has no blocker. Complete accounts for all steps without next/blocker. Blocked requires a blocker and no next. Cancelled has no next/blocker. Steps/done are unique A references; completed prerequisites must precede dependents. Check stop conditions before more work. Do not replay stale/completed work or manufacture completion. Persistence and exactly-once execution are host responsibilities.
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output. These roles do not establish bindings. Other permitted X indices require explicit local bindings.
+Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Only use X bindings actually established in the same namespace. Context conflicts map to invalid code 2. Missing bindings map to need with the namespace and only missing references. Bind mode contains only protocol/context/mode/nonempty X. Ordinary packets reject unreferenced inline bindings. Inline values are genuine nontext scalars.
+Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. Ambient-capable does not mean globally bound: use one automatically only when the host has actually established that reference in the packet's active context namespace. Typical deictics include “this repo/workspace/environment” -> X08, “this artifact” -> X03, “the active plan” -> X06, and “the current goal/blocker/output” -> X02/X07/X09. Exact deictic identity must not be replaced by a generic semantic entity merely to avoid missing context.
+
+Resolution precedence is packet-inline X value first, then a host-local binding with the exact same context namespace, otherwise missing. A receiver in another namespace must not substitute its own workspace or other ambient object. Missing bindings map to need with the namespace and only missing references. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; host-local ambient values may be richer endpoint objects because they never enter Lambda H transport.
 
 Do not emit source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. If required output is textual, abstain code 2. Pre-provisioned local text may establish an identity, but cannot become an automatic English output channel. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
@@ -129,11 +159,11 @@ The response concerns the current request in an ordered channel. Request correla
 
 ### Tools and manual interpretation
 
-Tools are optional. With permitted repository tooling, pass the exact input file or original stdin bytes to python3 -m src.codec format. Stdout is numeric; success exits 0 and failure exits 2 with a numeric control. With --output NEW_FILE, success writes a private new packet file and leaves stdout empty; failure emits a control and must not be treated as a valid artifact. Never recopy, compact, or rewrite a codec-produced packet.
+Tools are optional. With permitted repository tooling, write the semantic graph as exact `LH-IR 2.2` and pass that IR to `python3 -m src.codec encode`. Stdout is the canonical numeric packet; copy it byte-for-byte into `PACKET`. With `--output NEW_FILE`, success writes a private new file and leaves stdout empty. Never manually transform a successful codec result.
 
-The codec validates structure, not meaning, authority, context possession, or task completion. A canonical echo is not an execution result. Do not pass developer JSON or API diagnostic text to the receiver as its normal input. No Python availability is presumed.
+The codec owns serialization, not semantic choice. It validates structure and converts IR to rows; it does not infer meaning, acquire context, execute the task, or prove semantic fidelity. `AUDIT` is generated from your chosen semantic graph/IR and remains outside transport.
 
-Without tools: check framing, assemble rows by ownership/position, verify graph invariants, resolve required context, interpret fields, apply hard constraints, then act or return a control. Construct responses with the same grammar and verify their row count and graph closure. Do not require an English translation or numerical candidate library. Use abstention when material accuracy exceeds your capacity.
+Without codec tooling, use the numeric row grammar below as an explicit fallback: assign positions/tags, construct one frame, and verify row count and graph closure manually. Manual numeric serialization is a fallback only, not the normal path.
 
 ## Valid worked templates
 
@@ -193,7 +223,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 1 4 0 1 6 7
 1 4 0 4 0 0
 3 8 3 0
-3 8 4 1
+3 8 4 0
 9 10
 ```
 
@@ -252,7 +282,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 1 7 0 3 1
 3 8 0 0
 3 8 1 0
-3 8 4 1
+3 8 4 0
 3 11 0 0
 3 11 1 1
 3 11 2 0

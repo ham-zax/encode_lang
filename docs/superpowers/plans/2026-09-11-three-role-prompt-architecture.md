@@ -1,6 +1,8 @@
-# Lambda H/2.2 Clean Migration Implementation Plan
+# Historical Lambda H/2.2 Direct-Row Migration Plan
 
-**Goal:** Make shallow numeric Lambda H/2.2 the only active runtime, with three standalone prompts, optional deterministic validation, and explicit numeric failure behavior.
+> Historical record of the `4dab29a` direct-row migration. It is superseded for the active architecture by `2026-09-11-human-decoder-ir-codec-repair.md`, which restores human Encoder/Decoder surfaces and codec-owned symbolic IR serialization.
+
+**Goal:** Record the earlier direct-row migration that made shallow numeric Lambda H/2.2 the only model/runtime representation.
 
 **Architecture:** Models and tools consume the same numeric rows. `src.protocol` owns semantics, `src.wire` owns structural mappings, and `src.rows` owns the public frame. Runtime output is numeric-only; Python is optional.
 

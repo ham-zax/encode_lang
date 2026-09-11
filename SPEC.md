@@ -2,11 +2,43 @@
 
 ## 1. Scope and authorities
 
-Lambda H/2.2 is the only active runtime protocol. `src/protocol.py` owns the graph and invariants, `src/wire.py` owns structural mappings, `src/rows.py` owns public row framing, `src/geometry.py` owns field arithmetic, and `semantics/basis.json` owns semantic directions.
+Lambda H/2.2 is the only active runtime protocol. `src/protocol.py` owns the graph and invariants, `src/wire.py` owns structural mappings, `src/rows.py` owns public numeric row framing, `src/ir.py` owns the local symbolic model-facing representation, `src/geometry.py` owns field arithmetic, and `semantics/basis.json` owns semantic directions. `src/codec.py` owns deterministic conversion between local symbolic IR and numeric transport.
 
-The three standalone role prompts reproduce the same contract for endpoints without tools. Python is optional. Runtime protocol output contains one numeric packet and no prose, developer JSON, audit, code fence, or natural-language reconstruction.
+The agent-to-agent runtime protocol contains one numeric packet and no prose, developer JSON, audit, code fence, or natural-language reconstruction. Human-facing Encoder audits and Decoder explanations are outside this protocol boundary and are never protocol payload.
+
+The three standalone role prompts reproduce the numeric fallback contract for endpoints without tools. When codec tooling is available, Encoder/Doer/Decoder models operate on local `LH-IR 2.2` and let the codec derive or recover numeric rows instead of hand-authoring transport structure.
 
 The protocol does not infer meaning, execute actions, authenticate senders, persist task state, guarantee exactly-once effects, control hidden reasoning, or provide encryption.
+
+## Local symbolic IR boundary
+
+`LH-IR 2.2` is a local structural representation of the same developer graph, not a second transport protocol. It may contain fixed structural names such as `E`, `A`, `target`, `q`, and `TASK`, but no arbitrary source sentence or exact textual identity. `python3 -m src.codec encode` converts IR to canonical numeric rows; `python3 -m src.codec decode` converts numeric rows to local IR. Equivalent graphs must produce the same numeric Lambda H/2.2 packet regardless of whether they were assembled through IR or directly by trusted code.
+
+Models should not calculate transport row kinds, structural tags, list positions, reference namespaces, or row counts when the codec is available. Codec-produced numeric transport is immutable model output: pass it unchanged.
+
+Canonical symbolic directives are:
+
+```text
+LH-IR 2.2
+context <decimal-namespace>
+mode <message|bind>
+E <e-id> [q axis:coord ...] [u integer] [value scalar] [choices scalar ...]
+R <r-id> [q axis:coord ...] [u integer] subject <ref> object <ref> [not 0|1]
+A <a-id> [q axis:coord ...] [u integer] target <ref> [tool <t-ref>] [after <a-ref> ...] [when <c-ref>] [until <c-ref>] [not 0|1]
+T <t-id> [q axis:coord ...] [u integer] [value scalar]
+C <c-id> op <enum-name> left <ref> [right <ref>]
+F <E|R|A|T> <node-id> <component-index> q axis:coord ... s <width> [b axis:lower:upper ...] [w <weight>]
+K target <ref> state <K00..K08> [confidence <number>] [truth 0|1]
+P [mutation 0|1] [tools 0|1] [scope <ref> ...] [detail <brief|normal|full>] [reply packet] [effort <integer>] [initiative <integer>]
+X <X-ref> <scalar>
+V axis:coord ...
+TASK id <decimal-namespace> revision <integer> state <active|complete|blocked|cancelled> goal <ref> steps <a-ref> ... done <a-ref> ...| - [next <a-ref>] [stop <c-ref>] [blocker <ref>]
+control <ready|need|invalid|abstain>
+refs <X-ref> ...
+code <integer>
+```
+
+A positive coordinate may use an explicit `+`. Typed scalars are `n:<JSON-number>`, `b:0`, `b:1`, or `null`. f components are contiguous from index 0. A node represented by f is declared once by its E/R/A/T line and receives its components through F lines. The symbolic parser rejects unknown directives/fields and validates the assembled graph with the same protocol invariants as numeric rows.
 
 ## 2. Frame and lexical grammar
 
@@ -106,15 +138,19 @@ Binary C operators require right. Exists and done omit right; done references an
 
 K states retain observed, reported, assumed, hypothesized, inferred, multiply supported, contradicted, unknown, and confirmed-to-required-standard. Confidence is 0..1. Truth applies only to R/C. Packet assertions are not independent evidence.
 
-P false flags prohibit mutation/tool use. True stays within external authority. Scope can narrow but never expand authority. Effort and initiative are -7..7 preferences. Reply has only packet output.
+P false flags prohibit mutation or external task-tool use by the represented task. `P.tools` does not disable local protocol parsing/serialization by the codec. True stays within external authority. Scope can narrow but never expand authority. Effort and initiative are -7..7 preferences. Reply has only packet output.
 
 Task requires canonical numeric ID, revision, state, goal, ordered steps, and done. Active requires the first unfinished step as next. Complete accounts for all steps. Blocked requires blocker. Non-active tasks have no next. Done steps include completed prerequisites. Stop is checked before more execution.
 
 ## 7. Context and opacity
 
-Context IDs identify scoped state; they do not authenticate it. X00..X09 mean subject, previous subject, goal, artifact, hypothesis, result, plan, blocker, environment, and output. These names are bootstrap semantics, not automatic bindings.
+Context IDs identify scoped state; they do not authenticate it. X00..X09 mean subject, previous subject, goal, artifact, hypothesis, result, plan, blocker, environment, and output.
 
-Bind mode contains only protocol, mode, context, and nonempty nontext X values. Ordinary packets reject unreferenced inline bindings. A missing X binding produces need; a conflicting binding produces invalid code 2. Exact text is neither carried by the wire nor disguised as numbers.
+`X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, active artifact, active plan, current blocker, current workspace/environment/repository, and output/result target. Ambient-capable means a repo-aware host may establish the exact value locally; it does not create a global or automatic binding. Deictic source meaning should use the corresponding X reference when that host binding is grounded, rather than inventing a generic semantic entity for a specific current object.
+
+Resolution precedence is explicit packet X value, then host-local binding with an exactly matching context namespace, otherwise missing. A different host namespace is not a conflict by itself and must never cause substitution with the receiver's current workspace or artifact. Missing required references produce `need`. Host-local values may be arbitrary endpoint objects or text because they remain outside `src.rows`, `src.ir`, and `src.codec` transport serialization.
+
+Bind mode contains only protocol, mode, context, and nonempty nontext X values. Ordinary packets reject unreferenced inline bindings. Exact text is neither carried by the wire nor disguised as numbers. Context conflict code 2 remains for contradictory established context, not for the mere absence of a matching host namespace.
 
 Opacity means ordinary wording is absent. Shared anchors, packet shape, repetition, traffic metadata, and established context may still reveal meaning. Use external authenticated encryption when confidentiality is required.
 

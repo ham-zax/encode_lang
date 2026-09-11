@@ -1,7 +1,8 @@
-"""Lambda H/2.2 numeric packet validation and artifact output.
+"""Lambda H/2.2 codec boundary between local symbolic IR and numeric transport.
 
-The CLI emits numeric packets only. Python APIs expose the developer graph for
-local integrations; they do not execute actions, infer meaning, or bind context.
+`encode` maps local `LH-IR 2.2` to canonical numeric rows, `decode` maps numeric
+rows to local IR, and `format` canonicalizes an already numeric frame. The codec
+does not execute actions, infer semantic intent, or bind missing context.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .ir import IRError, format_ir, parse_ir
 from .protocol import PROTOCOL, ProtocolError, _same_json
 from .rows import MAX_BYTES, RowCapacityError, RowError, format_rows, parse_rows
 
@@ -62,12 +64,19 @@ def _read_bounded(path: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("format",), help="validate and canonicalize numeric rows")
-    parser.add_argument("packet", nargs="?", default="-", help="packet path; - is stdin")
-    parser.add_argument("--output", help="NEW private packet file; stdout is empty on success")
+    parser.add_argument("command", choices=("format", "encode", "decode"),
+                        help="format numeric rows, encode symbolic IR, or decode rows to local IR")
+    parser.add_argument("input", nargs="?", default="-", help="input path; - is stdin")
+    parser.add_argument("--output", help="NEW private output file; stdout is empty on success")
     args = parser.parse_args()
     try:
-        content = format_packet(parse_packet(_read_bounded(args.packet)))
+        source = _read_bounded(args.input)
+        if args.command == "format":
+            content = format_packet(parse_packet(source))
+        elif args.command == "encode":
+            content = format_packet(parse_ir(source))
+        else:
+            content = format_ir(parse_packet(source))
         if args.output is None:
             sys.stdout.write(content)
         else:
@@ -76,9 +85,14 @@ def main() -> int:
                 stream.write(content)
         return 0
     except (ProtocolError, OSError, UnicodeError, RecursionError) as exc:
+        if args.command == "decode":
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
         capacity = isinstance(exc, (RowCapacityError, RecursionError, OSError))
         control = "abstain" if capacity else "invalid"
         code = 4 if capacity else exc.code if isinstance(exc, RowError) else 0
+        if isinstance(exc, IRError):
+            code = 0
         sys.stdout.write(format_rows({"protocol": PROTOCOL, "control": control, "code": code}))
         return 2
 

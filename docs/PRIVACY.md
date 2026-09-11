@@ -1,6 +1,6 @@
 # Privacy: communicate less, protect the transport, choose the endpoint
 
-Lambda H/2.1 is a semantic notation, not a cipher. Its normal wire carries numeric structure and semantic regions; readable labels and literal text are not part of it. That is an opacity/minimal-disclosure property, not cryptographic encryption, anonymity, authentication, or secrecy from the receiving endpoint.
+Lambda H/2.2 is a semantic notation, not a cipher. Its agent-to-agent wire carries shallow numeric structure and semantic regions; readable labels and literal text are not part of that transport. Local symbolic IR, Encoder audits, and Decoder explanations exist only on the human/model control plane. This is an opacity/minimal-disclosure property, not cryptographic encryption, anonymity, authentication, or secrecy from an endpoint that receives enough context to interpret the packet.
 
 The default recommendation for information that must not reach a model provider is **local inference on a controlled device, with cloud tools disabled and only necessary data supplied**. For transfer between trusted devices, wrap the packet in an established encryption tool. Do not try to invent a prompt-decodable encryption scheme.
 
@@ -32,27 +32,15 @@ Encryption keys must never be pasted into a model prompt or uploaded with the ci
 
 ## 3. Minimize disclosure with context-local references
 
-Use a fresh, non-identifying `context` namespace for each conversation or mission. A binding such as `X10` may identify a private object locally without placing its name in every packet. Keep the local context file outside version-controlled and synced folders when the identity must remain private.
+Use a fresh, non-identifying `context` namespace for each conversation or mission. A reference can stand for an exact object already known to the endpoint without placing its name in every packet. `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable roles for goal, artifact, plan, blocker, workspace/environment/repository, and output/result target, but only a host-grounded binding makes one available.
 
-A context file has this shape (the values below are fictional):
+Lambda H/2.2 does not ship a readable context-sidecar or handoff command. The numeric wire may bind only genuine numeric, boolean, or null values. `src.context.HostContext` may hold richer endpoint-local objects or textual identities because it never serializes them. Resolution requires an exact packet/host namespace match; a receiver must not reinterpret `X08` as some other repository merely because it has one open. If a required X binding is absent, the protocol returns `need`; it does not hide the text inside numbers.
 
-```json
-{
-  "context": "7",
-  "X": {
-    "X10": "private draft located on the sender's device",
-    "X11": "unrelated private note"
-  }
-}
-```
+This keeps transport disclosure small without pretending the endpoint cannot see context that the host deliberately supplied. Review the host application's context injection, tool outputs, local files, and model inputs separately from the packet itself.
 
-A packet may reference `X10` without copying either value. The `inspect` command reports required or missing IDs without their values. Ordinary message/handoff encoding rejects unreferenced inline X bindings instead of carrying unnecessary context; an explicit bind frame may intentionally establish nontext bindings. The `handoff --output NEW_DIRECTORY` command writes a numeric `packet.lh` and a separate `context.private.json` containing only referenced bindings. The new directory's parent must exist; existing destinations are not overwritten. The wire alone does not supply the text in that sidecar.
+For abstract advice, use intentionally non-identifying placeholders and keep the identity map local to the trusted host. Do not reuse aliases across unrelated contexts when linkability matters. The surrounding facts can still identify a person or organization even after their name is removed.
 
-**Selective handoff is minimization, not redaction.** A required binding in the sidecar is readable disclosure to its recipient. Review both output files before sending. The numerical formatter rejects text rather than encoding it as bytes or silently dropping it. An agent cannot use a withheld identity, filename, measurement or secret merely because an alias exists; it must request the binding or solve only the abstract portion that does not need it.
-
-For abstract advice, use intentionally non-identifying placeholders such as Party A and Party B, and keep the identity map local. Do not reuse aliases across unrelated contexts when linkability matters. The surrounding facts can still identify a person or organization even after their name is removed.
-
-Do not copy entire chat histories, environment dumps, API credentials, unrelated files, or all context bindings into a handoff. Exact data is preserved where the task needs it; unnecessary data should not be sent.
+Do not copy entire chat histories, environment dumps, API credentials, unrelated files, or all host context into a receiving session. Exact data should be supplied only where the task actually needs it.
 
 ## 4. Encrypt an actual transfer with an established tool
 

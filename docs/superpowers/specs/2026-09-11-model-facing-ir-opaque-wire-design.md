@@ -1,9 +1,9 @@
-# Lambda H/2.2 Direct Numeric Semantics Architecture
+# Lambda H/2.2 Model-Facing IR + Opaque Wire Architecture
 
 **Status:** active design, clean migration.
 
-**Contract:** [SPEC.md](../../../SPEC.md)  
-**Implementation plan:** [Lambda H/2.2 implementation](../plans/2026-09-11-three-role-prompt-architecture.md)
+**Contract:** [SPEC.md](../../../SPEC.md)
+**Implementation plan:** [Human Decoder + codec-owned IR repair](../plans/2026-09-11-human-decoder-ir-codec-repair.md)
 
 ## Outcome
 
@@ -12,13 +12,19 @@ Lambda H carries semantic fields and exact operational structure between languag
 ```text
 source meaning
     -> Encoder
+    -> local symbolic IR
+    -> codec
     -> shallow numeric packet
     -> Receiver/Doer
+    -> codec
+    -> local symbolic IR
     -> authorized semantic action
+    -> response IR
+    -> codec
     -> shallow numeric packet
 ```
 
-Python is optional. A model without tools receives the complete numeric grammar, graph invariants, controls, and semantic anchors in its role prompt. A deterministic codec can validate and canonicalize the same representation when available.
+Python is optional. With repository tooling, models operate on the local symbolic IR and the deterministic codec owns IR <-> numeric transport conversion. Without tooling, the standalone prompts retain the complete numeric fallback grammar.
 
 ## Guarantees and limits
 
@@ -28,26 +34,35 @@ The design separates three claims:
 |---|---|
 | Structural fidelity | A conforming parser recovers the same supported graph, scalar types, field presence, arrays, constraints, and task state. Deterministic round-trips can prove this. |
 | Semantic fidelity | A model selected the intended meaning and acts at the required precision. Only behavioral evidence can support this. |
-| Numeric-only runtime | Observable protocol output contains one numeric frame and no English text, labels, audit, or developer JSON. This can be checked mechanically. |
+| Numeric-only transport | Observable agent-to-agent protocol output contains one numeric frame and no English text, labels, audit, or developer JSON. Human Decoder/Audit text is outside that transport. |
 
 The system cannot guarantee arbitrary meaning recovery for every model or observe the language of hidden reasoning. “Direct semantic action” describes the input/output workflow; it does not claim access to or control of internal model embeddings.
 
 When meaning, context, or capacity is insufficient, the endpoint returns a numeric need/abstain control. It must not hide uncertainty behind a valid-looking answer.
 
-## One active representation
+## One semantic contract, two representations
 
-Lambda H/2.2 uses the shallow numeric row representation as the runtime wire and the model-facing representation. There is no mandatory English-keyword IR and no active nested-array compatibility path.
+Lambda H/2.2 has one semantic graph with two representations at different boundaries:
 
-Every data row names its structural owner and list position. This makes row order irrelevant and makes gaps, duplication, and wrong ownership detectable. The frame declares the row count twice to expose common truncation errors.
+1. local `LH-IR 2.2`, a shallow symbolic model-facing representation; and
+2. `ΛH2.2|` shallow numeric rows, the sole agent-to-agent runtime wire.
+
+The IR is not a second network/runtime protocol and is never automatically forwarded. The codec converts between the two without changing the developer graph. Every numeric data row names its structural owner and list position, and the frame declares the row count twice to expose common truncation errors.
 
 ```text
+LH-IR 2.2
+control ready
+
+        codec encode
+             |
+             v
 ΛH2.2|
 8 1
 0 12 0
 9 1
 ```
 
-The formal row grammar and complete tags are in `SPEC.md` and are duplicated exactly in the three standalone role prompts.
+The formal row grammar is in `SPEC.md`; the symbolic grammar is owned by `src/ir.py`. Standalone role prompts include enough of both contracts for their preferred codec-backed path and explicit no-codec fallback.
 
 ## Opacity model
 
@@ -87,9 +102,9 @@ Encoder:
 1. Identify semantic concepts and exact operational structure.
 2. Preserve alternatives and uncertainty.
 3. Use only established numeric/nontext context bindings.
-4. Assign graph IDs and row positions.
-5. Verify closure, constraints, framing, and numeric-only output.
-6. Emit one packet or a numeric control.
+4. Express the graph as local symbolic IR.
+5. With codec tooling, serialize through `src.codec encode` and transfer numeric output unchanged; otherwise use the explicit numeric-row fallback.
+6. In a human session, show the packet plus a separate English audit; never put the audit in transport.
 
 Receiver/Doer:
 
@@ -102,33 +117,32 @@ Receiver/Doer:
 
 Decoder:
 
-1. Validate structure and recover the graph.
-2. Preserve every field, omission, list position, and scalar type.
-3. Return canonical numeric rows or a control.
-4. Never execute or explain in English.
+1. Validate structure and recover the graph, preferably through `src.codec decode` into local IR.
+2. Preserve every field, omission, list position, scalar type, semantic breadth, and unresolved X dependency.
+3. Explain the represented meaning and structure in English to the human.
+4. Never execute the represented action.
 
 Manual validation does not become deterministic merely because the steps are written down. Tool-free reliability remains a separate behavioral question.
 
 ## Optional deterministic boundary
 
-`python3 -m src.codec format` validates and canonicalizes a 2.2 frame. It accepts the original packet bytes, assembles the graph through fixed structural tables, invokes the authoritative validator, formats canonical rows, parses them again, and compares the recovered graph.
+The codec owns three structural operations:
 
-The codec:
+- `python3 -m src.codec encode`: local symbolic IR -> canonical numeric 2.2 rows;
+- `python3 -m src.codec decode`: canonical numeric 2.2 rows -> local symbolic IR;
+- `python3 -m src.codec format`: numeric 2.2 rows -> canonical numeric 2.2 rows.
 
-- never infers missing meaning or context;
-- never executes actions;
-- never repairs or clamps malformed data;
-- never emits developer JSON on the runtime channel;
-- never overwrites an artifact destination;
-- returns a numeric invalid or abstain control on failure.
+The codec never infers missing meaning or context, executes actions, repairs malformed semantic state, or overwrites an existing destination. Codec parsing/serialization is protocol infrastructure rather than a task instrument, so represented `P.tools=false` does not force models back into manual wire manipulation. Numeric-output commands return numeric invalid/abstain controls on failure; local decode reports local conversion errors without pretending they are transport.
 
-A canonical echo proves structural validity, not semantic comprehension or task completion. The model must not substitute canonicalization for doing the requested work.
+A successful encode/decode/format proves structural conversion only, not semantic comprehension or task completion. Models must not manually rewrite codec-produced numeric transport.
 
 ## Context discipline
 
-X references are namespace-scoped handles. X00..X09 carry conventional roles, but a role does not establish a binding. Text is never sent as a binding. Bind frames can establish only genuine numeric, boolean, or null values.
+X references are namespace-scoped handles. `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are ambient-capable conventions for active goal, artifact, plan, blocker, workspace/environment/repository, and output/result target. A role is usable ambiently only when the host has actually established it in the packet's context namespace. See [Agent-native ambient context](2026-09-11-agent-native-ambient-context-design.md).
 
-A missing required binding produces need with exactly the missing X references. A conflicting namespace/binding produces invalid code 2. An exact textual identity that is unavailable cannot be reconstructed from coordinates; the encoder or receiver abstains where exact text is essential.
+Resolution uses packet-inline values first, then a matching host-local binding, otherwise missing. Host-local values may be richer endpoint objects/text because they never become Lambda H transport. A receiver with a different context namespace must not substitute its own current environment. Bind frames still carry only genuine numeric, boolean, or null values.
+
+A missing required binding produces need with exactly the missing X references. Context conflict code 2 remains for contradictory established state, not simple namespace absence. An exact identity that is unavailable cannot be reconstructed from coordinates or replaced by a generic E node solely to avoid missing context.
 
 Persistent context storage, sender authentication, request correlation, replay protection, and exactly-once effects belong to the host environment.
 
@@ -157,13 +171,14 @@ Need is reserved for known missing X bindings. Ready is only bootstrap readiness
 |---|---|
 | `src/protocol.py` | Graph schema and invariants |
 | `src/wire.py` | Fixed numeric structural mappings |
-| `src/rows.py` | Public row parsing and formatting |
-| `src/codec.py` | Optional CLI and artifact boundary |
+| `src/rows.py` | Public numeric row parsing and formatting |
+| `src/ir.py` | Local symbolic model-facing IR |
+| `src/codec.py` | Deterministic IR <-> wire and numeric canonicalization boundary |
 | `src/geometry.py` | Field calculations |
 | `semantics/basis.json` | Shared semantic directions |
-| `prompt/ENCODER.md` | Source meaning to numeric packet |
+| `prompt/ENCODER.md` | Source meaning to numeric packet plus separate human audit |
 | `prompt/DOER.md` | Numeric packet to action and numeric response |
-| `prompt/DECODER.md` | Numeric structural canonicalization only |
+| `prompt/DECODER.md` | Numeric packet to human English explanation without execution |
 | `PROMPT.md` | Role selection |
 
 No surface may silently introduce another runtime representation.
@@ -184,6 +199,6 @@ Results record the exact Doer prompt digest, semantic-basis digest, corpus diges
 
 ## Clean migration
 
-The active repository contains no legacy parser, conversion command, combined bootstrap, natural reply mode, or readable context-sidecar workflow. Older packets are not upgraded by changing their marker. They must be recreated from actual source meaning under the 2.2 contract.
+The active repository contains no legacy parser, old-version conversion command, combined bootstrap, natural reply mode inside the numeric protocol, or readable context-sidecar workflow. The local symbolic IR and human Decoder/Audit are deliberate control-plane surfaces, not compatibility paths. Older packets are not upgraded by changing their marker; they must be recreated from actual source meaning under the 2.2 contract.
 
 Historical material may explain project lineage, but it is not an executable compatibility promise and is excluded from active entrypoints.

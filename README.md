@@ -2,21 +2,23 @@
 
 Lambda H/2.2 is a numeric semantic communication format for language-model endpoints. It combines shallow row framing, semantic fields, exact graph relationships, policy, epistemic state, and task progress.
 
-The runtime goal is direct semantic action:
+The transport goal is direct semantic action while keeping the human control plane usable:
 
 ```text
-source meaning -> Encoder -> numeric packet -> Receiver/Doer -> action -> numeric packet
+human source -> Encoder -> numeric packet -> Receiver/Doer -> action -> numeric packet
+                  |                                      |
+                  +-> English audit                      +-> human Decoder -> English explanation
 ```
 
-English reconstruction is not a runtime stage. Runtime output is exactly one `ΛH2.2|` numeric frame. Text, field labels, source wording, developer JSON, code fences, and human audits are excluded. A request that requires textual output receives numeric abstention code 2.
+Agent-to-agent transport is exactly one `ΛH2.2|` numeric frame. Source wording, field labels, developer JSON, code fences, and human audits are excluded from that packet. Human-facing Encoder audits and Decoder explanations are outside the transport boundary. A remote task that itself requires textual output receives numeric abstention code 2.
 
 ## Roles
 
 | Prompt | Responsibility |
 |---|---|
-| `prompt/ENCODER.md` | Encode source meaning; never execute it |
-| `prompt/DOER.md` | Interpret numeric meaning and perform authorized work |
-| `prompt/DECODER.md` | Validate/canonicalize numeric structure; never execute or explain in English |
+| `prompt/ENCODER.md` | Source meaning -> numeric packet plus separate human audit; never execute it |
+| `prompt/DOER.md` | Numeric packet -> authorized action -> numeric packet |
+| `prompt/DECODER.md` | Numeric packet -> English explanation for the human; never execute it |
 | `PROMPT.md` | Select one role from user intent |
 
 Each role prompt contains the complete row grammar, graph invariants, semantic anchors, valid controls, worked packets, and a path that requires no Python.
@@ -36,18 +38,26 @@ That packet is the ready control. Data rows use only finite JSON numbers separat
 
 Row counts detect truncation, while graph validation checks semantic structure. Neither proves that a sender chose the intended meaning.
 
-## Optional deterministic validation
+## Optional deterministic codec boundary
 
-Python 3.10+ and the standard library can validate and canonicalize a packet:
+Python 3.10+ and the standard library can translate local symbolic IR and numeric transport:
 
 ```sh
+python3 -m src.codec encode local.ir
+python3 -m src.codec decode examples/field.lh
 python3 -m src.codec format examples/field.lh
 python3 -m src.codec format examples/field.lh --output /tmp/canonical-field.lh
 ```
 
-With no `--output`, stdout is numeric packet data only. With `--output`, the destination must be new; success writes a private file and leaves stdout empty. Failures return a numeric invalid or abstain control and exit 2.
+`encode` accepts local `LH-IR 2.2` and emits canonical numeric transport. `decode` accepts numeric transport and emits local symbolic IR for a Doer or human-facing Decoder to interpret. `format` only canonicalizes an already numeric frame. With `--output`, the destination must be new and success leaves stdout empty.
 
-Python is optional. It checks serialization and graph invariants; it does not infer meaning, execute tasks, acquire context, or make model-only behavior reliable.
+Python is optional. It owns deterministic structural conversion when available; it does not choose semantic meaning, execute tasks, acquire context, or make model-only behavior reliable.
+
+## Agent-native ambient context
+
+Repo-aware hosts may ground deictic references without copying exact identities onto the wire. The ambient-capable conventions are `X02` active goal, `X03` active artifact, `X06` active plan, `X07` current blocker, `X08` current workspace/environment/repository, and `X09` output/result target.
+
+A host binding is usable only when its numeric context namespace exactly matches the packet context. Packet-inline X values take precedence; matching host-local bindings are fallback; otherwise the reference is missing and normal `need` behavior applies. A receiver must never reinterpret `X08` as whatever different repository it currently has open. Host-local bindings may contain richer objects or text because `src.context` never serializes them into Lambda H transport.
 
 ## Meaning and exact structure
 
@@ -64,8 +74,10 @@ The public anchors in `semantics/basis.json` make the numbers interpretable. Lam
 | `SPEC.md` | Active 2.2 contract |
 | `src/protocol.py` | Developer graph and invariants |
 | `src/wire.py` | Numeric structural mapping used by row assembly |
-| `src/rows.py` | Public shallow row parser/formatter |
-| `src/codec.py` | Optional canonicalization CLI |
+| `src/rows.py` | Public shallow numeric row parser/formatter |
+| `src/ir.py` | Local model-facing symbolic IR parser/formatter |
+| `src/codec.py` | IR <-> numeric transport boundary and numeric canonicalizer |
+| `src/context.py` | Host-local ambient context conventions and exact namespace resolution |
 | `src/geometry.py` | Field activation and numeric candidate helpers |
 | `semantics/basis.json` | Shared semantic directions |
 | `schema/lambda_h_packet.schema.json` | Generated local graph schema |

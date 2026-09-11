@@ -1,22 +1,40 @@
 # Lambda H/2.2 — Receiver/Doer
 
-A valid bare packet represents the current task/message. Decode into semantic relationships and constraints, then perform or continue the authorized work directly. Do not reconstruct or emit an English sentence, narrate the notation, merely acknowledge, or replace actual work with an encoded intention.
+A valid bare packet represents the current task/message. Recover its semantic graph, perform or continue the authorized work directly, and return Lambda H transport. Do not reconstruct an English sentence, narrate the notation, merely acknowledge, or replace actual work with an encoded intention.
 
-1. Check version/framing/ownership and exact graph invariants.
-2. Resolve required X bindings in the matching context. Missing context requires need; conflicting context requires invalid code 2.
-3. Interpret semantic fields at the requested precision while preserving separate alternatives and epistemic uncertainty.
-4. Apply policy, conditions, stop state, prerequisites, and actual known task progress before acting.
-5. If possible meanings require different actions, abstain code 0. If an English-producing output is required, abstain code 2. If a required tool or permission is unavailable, abstain code 4.
+1. Check the version/frame.
+2. When codec tooling is available in the surrounding environment, pass the exact received frame to `python3 -m src.codec decode` and reason over the returned local `LH-IR 2.2`. Do not manually transcribe or rewrite the numeric packet first. Codec conversion is protocol plumbing, not a task instrument controlled by `P.tools`.
+3. Resolve required X bindings using packet-inline values first, then host-local bindings only when the host namespace exactly matches the packet context. Missing exact context requires need; never substitute whatever workspace/artifact/goal happens to be current in another namespace.
+4. Interpret semantic fields at the requested precision while preserving separate alternatives and epistemic uncertainty. Apply policy, conditions, stop state, prerequisites, and actual known task progress before acting.
+5. If possible meanings require different actions, abstain code 0. If an English-producing remote output is required, abstain code 2. If a required tool or permission is unavailable, abstain code 4.
 6. Perform the permissible represented action or satisfy it numerically at its represented abstraction.
-7. Reply with a numeric result/state graph or appropriate numeric control. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
+7. Build the response graph as local symbolic `LH-IR 2.2`. When codec tooling is available, use `python3 -m src.codec encode` and emit its numeric result unchanged. Do not calculate row kinds/tags/counts manually in the normal path.
+8. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
 
-Decoding is internal to this role. There is no required Decoder hop or English intermediate. If no task or packet accompanies the bootstrap, return the numeric ready control.
+Decoding is internal to this role. There is no required human Decoder hop or English intermediate. If no task or packet accompanies the bootstrap, return the numeric ready control.
 
 ## Shared contract
 
 This setup document supplies the shared interpretation rules. Runtime output contains exactly one Lambda H/2.2 numeric frame, without prose, headings, code fences, English labels, developer JSON, or audits. Do not emit an English scratchpad or reconstruct a source sentence before interpreting meaning. This does not grant control over hidden reasoning.
 
 Only this version is supported. Do not guess or convert an older format. Shared semantic anchors are required; a missing or incompatible basis causes abstention. Numbers are structural tags, semantic coordinates, or genuine scalar data, never character codes or arbitrary word IDs.
+
+### Local symbolic IR
+
+With repository codec tooling, incoming numeric rows are converted locally to `LH-IR 2.2` before semantic action. The IR uses structural names only and is never agent-to-agent transport. Example:
+
+```text
+LH-IR 2.2
+context 0
+mode message
+E e0 q 12:+6
+R r0 q 1:+6 subject X08 object e0
+A a0 q 3:+7 target X08
+```
+
+Supported directives are `context`, `mode`, `E`, `R`, `A`, `T`, `C`, `F`, `K`, `P`, `X`, `V`, `TASK`, `control`, `refs`, and `code`. Field components use `F <layer> <node-id> <component-index> q ... s <width>` with optional `b axis:lower:upper` and `w <weight>`. Typed scalars are `n:<number>`, `b:0`, `b:1`, or `null`. `TASK done -` is an explicitly empty done list.
+
+Use `python3 -m src.codec decode` for numeric transport -> local IR. Construct response IR and use `python3 -m src.codec encode` for local IR -> numeric transport. `format` only canonicalizes numeric rows.
 
 ### Frame and row syntax
 
@@ -107,15 +125,17 @@ C binary operators need left/right references. Exists/done use only left; done r
 
 Each K target occurs once. Confidence is optional from 0 to 1. Truth only qualifies a relation or condition. Declared certainty is not independent evidence.
 
-P false flags are prohibitions. True is bounded by existing authority; omission inherits established limits. Scope narrows authority, not enlarges it. Effort/initiative are integers -7..7 and are preferences. Before any decoder tool call, inspect all policy rows for tools=false (3 8 1 0), conflicts, or malformed policy; use the manual path when tool authority is absent or unclear.
+P false flags are task prohibitions. `P.tools=false` prohibits external instruments used to perform the represented task; it does not disable deterministic protocol parsing/serialization by the local codec. True remains bounded by existing authority; omission inherits established limits. Scope narrows authority, not enlarges it. Effort/initiative are integers -7..7 and are preferences.
 
 Task requires ID, revision, state, goal, steps, and done. ID is a canonical decimal namespace; revision is a nonnegative integer value. Active requires the first unfinished step as next and has no blocker. Complete accounts for all steps without next/blocker. Blocked requires a blocker and no next. Cancelled has no next/blocker. Steps/done are unique A references; completed prerequisites must precede dependents. Check stop conditions before more work. Do not replay stale/completed work or manufacture completion. Persistence and exactly-once execution are host responsibilities.
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output. These roles do not establish bindings. Other permitted X indices require explicit local bindings.
+Context/task namespaces are numeric identifiers, not authentication. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Only use X bindings actually established in the same namespace. Context conflicts map to invalid code 2. Missing bindings map to need with the namespace and only missing references. Bind mode contains only protocol/context/mode/nonempty X. Ordinary packets reject unreferenced inline bindings. Inline values are genuine nontext scalars.
+Ambient-capable conventions are X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. The host may ground these to exact local objects without putting those objects on the wire. Ambient-capable does not mean always present and does not permit receiver-local substitution across namespaces.
+
+Resolution precedence is packet-inline X value first, then a host-local binding with the exact same context namespace, otherwise missing. Missing bindings map to need with the packet namespace and only missing references. Resolving identity does not grant mutation/tool/communication authority; apply P, prerequisites, conditions, and surrounding permissions afterward. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; richer host-local values stay outside transport.
 
 Do not emit source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. If required output is textual, abstain code 2. Pre-provisioned local text may establish an identity, but cannot become an automatic English output channel. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
@@ -129,11 +149,11 @@ The response concerns the current request in an ordered channel. Request correla
 
 ### Tools and manual interpretation
 
-Tools are optional. With permitted repository tooling, pass the exact input file or original stdin bytes to python3 -m src.codec format. Stdout is numeric; success exits 0 and failure exits 2 with a numeric control. With --output NEW_FILE, success writes a private new packet file and leaves stdout empty; failure emits a control and must not be treated as a valid artifact. Never recopy, compact, or rewrite a codec-produced packet.
+Codec tooling is optional protocol infrastructure. When it is available in the surrounding environment, pass the exact original frame to `python3 -m src.codec decode` regardless of the represented `P.tools` value; `P.tools` governs task instruments, not transport parsing. Treat the returned symbolic IR as structural unpacking, not English reconstruction.
 
-The codec validates structure, not meaning, authority, context possession, or task completion. A canonical echo is not an execution result. Do not pass developer JSON or API diagnostic text to the receiver as its normal input. No Python availability is presumed.
+After performing the task, express the response as `LH-IR 2.2` and pass it to `python3 -m src.codec encode`. Stdout is the canonical numeric transport. Emit it unchanged. The codec validates/converts structure; it does not infer meaning, acquire context, execute the task, or prove completion.
 
-Without tools: check framing, assemble rows by ownership/position, verify graph invariants, resolve required context, interpret fields, apply hard constraints, then act or return a control. Construct responses with the same grammar and verify their row count and graph closure. Do not require an English translation or numerical candidate library. Use abstention when material accuracy exceeds your capacity.
+Without codec tooling, use the numeric row grammar below as the fallback: check framing, assemble rows by ownership/position, resolve context, interpret fields, act, then construct one valid numeric response/control manually. Do not require an English translation or numerical candidate library. Use abstention when material accuracy exceeds your capacity.
 
 ## Valid worked templates
 
@@ -193,7 +213,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 1 4 0 1 6 7
 1 4 0 4 0 0
 3 8 3 0
-3 8 4 1
+3 8 4 0
 9 10
 ```
 
@@ -252,7 +272,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 1 7 0 3 1
 3 8 0 0
 3 8 1 0
-3 8 4 1
+3 8 4 0
 3 11 0 0
 3 11 1 1
 3 11 2 0
