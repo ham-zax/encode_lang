@@ -201,6 +201,79 @@ def lint_packet(source: str) -> str:
     return f"OK: {actual_rows} data rows, valid ΛH/2.2 frame, all invariants and local references resolve.\n"
 
 
+RECIPES = {
+    "diagnose": """LH-IR 2.2
+context 0
+mode message
+A a0 q 3:+7 target X08
+P detail full""",
+    "inspect": """LH-IR 2.2
+context 0
+mode message
+T t0 q 11:+7
+A a0 q 0:+7 target X08 tool t0
+P detail full""",
+    "wayfinding": """LH-IR 2.2
+context 0
+mode message
+E e0 q 31:+7
+R r0 q 14:-7 subject X08 object e0
+A a0 q 3:+7 target X07
+A a1 q 10:+7 target e0 after a0
+TASK id 1 revision 1 state active goal e0 steps a0 a1 next a0 done -
+P detail full""",
+    "audit": """LH-IR 2.2
+context 0
+mode message
+E e0 q 31:+7
+E e1 q 13:+7
+R r0 q 15:+7 subject X08 object e1
+A a0 q 2:+7 target r0
+A a1 q 10:+7 target e0 after a0
+TASK id 2 revision 1 state active goal e0 steps a0 a1 next a0 done -
+P detail full""",
+    "fuzz": """LH-IR 2.2
+context 0
+mode message
+E e0 q 31:+7
+T t0 q 13:+7
+T t1 q 6:+7
+A a0 q 1:+7 target X08
+A a1 q 8:+7 target e0 tool t1 after a0
+A a2 q 13:+7 target e0 tool t0 after a1
+A a3 q 15:+7 target X03 after a2
+TASK id 1 revision 1 state active goal e0 steps a0 a1 a2 a3 next a0 done -
+P detail full""",
+}
+
+
+def recipe_packet(name: str) -> str:
+    recipe_name = name.strip().lower() if name else "diagnose"
+    if recipe_name not in RECIPES:
+        valid = ", ".join(sorted(RECIPES.keys()))
+        raise ProtocolError(f"unknown recipe {name!r}; valid recipes: {valid}")
+    ir = RECIPES[recipe_name]
+    return format_packet(parse_ir(ir))
+
+
+def fix_packet(source: str) -> str:
+    lines = [line.strip() for line in source.splitlines() if line.strip()]
+    if not lines:
+        raise ProtocolError("empty input")
+    start_idx = 0
+    while start_idx < len(lines) and (lines[start_idx] == "ΛH2.2|" or lines[start_idx].startswith("8 ")):
+        start_idx += 1
+    end_idx = len(lines) - 1
+    while end_idx >= 0 and lines[end_idx].startswith("9 "):
+        end_idx -= 1
+    data_rows = lines[start_idx:end_idx + 1]
+    count = len(data_rows)
+    fixed_frame = ["ΛH2.2|", f"8 {count}"] + data_rows + [f"9 {count}"]
+    content = "\n".join(fixed_frame) + "\n"
+    parse_packet(content)
+    return content
+
+
 def _read_bounded(path: str) -> str:
     if path == "-":
         text = sys.stdin.read(MAX_BYTES + 1)
@@ -220,6 +293,8 @@ def main() -> int:
             "  python3 -m src.codec decode examples/field.lh\n"
             "  python3 -m src.codec explain examples/field.lh\n"
             "  python3 -m src.codec lint examples/field.lh\n"
+            "  python3 -m src.codec fix examples/field.lh\n"
+            "  python3 -m src.codec recipe diagnose\n"
             "  python3 -m src.codec encode local.ir\n"
             "  python3 -m src.codec format examples/field.lh\n"
             "exit codes: 0 success; 2 invalid/capacity/IO (see stderr; "
@@ -227,23 +302,28 @@ def main() -> int:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("command", choices=("format", "encode", "decode", "explain", "lint"),
-                        help="format numeric rows, encode symbolic IR, decode rows to local IR, explain mission gloss, or lint frame")
-    parser.add_argument("input", nargs="?", default="-", help="input path; - is stdin")
+    parser.add_argument("command", choices=("format", "encode", "decode", "explain", "lint", "fix", "recipe"),
+                        help="format numeric rows, encode symbolic IR, decode rows to local IR, explain mission gloss, lint frame, fix row counts, or emit standard recipe")
+    parser.add_argument("input", nargs="?", default="-", help="input path or recipe name; - is stdin")
     parser.add_argument("--output", help="NEW private output file; stdout is empty on success")
     args = parser.parse_args()
     try:
-        source = _read_bounded(args.input)
-        if args.command == "format":
-            content = format_packet(parse_packet(source))
-        elif args.command == "encode":
-            content = format_packet(parse_ir(source))
-        elif args.command == "decode":
-            content = format_ir(parse_packet(source))
-        elif args.command == "explain":
-            content = explain_packet(source)
+        if args.command == "recipe":
+            content = recipe_packet(args.input if args.input != "-" else "diagnose")
         else:
-            content = lint_packet(source)
+            source = _read_bounded(args.input)
+            if args.command == "format":
+                content = format_packet(parse_packet(source))
+            elif args.command == "encode":
+                content = format_packet(parse_ir(source))
+            elif args.command == "decode":
+                content = format_ir(parse_packet(source))
+            elif args.command == "explain":
+                content = explain_packet(source)
+            elif args.command == "lint":
+                content = lint_packet(source)
+            else:
+                content = fix_packet(source)
         if args.output is None:
             sys.stdout.write(content)
         else:

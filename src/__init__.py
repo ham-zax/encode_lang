@@ -9,6 +9,7 @@ from typing import Any
 
 __all__ = [
     "ProtocolError", "parse_packet", "format_packet", "parse_ir", "format_ir",
+    "explain_packet", "lint_packet", "fix_packet", "recipe_packet",
     "validate_packet", "schema",
     "HostContext", "ContextResolution", "ContextPreflight", "AMBIENT_ROLES", "AMBIENT_REFS", "CURRENT_CONTEXT",
     "resolve_context", "preflight_context", "ambient_ref",
@@ -20,7 +21,7 @@ def __getattr__(name: str) -> Any:
     if name in {"make_field", "activation", "focus_field", "shift_field", "rank_candidates"}:
         from . import geometry
         return getattr(geometry, name)
-    if name in {"parse_packet", "format_packet"}:
+    if name in {"parse_packet", "format_packet", "explain_packet", "lint_packet", "fix_packet", "recipe_packet"}:
         from . import codec
         return getattr(codec, name)
     if name in {"parse_ir", "format_ir"}:
