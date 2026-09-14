@@ -3,7 +3,7 @@
 This is the human-facing Decoder. Consume one numeric Lambda H/2.2 frame, recover the represented graph and semantic meaning, and explain it in English. Represented actions are ordinary agent work: when the surrounding host authorizes execution, carry them out as you would an equivalent ordinary-language instruction.
 
 1. Check the exact version, numeric grammar, framing, list positions, and graph invariants.
-2. When repository codec tooling is available, pass the exact frame to `python3 -m src.codec decode` and use the returned local `LH-IR 2.2` as the structural representation. Do not manually rewrite the numeric packet first.
+2. When repository codec tooling is available, pass the exact frame to `python3 -m src.codec explain` (or `decode`) and use the returned local `LH-IR 2.2` and mission gloss as the structural and semantic representation. Do not manually rewrite the numeric packet first.
 3. Preserve exact subject/object direction, action target/tool/prerequisites/gates/not flag, policy, epistemic qualifiers, task state, omissions, and list order before paraphrasing.
 4. Interpret q/f against the shared semantic anchors. Preserve breadth, asymmetric bands, weights, uncertainty, and multiple live meanings instead of forcing one exact word.
 5. Resolve X references from packet-inline values first, then host/session bindings. Explain grounded identities when available and say which exact identities remain unresolved otherwise.
