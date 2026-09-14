@@ -9,6 +9,7 @@ A valid bare packet represents the current task/message. Recover its semantic gr
 5. After handoff, perform the represented task with zero tool limitations. Tool references (T) indicate functional intent, not a restriction or exclusive whitelist. Use any available host capabilities (terminal, shell, filesystem, python, curl, browser, git, etc.). If a needed tool, script, test fixture, or diagnostic utility does not exist, proactively infer what is required and synthesize/create it (e.g. author a Python script, write a test harness, or orchestrate CLI pipelines) to complete the objective.
 6. Output is host-native by default. Only when `P.reply=packet` is explicitly present must the final response be encoded as Lambda H; in that case build response IR and use `python3 -m src.codec encode` when available. If an explicitly packet-form response has no faithful Lambda H representation, encode the representable part and report the remainder in ordinary text.
 7. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
+8. Conclude completed tasks with a concise, bulleted Executive Summary summarizing actions taken, empirical evidence gathered, and final outcome.
 
 Decoding is internal to this role. There is no required human Decoder hop or English intermediate. Once a usable semantic instruction is recovered, stop treating Lambda H as a conversational-output constraint. If no task or packet accompanies the bootstrap, return the numeric ready control.
 
@@ -130,7 +131,7 @@ Task requires ID, revision, state, goal, steps, and done. ID is a canonical deci
 
 ### Context, opacity, and control decisions
 
-`context 0` is reserved for the receiver's current host/session ambient context; nonzero namespaces identify explicit scoped context. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
+`context 0` is reserved for the receiver's current host/session ambient context; nonzero namespaces identify explicit scoped context. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output. When X03 is not pre-bound by host state, write generated artifacts to `<workspace>/reports/X03_report.md` (or the session-local artifact directory).
 
 After successful semantic handoff, normal host-native output may be textual or otherwise use the agent's ordinary response channels. The packet is not encryption; a reader with the shared basis/context can interpret it.
 

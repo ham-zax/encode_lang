@@ -172,6 +172,35 @@ def explain_packet(source: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def lint_packet(source: str) -> str:
+    lines = source.splitlines()
+    if not lines:
+        raise ProtocolError("empty input")
+    if lines[0] != "ΛH2.2|":
+        raise ProtocolError(f"invalid protocol marker on line 1: expected 'ΛH2.2|', got {lines[0]!r}")
+    if len(lines) < 3:
+        raise ProtocolError("frame too short: requires marker, start count, and end count")
+
+    start_parts = lines[1].split()
+    if len(start_parts) != 2 or start_parts[0] != "8" or not start_parts[1].isdigit():
+        raise ProtocolError(f"invalid frame start on line 2: expected '8 <count>', got {lines[1]!r}")
+    stated_start = int(start_parts[1])
+
+    end_parts = lines[-1].split()
+    if len(end_parts) != 2 or end_parts[0] != "9" or not end_parts[1].isdigit():
+        raise ProtocolError(f"invalid frame end on line {len(lines)}: expected '9 <count>', got {lines[-1]!r}")
+    stated_end = int(end_parts[1])
+
+    actual_rows = len(lines) - 3
+    if stated_start != stated_end:
+        raise ProtocolError(f"framing count mismatch: line 2 states {stated_start}, but line {len(lines)} states {stated_end}")
+    if stated_start != actual_rows:
+        raise ProtocolError(f"framing count mismatch: header states {stated_start} rows, but actual data rows count is {actual_rows}")
+
+    parse_packet(source)
+    return f"OK: {actual_rows} data rows, valid ΛH/2.2 frame, all invariants and local references resolve.\n"
+
+
 def _read_bounded(path: str) -> str:
     if path == "-":
         text = sys.stdin.read(MAX_BYTES + 1)
@@ -190,6 +219,7 @@ def main() -> int:
             "examples:\n"
             "  python3 -m src.codec decode examples/field.lh\n"
             "  python3 -m src.codec explain examples/field.lh\n"
+            "  python3 -m src.codec lint examples/field.lh\n"
             "  python3 -m src.codec encode local.ir\n"
             "  python3 -m src.codec format examples/field.lh\n"
             "exit codes: 0 success; 2 invalid/capacity/IO (see stderr; "
@@ -197,8 +227,8 @@ def main() -> int:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("command", choices=("format", "encode", "decode", "explain"),
-                        help="format numeric rows, encode symbolic IR, decode rows to local IR, or explain mission gloss")
+    parser.add_argument("command", choices=("format", "encode", "decode", "explain", "lint"),
+                        help="format numeric rows, encode symbolic IR, decode rows to local IR, explain mission gloss, or lint frame")
     parser.add_argument("input", nargs="?", default="-", help="input path; - is stdin")
     parser.add_argument("--output", help="NEW private output file; stdout is empty on success")
     args = parser.parse_args()
@@ -210,8 +240,10 @@ def main() -> int:
             content = format_packet(parse_ir(source))
         elif args.command == "decode":
             content = format_ir(parse_packet(source))
-        else:
+        elif args.command == "explain":
             content = explain_packet(source)
+        else:
+            content = lint_packet(source)
         if args.output is None:
             sys.stdout.write(content)
         else:
