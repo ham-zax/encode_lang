@@ -4,24 +4,23 @@ A valid bare packet represents the current task/message. Recover its semantic gr
 
 1. Check the version/frame.
 2. When codec tooling is available in the surrounding environment, pass the exact received frame to `python3 -m src.codec decode` and reason over the returned local `LH-IR 2.2`. Do not manually transcribe or rewrite the numeric packet first. Codec conversion is protocol plumbing, not a task instrument controlled by `P.tools`.
-3. Resolve required X bindings using packet-inline values first, then exact matching host/session bindings. For `context 0`, `X00` may additionally resolve to exactly one conversational/task subject that was already established and unambiguous immediately before packet receipt. Do not infer X00 when several subjects are plausible, when no subject was established, from a relation field merely named `subject`, or solely from cwd/repository state. For `X08`, use the host/IDE-provided workspace root when available; otherwise use the process/tool current working directory, optionally normalized to its enclosing Git worktree root with `git rev-parse --show-toplevel`. `X08` is not a repository-discovery request: never scan `/home`, `/`, sibling directories, caches, or unrelated worktrees to choose it. If a required identity remains unresolved, return need. For nonzero contexts, use host-local bindings only when the host namespace exactly matches the packet context; never use conversational fallback there.
-4. Interpret semantic fields at the requested precision while preserving separate alternatives and epistemic uncertainty. Apply policy, conditions, stop state, prerequisites, and actual known task progress before acting.
-5. If malformed structure, missing required context, or material semantic ambiguity prevents a usable instruction from being recovered, return the corresponding Lambda H control. Otherwise the semantic handoff is complete.
-6. After handoff, perform the permissible represented task using the same normal tools, workflow, progress reporting, artifacts, and response style you would use for an equivalent ordinary-language instruction, subject to the packet's actual policy/scope constraints and surrounding authority.
-7. Output is host-native by default. Only when `P.reply=packet` is explicitly present must the final response be encoded as Lambda H; in that case build response IR and use `python3 -m src.codec encode` when available. If an explicitly packet-form response cannot faithfully represent a required result, use abstain code 2.
-8. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
+3. Interpret semantic fields at the requested precision while preserving separate alternatives and epistemic uncertainty. Apply conditions, stop state, and prerequisites before acting.
+4. If the structure is malformed, return the invalid control. Otherwise the semantic handoff is complete; when meaning is ambiguous, proceed on the reading best supported by the anchors.
+5. After handoff, perform the represented task using the same normal tools, workflow, progress reporting, artifacts, and response style you would use for an equivalent ordinary-language instruction.
+6. Output is host-native by default. Only when `P.reply=packet` is explicitly present must the final response be encoded as Lambda H; in that case build response IR and use `python3 -m src.codec encode` when available. If an explicitly packet-form response has no faithful Lambda H representation, encode the representable part and report the remainder in ordinary text.
+7. Do not declare completion without evidence, echo an action as if it were done, or restart a finished task.
 
 Decoding is internal to this role. There is no required human Decoder hop or English intermediate. Once a usable semantic instruction is recovered, stop treating Lambda H as a conversational-output constraint. If no task or packet accompanies the bootstrap, return the numeric ready control.
 
 ## Shared contract
 
-This setup document supplies the shared interpretation rules for the incoming Lambda H instruction and for any explicitly requested packet reply. A successfully decoded instruction does not constrain ordinary Doer output: without `P.reply=packet`, use the host's normal agent response conventions. Do not require an English reconstruction as an intermediate decoding step. This does not grant control over hidden reasoning.
+This setup document supplies the shared interpretation rules for the incoming Lambda H instruction and for any explicitly requested packet reply. A successfully decoded instruction does not constrain ordinary Doer output: without `P.reply=packet`, use the host's normal agent response conventions. Do not require an English reconstruction as an intermediate decoding step.
 
-Only this version is supported. Do not guess or convert an older format. Shared semantic anchors are required; a missing or incompatible basis causes abstention. Numbers are structural tags, semantic coordinates, or genuine scalar data, never character codes or arbitrary word IDs.
+Only this version is supported. Do not guess or convert an older format. Shared semantic anchors are required; a missing or incompatible basis is a contract failure answered by the invalid control. Numbers are structural tags, semantic coordinates, or genuine scalar data.
 
 ### Local symbolic IR
 
-With repository codec tooling, incoming numeric rows are converted locally to `LH-IR 2.2` before semantic action. The IR uses structural names only and is never agent-to-agent transport. Example:
+With repository codec tooling, incoming numeric rows are converted locally to `LH-IR 2.2` before semantic action. The IR uses structural names. Example:
 
 ```text
 LH-IR 2.2
@@ -40,7 +39,7 @@ Use `python3 -m src.codec decode` for numeric transport -> local IR. Construct r
 
 The first line is exactly ΛH2.2|. The second line is 8 followed by the number of data rows. After those data rows, the last line is 9 followed by the same count. One data row occupies one line. Canonical output uses single ASCII spaces, LF line breaks, and a final LF. Input may have multiple ASCII spaces and CRLF. Blank lines, tabs, brackets, strings, comments, and concatenated frames are invalid.
 
-Values use finite JSON numbers. No NaN/infinity, leading plus, or locale decimals. Structural IDs/tags/counts use nonnegative decimal integers without leading zeros, at most 9007199254740991. Packet limits are 1 MiB and 16384 data rows; abstain with code 4 when capacity is insufficient. A shorter model capacity is also a reason to abstain, not silently truncate.
+Values use finite JSON numbers. No NaN/infinity, leading plus, or locale decimals. Structural IDs/tags/counts use nonnegative decimal integers without leading zeros, at most 9007199254740991. Packet limits are 1 MiB and 16384 data rows; an endpoint that cannot hold the packet rejects it as invalid and never silently truncates.
 
 The following forms use explanatory names only in the bootstrap. Replace each name with its numeric value on the wire:
 
@@ -85,7 +84,7 @@ Node/property tags:
 |---|---|
 | E | 0 id, 1 q, 2 f, 3 u, 4 typed value, 5 typed choices |
 | R | 0 id, 1 q, 2 f, 3 u, 4 subject ref, 5 object ref, 6 negation |
-| A | 0 id, 1 q, 2 f, 3 u, 4 target ref, 5 tool ref, 6 prerequisite refs, 7 when ref, 8 until ref, 9 prohibition |
+| A | 0 id, 1 q, 2 f, 3 u, 4 target ref, 5 tool ref, 6 prerequisite refs, 7 when ref, 8 until ref, 9 not flag |
 | T | 0 id, 1 q, 2 f, 3 u, 4 typed value |
 | C | 0 id, 1 comparison enum, 2 left ref, 3 right ref |
 | K | 0 target ref, 1 epistemic enum, 2 confidence, 3 proposition truth |
@@ -105,7 +104,7 @@ A reference list is consecutive reference pairs. A point q is consecutive axis/c
 | detail | 0 brief; 1 normal; 2 full |
 | reply | 0 packet |
 | task state | 0 active; 1 complete; 2 blocked; 3 cancelled |
-| control | 0 ready; 1 need; 2 invalid; 3 abstain |
+| control | 0 ready; 1 invalid |
 
 `P.reply` is optional. Omission means normal host-native output, exactly as for an equivalent ordinary-language instruction. The only encoded reply override is `P.reply=packet` (code 0), which explicitly requests a Lambda H final response. Do not infer `reply=packet` merely because the instruction arrived through Lambda H.
 
@@ -117,33 +116,27 @@ Each q is nonempty. Coordinates are nonzero integral values from -7 through 7. E
 
 Each f is a nonempty ordered list of components with q and s. Widths s and every lower/upper band width are positive and at most 14. Optional w is positive and at most 1; omission means 1. Keep separate components, asymmetric widths, and weights. Never average alternatives into an invented center.
 
-For candidate x, use lower width when x is below a component coordinate and upper otherwise, falling back to s. The component compatibility is exp(-0.5 times the sum of squared normalized distances). The field is the maximum component compatibility times its w divided by maximum w. This is a compatibility envelope, not calibrated probability. Arithmetic/candidate scoring is optional; insufficient material discrimination requires abstention. Width changes never establish truth or restore missing identity.
+For candidate x, use lower width when x is below a component coordinate and upper otherwise, falling back to s. The component compatibility is exp(-0.5 times the sum of squared normalized distances). The field is the maximum component compatibility times its w divided by maximum w. This is a compatibility envelope, not calibrated probability. Arithmetic/candidate scoring is optional; when it cannot discriminate, proceed on the reading best supported by the anchors. Width changes never establish truth.
 
-R direction and negation are exact. A target/tool/prerequisites/when/until/prohibition are exact. A.tool must reference a T node; after contains unique A references, is acyclic, and constrains execution order. Independent actions follow declaration order when no task specifies order. Prohibited actions are not executable steps.
+R direction and negation are exact. A target/tool/prerequisites/when/until/not flag are exact. A.tool must reference a T node; after contains unique A references, is acyclic, and constrains execution order. Independent actions follow declaration order when no task specifies order. The not flag is preserved structurally and does not block execution.
 
 C binary operators need left/right references. Exists/done use only left; done requires an action reference. A path string does not establish existence. Unknown observations stay unknown. Check when before action and until before repetition.
 
 Each K target occurs once. Confidence is optional from 0 to 1. Truth only qualifies a relation or condition. Declared certainty is not independent evidence.
 
-P false flags are task prohibitions. `P.tools=false` prohibits external instruments used to perform the represented task; it does not disable deterministic protocol parsing/serialization by the local codec. True remains bounded by existing authority; omission inherits established limits. Scope narrows authority, not enlarges it. Effort/initiative are integers -7..7 and are preferences.
+P.mutation and P.tools are plain boolean fields with no prohibition meaning; they never disable deterministic protocol parsing/serialization by the local codec. Effort/initiative are integers -7..7 and are preferences.
 
 Task requires ID, revision, state, goal, steps, and done. ID is a canonical decimal namespace; revision is a nonnegative integer value. Active requires the first unfinished step as next and has no blocker. Complete accounts for all steps without next/blocker. Blocked requires a blocker and no next. Cancelled has no next/blocker. Steps/done are unique A references; completed prerequisites must precede dependents. Check stop conditions before more work. Do not replay stale/completed work or manufacture completion. Persistence and exactly-once execution are host responsibilities.
 
 ### Context, opacity, and control decisions
 
-Context/task namespaces are numeric identifiers, not authentication. `context 0` is reserved for the receiver's current host/session ambient context; nonzero namespaces identify explicit scoped context. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
+`context 0` is reserved for the receiver's current host/session ambient context; nonzero namespaces identify explicit scoped context. X00 subject, X01 previous subject, X02 goal, X03 artifact, X04 hypothesis, X05 result, X06 plan, X07 blocker, X08 environment, X09 output.
 
-Ambient-capable conventions in `context 0` are X00 current conversational/task subject, X02 active goal, X03 active artifact, X06 active plan, X07 current blocker, X08 current workspace/environment/repository, and X09 output/result target. `X00` is a snapshot of one already-established discourse/task subject, not a guess target. It may be grounded only when exactly one such subject is unambiguous before packet receipt. `X08` specifically means the already-active workspace: prefer an explicit host/IDE workspace root; otherwise use the current process/tool working directory, and if that directory is inside a Git worktree it may be normalized upward only to that worktree root. Do not derive X00 from X08 and do not search laterally or globally for repositories. If the already-active location does not identify one unique workspace, X08 is missing.
-
-Resolution precedence is packet-inline X value first; exact matching host/session binding second; for context 0 X00 only, one already-established unambiguous conversational subject third; otherwise missing. Snapshot resolved context-0 bindings at packet receipt and keep them stable for that request: later topic shifts or `cd` operations do not retarget X00/X08. Once X08 is resolved, repository exploration for an X08-scoped action stays inside that workspace unless the packet explicitly references another authorized scope. Never use receiver-current conversational or workspace state to satisfy a different nonzero namespace. Missing bindings map to need with the packet namespace and only missing references. Structural field names never imply X references: `R.subject` means use the exact decoded subject reference and does not itself imply X00. Resolving identity does not grant mutation/tool/communication authority; apply P, prerequisites, conditions, and surrounding permissions afterward. Bind mode contains only protocol/context/mode/nonempty X. Inline values are genuine nontext scalars; richer host-local values stay outside transport.
-
-The incoming transport must not contain source words, English audit, readable context sidecar, or an exact unbound identity disguised as numbers. After successful semantic handoff, normal host-native output may be textual or otherwise use the agent's ordinary response channels. Abstain code 2 is reserved for a task that explicitly requires `P.reply=packet` when the required result cannot be represented faithfully as Lambda H. The packet is not encryption; a reader with the shared basis/context can interpret it.
+After successful semantic handoff, normal host-native output may be textual or otherwise use the agent's ordinary response channels. The packet is not encryption; a reader with the shared basis/context can interpret it.
 
 Controls cannot carry task payload:
 - ready: control only. Use for bootstrap-only readiness, not task success or acknowledgement.
-- need: context, control, nonempty unique X refs.
 - invalid: control and code, with 0 shape, 1 local reference, 2 context conflict, 3 inconsistent task/dependency state.
-- abstain: control and integer code: 0 material ambiguity; 1 unrepresentable meaning; 2 explicit packet-reply output incompatibility; 3 missing/incompatible shared contract; 4 insufficient capacity or unavailable required capability/permission.
 
 The response concerns the current request in an ordered channel. Request correlation for concurrency is a host responsibility. Do not invent a new control or automatically retry forever.
 
@@ -168,24 +161,13 @@ Examples show syntax and represented state; they are not evidence of model perfo
 9 1
 ```
 
-### Need X08 in namespace 0
-
-```text
-ΛH2.2|
-8 3
-0 0 0
-0 12 1
-0 13 5 8
-9 3
-```
-
-### Ambiguity abstention
+### Invalid local reference
 
 ```text
 ΛH2.2|
 8 2
-0 12 3
-0 14 0
+0 12 1
+0 14 1
 9 2
 ```
 
@@ -194,7 +176,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 ```text
 ΛH2.2|
 8 2
-0 12 2
+0 12 1
 0 14 0
 9 2
 ```
@@ -285,7 +267,7 @@ Examples show syntax and represented state; they are not evidence of model perfo
 
 ## Shared semantic anchors
 
-These are setup definitions of semantic directions, not word IDs. They are shared across all three roles.
+These are setup definitions of semantic directions. They are shared across all three roles.
 
 ```text
 E00 living, independently perceiving or acting

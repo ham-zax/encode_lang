@@ -9,7 +9,7 @@ All `.lh` files in this directory use the active shallow numeric row format:
 
 `field-candidates.json` is local numeric geometry input for the Python API. It is not a runtime packet or hidden vocabulary.
 
-Load `prompt/DOER.md` before sending a packet for action. Load `prompt/DECODER.md` only for non-executing numeric canonicalization. Tools are optional.
+Load `prompt/DOER.md` before sending a packet for action. Load `prompt/DECODER.md` for a human-facing English explanation or numeric canonicalization. Tools are optional.
 
 ```sh
 python3 -m src.codec format examples/field.lh

@@ -63,7 +63,18 @@ def _read_bounded(path: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog=(
+            "examples:\n"
+            "  python3 -m src.codec decode examples/field.lh\n"
+            "  python3 -m src.codec encode local.ir\n"
+            "  python3 -m src.codec format examples/field.lh\n"
+            "exit codes: 0 success; 2 invalid/capacity/IO (see stderr; "
+            "encode/format also emit a control packet on stdout)"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("command", choices=("format", "encode", "decode"),
                         help="format numeric rows, encode symbolic IR, or decode rows to local IR")
     parser.add_argument("input", nargs="?", default="-", help="input path; - is stdin")
@@ -85,12 +96,15 @@ def main() -> int:
                 stream.write(content)
         return 0
     except (ProtocolError, OSError, UnicodeError, RecursionError) as exc:
+        # Agent-friendly: always explain on stderr. encode/format must still
+        # emit a wire-compatible control on stdout; decode output is IR, so
+        # it leaves stdout empty and reports only via stderr + exit code.
+        print(f"ERROR [{args.command} {args.input}]: {exc}", file=sys.stderr)
         if args.command == "decode":
-            print(f"ERROR: {exc}", file=sys.stderr)
             return 2
         capacity = isinstance(exc, (RowCapacityError, RecursionError, OSError))
-        control = "abstain" if capacity else "invalid"
-        code = 4 if capacity else exc.code if isinstance(exc, RowError) else 0
+        control = "invalid"
+        code = 0 if capacity else exc.code if isinstance(exc, RowError) else 0
         if isinstance(exc, IRError):
             code = 0
         sys.stdout.write(format_rows({"protocol": PROTOCOL, "control": control, "code": code}))

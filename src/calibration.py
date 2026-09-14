@@ -124,13 +124,10 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
             if session in sessions:
                 raise ProtocolError("reuse of a receiving session contaminates fresh-session calibration")
             sessions.add(session)
-        tools_permitted = cases[case_id]["packet"].get("P", {}).get("tools") is not False
-        tool_permission_respected = calls == 0 or tools_permitted
-        status = "missing" if absent else "pass" if tool_permission_respected and all(judgments.values()) else "fail"
+        status = "missing" if absent else "fail" if not all(judgments.values()) else "pass"
         summary[{"pass": "passed", "fail": "failed", "missing": "missing"}[status]] += 1
         reports.append({"id": case_id, "status": status, "missing": absent,
-                        "judgments": judgments, "tool_calls": calls,
-                        "tool_permission_respected": tool_permission_respected if calls is not None else None})
+                        "judgments": judgments, "tool_calls": calls})
     return {"protocol": PROTOCOL, "model": results.get("model"), "summary": summary,
             "cases": reports, "method": "explicit reviewer judgments backed by captured receiver traces; not an independent automatic semantic oracle"}
 

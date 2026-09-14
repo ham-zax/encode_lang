@@ -93,12 +93,9 @@ def ambient_ref(role: str) -> str:
 
 
 def _required_x(packet: dict[str, Any]) -> list[str]:
-    if packet.get("control") == "need":
-        refs = list(packet["refs"])
-    elif "control" in packet:
+    if "control" in packet:
         return []
-    else:
-        refs = [ref for _, ref in references(packet) if ref.startswith("X")]
+    refs = [ref for _, ref in references(packet) if ref.startswith("X")]
     # Preserve first semantic occurrence for deterministic missing/ref reporting.
     return list(dict.fromkeys(refs))
 

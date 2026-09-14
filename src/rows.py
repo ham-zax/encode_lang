@@ -30,7 +30,7 @@ class RowError(ProtocolError):
 
 
 class RowCapacityError(ProtocolError):
-    """Input exceeds the declared endpoint limits; abstain, do not truncate."""
+    """Input exceeds the declared endpoint limits; reject as invalid, do not truncate."""
 
 
 def validate_rows_graph(packet: dict[str, Any]) -> None:
@@ -40,8 +40,6 @@ def validate_rows_graph(packet: dict[str, Any]) -> None:
         if not code and any(error.startswith(("task.", "A.after:")) for error in errors):
             code = 3
         raise RowError("; ".join(errors), code)
-    if packet.get("control") == "abstain" and type(packet["code"]) is not int:
-        raise RowError("abstain code must be an integer token")
     encode_graph(packet)
 
 

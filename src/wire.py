@@ -21,7 +21,7 @@ ENUMS = {
     "detail": ("brief", "normal", "full"),
     "reply": ("packet",),
     "state": ("active", "complete", "blocked", "cancelled"),
-    "control": ("ready", "need", "invalid", "abstain"),
+    "control": ("ready", "invalid"),
 }
 # The position in each table is a STRUCTURAL field tag, never a word identity.
 RECORDS = {

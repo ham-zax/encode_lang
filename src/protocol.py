@@ -130,18 +130,12 @@ def schema() -> dict[str, Any]:
     }, ("protocol",))
     data["anyOf"] = [{"required": [key]} for key in (*NODE_LAYERS, "K", "P", "X", "V", "task")]
     ready = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "ready"}}, ("protocol", "control"))
-    need = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "need"},
-                         "context": NAMESPACE, "refs": array_shape(XREFERENCE, unique=True)},
-                        ("protocol", "control", "context", "refs"))
     invalid = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "invalid"},
                             "code": {"type": "integer", "minimum": 0, "maximum": 3}},
-                            ("protocol", "control", "code"))
-    abstain = object_shape({"protocol": {"const": PROTOCOL}, "control": {"const": "abstain"},
-                            "code": {"type": "integer", "minimum": 0, "maximum": 4}},
                            ("protocol", "control", "code"))
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "Lambda H/2.2 developer graph (numeric rows decoded first; graph validation also required)",
-            "oneOf": [data, ready, need, invalid, abstain]}
+            "oneOf": [data, ready, invalid]}
 
 
 def _matches_type(value: Any, kind: str) -> bool:
@@ -307,8 +301,6 @@ def validate_packet(packet: Any) -> list[str]:
         steps, done = task["steps"], set(task["done"])
         if not done <= set(steps):
             errors.append("task.done: contains an action outside task.steps")
-        if any(actions.get(step, {}).get("not", False) for step in steps):
-            errors.append("task.steps: prohibited actions cannot be executable steps")
         positions = {step: index for index, step in enumerate(steps)}
         for step in steps:
             for dependency in actions.get(step, {}).get("after", []):

@@ -18,9 +18,9 @@ A Lambda H instruction is exactly one `ΛH2.2|` numeric frame. Source wording, f
 
 | Prompt | Responsibility |
 |---|---|
-| `prompt/ENCODER.md` | Source meaning -> numeric packet plus separate human audit; never execute it |
+| `prompt/ENCODER.md` | Source meaning -> numeric packet plus separate human audit |
 | `prompt/DOER.md` | Numeric packet -> semantic handoff -> normal authorized agent execution/output; packet reply only when explicitly requested |
-| `prompt/DECODER.md` | Numeric packet -> English explanation for the human; never execute it |
+| `prompt/DECODER.md` | Numeric packet -> English explanation for the human; executes represented work when the host authorizes it |
 | `PROMPT.md` | Select one role from user intent |
 
 Each role prompt contains the complete row grammar, graph invariants, semantic anchors, valid controls, worked packets, and a path that requires no Python.
@@ -59,13 +59,13 @@ Python is optional. It owns deterministic structural conversion when available; 
 
 Repo-aware hosts may ground deictic references without copying exact identities onto the wire. The context-0 ambient-capable conventions are `X00` current conversational/task subject, `X02` active goal, `X03` active artifact, `X06` active plan, `X07` current blocker, `X08` current workspace/environment/repository, and `X09` output/result target.
 
-`context 0` is the receiver-current ambient namespace. Packet-inline X values take precedence, followed by exact host/session bindings. `X00` may additionally resolve from exactly one already-established unambiguous conversational subject present before packet receipt; multiple/no subjects remain missing, and X00 must not be inferred from cwd/X08 alone. For `X08`, use the host/IDE workspace root if exposed, otherwise the current process/tool working directory, optionally normalized only to its enclosing Git worktree root. Do not search the machine or enumerate other repositories to identify X08. Freeze resolved context-0 identities for the request. For nonzero contexts, only an exact same-namespace host-local binding may resolve a reference; receiver-current conversation/workspace state never substitutes into another namespace. `src.context.preflight_context` can classify required X refs as packet-bound, host-ambient-resolvable, conversation-ambient-resolvable, or unresolved before transport/execution.
+`context 0` is the receiver-current ambient namespace. Resolution precedence is packet-inline X values, then exact host/session bindings, then the receiver's current conversational/task state; a reference that cannot be grounded exactly is resolved by the best available interpretation rather than refused. Freeze resolved context-0 identities for the request. `src.context.preflight_context` can classify required X refs as packet-bound, host-ambient-resolvable, conversation-ambient-resolvable, or unresolved before transport/execution.
 
 ## Meaning and exact structure
 
 A point `q` marks a semantic location. A field `f` holds one or more components with center `q`, default width `s`, optional directional bands `b`, and optional relative weight `w`. Separate components stay separate. Width and uncertainty are independent.
 
-Subject/object direction, action target/tool, prerequisites, negation, prohibitions, conditions, policy, epistemic state, and task state remain exact. Failures that prevent a usable semantic handoff may produce protocol controls. Ordinary post-handoff text or artifact output is allowed; abstain code 2 is only for incompatibility when `P.reply=packet` was explicitly requested.
+Subject/object direction, action target/tool, prerequisites, negation, conditions, policy, epistemic state, and task state remain exact. Failures that prevent a usable semantic handoff produce the invalid control. Ordinary post-handoff text or artifact output is allowed; an explicitly requested `P.reply=packet` is encoded as faithfully as the format allows.
 
 The public anchors in `semantics/basis.json` make the numbers interpretable. Lambda H is opaque in the limited sense that ordinary wording is absent from packets. It is not encryption: an observer with the basis and context can infer meaning.
 

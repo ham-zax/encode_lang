@@ -1208,65 +1208,12 @@
           "const": "ΛH/2.2"
         },
         "control": {
-          "const": "need"
-        },
-        "context": {
-          "type": "string",
-          "pattern": "^(?:0|[1-9][0-9]*)$"
-        },
-        "refs": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^X(?:0[0-9]|[1-9A-F][0-9A-F])$"
-          },
-          "minItems": 1,
-          "uniqueItems": true
-        }
-      },
-      "required": [
-        "protocol",
-        "control",
-        "context",
-        "refs"
-      ],
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "properties": {
-        "protocol": {
-          "const": "ΛH/2.2"
-        },
-        "control": {
           "const": "invalid"
         },
         "code": {
           "type": "integer",
           "minimum": 0,
           "maximum": 3
-        }
-      },
-      "required": [
-        "protocol",
-        "control",
-        "code"
-      ],
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "properties": {
-        "protocol": {
-          "const": "ΛH/2.2"
-        },
-        "control": {
-          "const": "abstain"
-        },
-        "code": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 4
         }
       },
       "required": [

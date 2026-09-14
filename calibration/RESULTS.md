@@ -2,7 +2,7 @@
 
 Date: 2026-09-11.
 
-The active source implements shallow numeric transport rows, local symbolic IR, exact graph validation, numeric-only protocol controls, three standalone prompts, and an optional IR/wire codec boundary. Checked-in behavioral cases are defined, but no fresh receiving-model experiment has been run against the final 2.2 prompt/basis/corpus.
+The active source implements shallow numeric transport rows, local symbolic IR, exact graph validation, numeric-only protocol controls, three standalone prompts, and an optional IR/wire codec boundary. Checked-in behavioral cases are defined, but no fresh receiving-model experiment has been run against the final 2.2 prompt/basis/corpus. The permissive 2.2 revision (no need/abstain controls, no prohibition semantics) supersedes any earlier behavioral observations; evidence must be re-measured against the current prompts.
 
 ## Mechanical evidence
 

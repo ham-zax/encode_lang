@@ -33,7 +33,7 @@ P [mutation 0|1] [tools 0|1] [scope <ref> ...] [detail <brief|normal|full>] [rep
 X <X-ref> <scalar>
 V axis:coord ...
 TASK id <decimal-namespace> revision <integer> state <active|complete|blocked|cancelled> goal <ref> steps <a-ref> ... done <a-ref> ...| - [next <a-ref>] [stop <c-ref>] [blocker <ref>]
-control <ready|need|invalid|abstain>
+control <ready|invalid>
 refs <X-ref> ...
 code <integer>
 ```
@@ -53,7 +53,7 @@ The marker is literal. The two framing rows do not count as data. Each data row 
 
 Numbers use finite JSON number syntax. Structural tags, positions, list indices, IDs, and counts are canonical nonnegative decimal integers bounded by 9007199254740991. No leading plus or leading-zero aliases. Coordinates are nonzero integers from -7 through 7.
 
-An endpoint accepts at most 1 MiB and 16384 data rows. It must abstain for insufficient capacity, never truncate.
+An endpoint accepts at most 1 MiB and 16384 data rows. It rejects with the invalid control for insufficient capacity and never truncates.
 
 ## 3. Data rows
 
@@ -110,7 +110,7 @@ epistemic: K00..K08 = 0..8
 detail: brief=0, normal=1, full=2
 reply: packet=0
 task: active=0, complete=1, blocked=2, cancelled=3
-control: ready=0, need=1, invalid=2, abstain=3
+control: ready=0, invalid=1
 ```
 
 ## 5. Graph and fields
@@ -132,13 +132,13 @@ F is compatibility under supplied geometry, not probability, truth, lexical iden
 
 ## 6. Exact operations and state
 
-R subject/object order and negation are exact. A target, tool, prerequisite order, when/until gates, and prohibition are exact. Prerequisites must be acyclic. A tool references T; conditions reference C. Prohibited actions cannot be task steps.
+R subject/object order and negation are exact. A target, tool, prerequisite order, when/until gates, and the not flag are exact. Prerequisites must be acyclic. A tool references T; conditions reference C. The not flag is preserved structurally and does not block execution.
 
 Binary C operators require right. Exists and done omit right; done references an action. Unknown evidence stays unknown. A declared resource or action is not proof of existence or completion.
 
 K states retain observed, reported, assumed, hypothesized, inferred, multiply supported, contradicted, unknown, and confirmed-to-required-standard. Confidence is 0..1. Truth applies only to R/C. Packet assertions are not independent evidence.
 
-P false flags prohibit mutation or external task-tool use by the represented task. `P.tools` does not disable local protocol parsing/serialization by the codec. True stays within external authority. Scope can narrow but never expand authority. Effort and initiative are -7..7 preferences. `P.reply` is optional: omission means normal host-native output after semantic handoff; `reply=packet` explicitly requests a Lambda H final response.
+P.mutation and P.tools are plain boolean fields with no prohibition meaning. They do not disable local protocol parsing/serialization by the codec. Effort and initiative are -7..7 preferences. `P.reply` is optional: omission means normal host-native output after semantic handoff; `reply=packet` explicitly requests a Lambda H final response.
 
 Task requires canonical numeric ID, revision, state, goal, ordered steps, and done. Active requires the first unfinished step as next. Complete accounts for all steps. Blocked requires blocker. Non-active tasks have no next. Done steps include completed prerequisites. Stop is checked before more execution.
 
@@ -146,9 +146,9 @@ Task requires canonical numeric ID, revision, state, goal, ordered steps, and do
 
 Context IDs identify scoped state; they do not authenticate it. `context 0` is reserved for the receiver's current ambient host/session context. Nonzero context IDs identify explicit scoped state. X00..X09 mean subject, previous subject, goal, artifact, hypothesis, result, plan, blocker, environment, and output.
 
-`X00`, `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are context-0 ambient-capable conventions for current conversational/task subject, active goal, active artifact, active plan, current blocker, current workspace/environment/repository, and output/result target. Select references by semantic role rather than convenience: X00 and X08 are distinct even when the current subject has a repository. Context-0 X00 may use exactly one already-established unambiguous conversational subject present before packet receipt; no/multiple subjects, cwd alone, or a structural field named `subject` do not establish X00. For X08, the authoritative value is the workspace root supplied by the host/IDE when available, otherwise the process/tool current working directory, optionally normalized only to its enclosing Git worktree root. X08 is a snapshot of the already-active workspace, not an instruction to discover repositories: implementations must not enumerate sibling repositories, caches, `/home`, `/`, or unrelated worktrees to choose it.
+`X00`, `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` are context-0 ambient-capable conventions for current conversational/task subject, active goal, active artifact, active plan, current blocker, current workspace/environment/repository, and output/result target. Select references by semantic role rather than convenience: X00 and X08 are distinct even when the current subject has a repository.
 
-Resolution precedence is explicit packet X value first; exact matching host/session binding second; for context 0 X00 only, one already-established unambiguous conversational subject third; otherwise missing. Resolved context-0 bindings are frozen for the request, so later topic or working-directory changes do not retarget them. Once X08 is resolved, X08-scoped repository exploration remains inside that workspace unless another scope is explicitly represented and authorized. Receiver-current state must never satisfy a different nonzero context. Missing required references produce `need`. Before transmission, an Encoder may run a local `UNBOUND_REQUIRED_X` preflight that classifies each required X as packet-bound, host-ambient-resolvable, conversation-ambient-resolvable, or unresolved; this diagnostic is not a wire control. Host-local values may be arbitrary endpoint objects or text because they remain outside `src.rows`, `src.ir`, and `src.codec` transport serialization.
+Resolution precedence is explicit packet X value first; exact matching host/session binding second; the receiver's current conversational/task state third. A reference that cannot be grounded exactly is resolved by the best available interpretation rather than refused. Resolved context-0 bindings are frozen for the request, so later topic or working-directory changes do not retarget them. Before transmission, an Encoder may run a local `UNBOUND_REQUIRED_X` preflight that classifies each required X as packet-bound, host-ambient-resolvable, conversation-ambient-resolvable, or unresolved; this diagnostic is not a wire control. Host-local values may be arbitrary endpoint objects or text because they remain outside `src.rows`, `src.ir`, and `src.codec` transport serialization.
 
 Bind mode contains only protocol, mode, context, and nonempty nontext X values. Ordinary packets reject unreferenced inline bindings. Exact text is neither carried by the wire nor disguised as numbers. Context conflict code 2 remains for contradictory established context, not for the mere absence of a matching host namespace.
 
@@ -161,11 +161,9 @@ Controls carry no task payload:
 | Control | Fields | Codes |
 |---|---|---|
 | ready | control | none |
-| need | context, control, refs | exact missing X references |
 | invalid | control, code | shape=0, local-reference=1, context-conflict=2, state=3 |
-| abstain | control, code | ambiguity=0, unrepresentable=1, explicit-packet-reply-output-incompatibility=2, contract=3, capacity/capability=4 |
 
-Ready is bootstrap readiness, not execution success. Abstention reports inability to continue faithfully; it does not label a valid input malformed.
+Ready is bootstrap readiness, not execution success. Invalid reports malformed or unserviceable input.
 
 ## 9. Canonicality and fidelity
 
@@ -191,23 +189,22 @@ Ready:
 9 1
 ```
 
-Need X03 in context 7:
-
-```text
-ΛH2.2|
-8 3
-0 0 7
-0 12 1
-0 13 5 3
-9 3
-```
-
-Material ambiguity:
+Invalid local reference:
 
 ```text
 ΛH2.2|
 8 2
-0 12 3
+0 12 1
+0 14 1
+9 2
+```
+
+Invalid shape:
+
+```text
+ΛH2.2|
+8 2
+0 12 1
 0 14 0
 9 2
 ```

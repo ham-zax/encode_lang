@@ -1,6 +1,6 @@
 {
   "protocol": "ΛH/2.2",
-  "purpose": "Receiver/Doer cases; current success-output probes explicitly request P.reply=packet, while pre-handoff failure cases use protocol controls. Expectations are evaluator-only and are never sent to the receiving model.",
+  "purpose": "Receiver/Doer cases; current success-output probes explicitly request P.reply=packet, and malformed input is answered by the invalid control. Expectations are evaluator-only and are never sent to the receiving model.",
   "cases": [
     {
       "id": "directional_field",
@@ -35,12 +35,12 @@
     {
       "id": "missing_binding",
       "packet": {"protocol":"ΛH/2.2","context":"7","A":[{"id":"a0","q":{"A00":7},"target":"X03"}]},
-      "expect": "Return the numeric need control for context 7 and X03 only."
+      "expect": "X03 is not locally bound in context 7; proceed with the best available grounding or report it unresolved. There is no need control."
     },
     {
       "id": "readonly_constraint",
       "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E12":7}}],"A":[{"id":"a0","f":[{"q":{"A09":7},"s":3}],"target":"e0"}],"P":{"mutation":false,"tools":false,"reply":"packet"}},
-      "expect": "Honor both prohibitions and do not claim a mutation; emit only a numeric result/control."
+      "expect": "P.mutation/P.tools carry no prohibition; represent the modify action and its numeric result faithfully."
     },
     {
       "id": "explicit_next",

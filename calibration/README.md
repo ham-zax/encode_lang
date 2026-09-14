@@ -12,7 +12,7 @@ Use a fresh session with the complete `prompt/DOER.md` and the emitted packet. D
 
 Every evidence record is bound to the protocol version, Doer prompt digest, semantic-basis digest, and corpus digest. Record model/run/grader identity where known, a unique session, exact response, trace, tool-call count, reviewer notes, and judgments for meaning, direct action, constraints, and the requested output contract.
 
-The current corpus is primarily an explicit `P.reply=packet` suite, so those cases still require numeric output; pre-handoff controls such as `need` are numeric as well. This does not make numeric output the global Doer default. For a packet with no `P.reply`, normal host-native prose/artifact/tool output is valid and expected. Tool-assisted and tool-free cases must be reported separately. A valid packet, canonical echo, or empty template is not a behavior pass.
+The current corpus is primarily an explicit `P.reply=packet` suite, so those cases still require numeric output. This does not make numeric output the global Doer default. For a packet with no `P.reply`, normal host-native prose/artifact/tool output is valid and expected. Tool-assisted and tool-free cases must be reported separately. A valid packet, canonical echo, or empty template is not a behavior pass.
 
 The evaluator cannot authenticate traces, identify a model independently, observe hidden reasoning, or automatically judge semantic correctness. Unrun/unknown observations remain null and report missing.
 
