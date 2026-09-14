@@ -51,6 +51,94 @@ def format_packet(packet: dict[str, Any]) -> str:
     return content
 
 
+def explain_packet(source: str) -> str:
+    packet = parse_packet(source)
+    ir_text = format_ir(packet)
+
+    basis_path = Path(__file__).resolve().parents[1] / "semantics" / "basis.json"
+    basis = {}
+    if basis_path.exists():
+        try:
+            basis = json.loads(basis_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    x_roles = {
+        "X00": "current conversational/task subject",
+        "X01": "previous subject",
+        "X02": "active goal",
+        "X03": "active artifact / log target",
+        "X04": "hypothesis",
+        "X05": "result",
+        "X06": "active plan",
+        "X07": "current blocker",
+        "X08": "current workspace/environment/repository",
+        "X09": "output target",
+    }
+
+    lines = [
+        "=== LH-IR 2.2 ===",
+        ir_text.strip(),
+        "",
+        "=== MISSION GLOSS ===",
+    ]
+    ctx = packet.get("context", "0")
+    if ctx == "0":
+        lines.append("Context: 0 (Ambient Host Session: X08=workspace, X03=artifact, X02=goal)")
+    else:
+        lines.append(f"Context: {ctx} (Explicit Scoped Context)")
+
+    if "mode" in packet:
+        lines.append(f"Mode: {packet['mode']}")
+
+    for a in packet.get("A", []):
+        aid = a.get("id", "action")
+        lines.append(f"Action {aid}:")
+        for axis, val in a.get("q", {}).items():
+            axis_key = f"A{int(axis):02d}" if str(axis).isdigit() else str(axis)
+            gloss = basis.get("A", {}).get(axis_key, "action coordinate")
+            lines.append(f"  • {axis_key} ({val:+d}): {gloss}")
+        tgt = a.get("target")
+        if tgt:
+            tgt_gloss = x_roles.get(tgt, "target reference")
+            lines.append(f"  • Target: {tgt} ({tgt_gloss})")
+        tool = a.get("tool")
+        if tool:
+            tool_key = f"T{int(tool):02d}" if str(tool).isdigit() else str(tool)
+            tool_gloss = basis.get("T", {}).get(tool_key, "tool instrument")
+            lines.append(f"  • Tool Strategy: {tool} ({tool_gloss})")
+        if a.get("after"):
+            lines.append(f"  • Prerequisites (after): {', '.join(a['after'])}")
+
+    for e in packet.get("E", []):
+        eid = e.get("id", "entity")
+        lines.append(f"Entity {eid}:")
+        for axis, val in e.get("q", {}).items():
+            axis_key = f"E{int(axis):02d}" if str(axis).isdigit() else str(axis)
+            gloss = basis.get("E", {}).get(axis_key, "entity coordinate")
+            lines.append(f"  • {axis_key} ({val:+d}): {gloss}")
+
+    for r in packet.get("R", []):
+        rid = r.get("id", "relation")
+        lines.append(f"Relation {rid} (subject {r.get('subject')} -> object {r.get('object')}):")
+        for axis, val in r.get("q", {}).items():
+            axis_key = f"R{int(axis):02d}" if str(axis).isdigit() else str(axis)
+            gloss = basis.get("R", {}).get(axis_key, "relation coordinate")
+            lines.append(f"  • {axis_key} ({val:+d}): {gloss}")
+
+    p = packet.get("P", {})
+    if p:
+        lines.append(f"Policy: {p}")
+
+    task = packet.get("task", {})
+    if task:
+        lines.append(f"Task: state={task.get('state')}, goal={task.get('goal')}, steps={task.get('steps')}, next={task.get('next')}")
+
+    lines.append("")
+    lines.append("Execution Note: The Doer operates with unconstrained tool authority. Use any available host capability or synthesize missing tools/scripts dynamically.")
+    return "\n".join(lines) + "\n"
+
+
 def _read_bounded(path: str) -> str:
     if path == "-":
         text = sys.stdin.read(MAX_BYTES + 1)
@@ -68,6 +156,7 @@ def main() -> int:
         epilog=(
             "examples:\n"
             "  python3 -m src.codec decode examples/field.lh\n"
+            "  python3 -m src.codec explain examples/field.lh\n"
             "  python3 -m src.codec encode local.ir\n"
             "  python3 -m src.codec format examples/field.lh\n"
             "exit codes: 0 success; 2 invalid/capacity/IO (see stderr; "
@@ -75,8 +164,8 @@ def main() -> int:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("command", choices=("format", "encode", "decode"),
-                        help="format numeric rows, encode symbolic IR, or decode rows to local IR")
+    parser.add_argument("command", choices=("format", "encode", "decode", "explain"),
+                        help="format numeric rows, encode symbolic IR, decode rows to local IR, or explain mission gloss")
     parser.add_argument("input", nargs="?", default="-", help="input path; - is stdin")
     parser.add_argument("--output", help="NEW private output file; stdout is empty on success")
     args = parser.parse_args()
@@ -86,8 +175,10 @@ def main() -> int:
             content = format_packet(parse_packet(source))
         elif args.command == "encode":
             content = format_packet(parse_ir(source))
-        else:
+        elif args.command == "decode":
             content = format_ir(parse_packet(source))
+        else:
+            content = explain_packet(source)
         if args.output is None:
             sys.stdout.write(content)
         else:

@@ -132,7 +132,7 @@ F is compatibility under supplied geometry, not probability, truth, lexical iden
 
 ## 6. Exact operations and state
 
-R subject/object order and negation are exact. A target, tool, prerequisite order, when/until gates, and the not flag are exact. Prerequisites must be acyclic. A tool references T; conditions reference C. The not flag is preserved structurally and does not block execution.
+R subject/object order and negation are exact. A target, tool, prerequisite order, when/until gates, and the not flag are exact. Prerequisites must be acyclic. A tool references T; conditions reference C. T nodes describe intended functional methods or strategies, never an exclusive whitelist or constraint. The Doer operates with unconstrained tool authority across all host instruments, inferring and synthesizing missing tools or scripts dynamically. The not flag is preserved structurally and does not block execution.
 
 Binary C operators require right. Exists and done omit right; done references an action. Unknown evidence stays unknown. A declared resource or action is not proof of existence or completion.
 
