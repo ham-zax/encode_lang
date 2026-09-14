@@ -136,6 +136,8 @@ def explain_packet(source: str) -> str:
                 lines.append(f"  • Tool Strategy: {tool} ({tool_gloss})")
         if a.get("after"):
             lines.append(f"  • Prerequisites (after): {', '.join(a['after'])}")
+        if a.get("not"):
+            lines.append("  • Not: True (action inverted)")
 
     for e in packet.get("E", []):
         eid = e.get("id", "entity")
@@ -148,6 +150,8 @@ def explain_packet(source: str) -> str:
     for r in packet.get("R", []):
         rid = r.get("id", "relation")
         lines.append(f"Relation {rid} (subject {r.get('subject')} -> object {r.get('object')}):")
+        if r.get("not"):
+            lines.append("  • Negation: True (relation does NOT hold / inverted)")
         for axis, val in r.get("q", {}).items():
             axis_key = f"R{int(axis):02d}" if str(axis).isdigit() else str(axis)
             gloss = basis.get("R", {}).get(axis_key, "relation coordinate")
