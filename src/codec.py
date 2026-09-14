@@ -153,6 +153,12 @@ def explain_packet(source: str) -> str:
             gloss = basis.get("R", {}).get(axis_key, "relation coordinate")
             lines.append(f"  • {axis_key} ({val:+d}): {gloss}")
 
+    for k in packet.get("K", []):
+        target = k.get("target")
+        state = k.get("state")
+        gloss = basis.get("K", {}).get(state, "epistemic state")
+        lines.append(f"Epistemic Status ({target}): {state} [{gloss}]")
+
     p = packet.get("P", {})
     if p:
         lines.append(f"Policy: {p}")
