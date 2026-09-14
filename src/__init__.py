@@ -10,8 +10,8 @@ from typing import Any
 __all__ = [
     "ProtocolError", "parse_packet", "format_packet", "parse_ir", "format_ir",
     "validate_packet", "schema",
-    "HostContext", "ContextResolution", "AMBIENT_ROLES", "AMBIENT_REFS", "CURRENT_CONTEXT",
-    "resolve_context", "ambient_ref",
+    "HostContext", "ContextResolution", "ContextPreflight", "AMBIENT_ROLES", "AMBIENT_REFS", "CURRENT_CONTEXT",
+    "resolve_context", "preflight_context", "ambient_ref",
     "make_field", "activation", "focus_field", "shift_field", "rank_candidates",
 ]
 
@@ -26,7 +26,7 @@ def __getattr__(name: str) -> Any:
     if name in {"parse_ir", "format_ir"}:
         from . import ir
         return getattr(ir, name)
-    if name in {"HostContext", "ContextResolution", "AMBIENT_ROLES", "AMBIENT_REFS", "CURRENT_CONTEXT", "resolve_context", "ambient_ref"}:
+    if name in {"HostContext", "ContextResolution", "ContextPreflight", "AMBIENT_ROLES", "AMBIENT_REFS", "CURRENT_CONTEXT", "resolve_context", "preflight_context", "ambient_ref"}:
         from . import context
         return getattr(context, name)
     if name in {"ProtocolError", "validate_packet", "schema"}:

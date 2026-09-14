@@ -11,9 +11,9 @@
 - Keep `ΛH2.2|` numeric rows byte-compatible and version unchanged.
 - Ambient context is host-grounded, context-scoped, and never model-guessed.
 - Lambda H constrains instruction transport, not normal Doer behavior after semantic handoff; native output is default and `P.reply=packet` is explicit opt-in.
-- Ambient-capable roles are `X02`, `X03`, `X06`, `X07`, `X08`, and `X09` only.
+- Context-0 ambient-capable roles are `X00`, `X02`, `X03`, `X06`, `X07`, `X08`, and `X09`; X00 subject and X08 workspace remain distinct.
 - Host-local bindings may contain arbitrary endpoint-local objects/text but are never serialized by the protocol merely because they exist.
-- `context 0` intentionally resolves from receiver-current grounded ambient state already active at packet receipt; X08 is a frozen starting workspace, never a filesystem/repository search. Nonzero namespace mismatch never falls back to the receiver's current environment.
+- `context 0` intentionally resolves from receiver-current grounded ambient state already active at packet receipt; X00 may use one already-established unambiguous conversational subject and X08 is a frozen starting workspace, never a filesystem/repository search. Nonzero namespace mismatch never falls back to receiver-current conversation/environment.
 - Existing inline X bindings retain protocol precedence.
 - Missing exact ambient identity uses existing `need` behavior; do not replace it with a generic semantic entity when identity matters.
 - Do not add or run tests unless separately authorized. Use focused non-test checks only at candidate-final state.
@@ -32,7 +32,7 @@
 **Steps:**
 - [x] Define canonical ambient role mappings.
 - [x] Validate host namespace and X binding keys without constraining local binding value types.
-- [x] Resolve required X references using packet-inline value first, then context-appropriate host grounding: receiver-current ambient state for context 0 or exact-namespace host binding for nonzero contexts, otherwise mark missing.
+- [x] Resolve required X references using packet-inline value first, then exact matching host/session binding, then context-0 single-subject fallback for X00 only, otherwise mark missing; expose local required-X preflight classification.
 - [x] Keep resolution side-effect free and independent of codec serialization.
 - [x] Export the context API lazily from `src`.
 
@@ -54,9 +54,9 @@
 
 **Steps:**
 - [x] Define ambient-capable role table in each standalone role prompt.
-- [x] In Encoder, map “this repo/workspace/environment” to grounded `X08` and analogous deictic roles to their ambient refs.
+- [x] In Encoder, choose ambient refs by semantic identity role: “this repo/workspace/environment” -> X08, established discourse/task subject -> X00, and analogous deictics -> their exact roles; preflight accidental unresolved required X refs before transport.
 - [x] Prohibit replacing a missing exact deictic identity with a generic semantic `E` solely to avoid `need`.
-- [x] In Doer, ground context-0 ambient references from authoritative receiver-current host/session facts, bind X08 only from the already-active host/IDE workspace or cwd/enclosing Git root without global/lateral repository search, freeze it for the request, require exact namespace matches for nonzero host-local resolution, preserve normal authority/policy after identity resolution, and hand successful decoding into normal native agent execution/output unless `P.reply=packet` is explicit.
+- [x] In Doer, ground context-0 X00 only from one already-established unambiguous conversational/task subject, bind X08 only from the already-active host/IDE workspace or cwd/enclosing Git root without global/lateral repository search, freeze both for the request, require exact namespace matches for nonzero host-local resolution, preserve normal authority/policy after identity resolution, and hand successful decoding into normal native agent execution/output unless `P.reply=packet` is explicit.
 - [x] In Decoder, report host-grounded identity only when actually available; otherwise explain the conventional X role and missing context.
 - [x] Make root router state that repo-aware host context is local setup, not protocol payload.
 
