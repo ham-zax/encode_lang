@@ -276,6 +276,136 @@ Examples show syntax and represented state; they are not evidence of model perfo
 9 29
 ```
 
+### Reverse engineering and proxy/protocol inspection
+
+```text
+LH-IR 2.2
+context 0
+mode message
+A a0 q 3:+7 target X08 tool t0
+T t0 q 4:+7
+P detail full
+```
+
+Numeric wire:
+```text
+ΛH2.2|
+8 9
+0 0 0
+0 1 0
+1 4 0 0 0
+1 4 0 1 3 7
+1 4 0 4 5 8
+1 4 0 5 3 0
+1 5 0 0 0
+1 5 0 1 4 7
+3 8 3 2
+9 9
+```
+
+Audit: Action `a0` instructs the Doer to investigate and diagnose causes (`A03`) on active workspace `X08` using network/proxy interception instrumentation (`T04`).
+
+### White-hat vulnerability testing and remediation
+
+```text
+LH-IR 2.2
+context 0
+mode message
+E e0 q 31:+7
+E e1 q 13:+7
+A a0 q 2:+7 target e0
+A a1 q 10:+7 target e0 after a0
+TASK id 0 revision 1 state active goal e0 steps a0 a1 done - next a0
+```
+
+Numeric wire:
+```text
+ΛH2.2|
+8 20
+0 0 0
+0 1 0
+1 2 0 0 0
+1 2 0 1 31 7
+1 2 1 0 1
+1 2 1 1 13 7
+1 4 0 0 0
+1 4 0 1 2 7
+1 4 0 4 0 0
+1 4 1 0 1
+1 4 1 1 10 7
+1 4 1 4 0 0
+1 4 1 6 2 0
+3 11 0 0
+3 11 1 1
+3 11 2 0
+3 11 3 0 0
+3 11 4 2 0 2 1
+3 11 5
+3 11 6 2 0
+9 20
+```
+
+Audit: Verify/test (`A02`) defect/vulnerability `e0` (`E31`) within authorized boundary `e1` (`E13`), then remediate/patch (`A10`).
+
+### Experimentation and hypothesis testing
+
+```text
+LH-IR 2.2
+context 0
+mode message
+A a0 q 7:+7 target X04
+A a1 q 2:+7 target X03 after a0
+P detail full
+```
+
+Numeric wire:
+```text
+ΛH2.2|
+8 10
+0 0 0
+0 1 0
+1 4 0 0 0
+1 4 0 1 7 7
+1 4 0 4 5 4
+1 4 1 0 1
+1 4 1 1 2 7
+1 4 1 4 5 3
+1 4 1 6 2 0
+3 8 3 2
+9 10
+```
+
+Audit: Explore search space (`A07`) around active hypothesis `X04`, verify results (`A02`), and record findings in artifact `X03`.
+
+### Code and dependency inspection
+
+```text
+LH-IR 2.2
+context 0
+mode message
+A a0 q 0:+7 target X08 tool t0
+T t0 q 11:+7
+P detail full
+```
+
+Numeric wire:
+```text
+ΛH2.2|
+8 9
+0 0 0
+0 1 0
+1 4 0 0 0
+1 4 0 1 0 7
+1 4 0 4 5 8
+1 4 0 5 3 0
+1 5 0 0 0
+1 5 0 1 11 7
+3 8 3 2
+9 9
+```
+
+Audit: Passive read/inspection (`A00`) of repository/dependencies (`T11`) on workspace `X08`.
+
 ## Shared semantic anchors
 
 These are setup definitions of semantic directions, not word IDs. They are shared across all three roles.
@@ -383,4 +513,15 @@ V04 affect-neutral <-> affect-laden
 V05 local/detail-level <-> global/holistic
 V06 preserve framing <-> reinterpret/reframe
 V07 low context dependence <-> high context dependence
+
+X00 current conversational/task subject
+X01 previous subject
+X02 active user goal
+X03 active artifact or log target
+X04 active hypothesis
+X05 active result or finding
+X06 active plan
+X07 current blocker or failure
+X08 current workspace/environment/repository
+X09 output target
 ```

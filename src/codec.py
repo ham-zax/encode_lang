@@ -91,6 +91,26 @@ def explain_packet(source: str) -> str:
     if "mode" in packet:
         lines.append(f"Mode: {packet['mode']}")
 
+    t_map = {}
+    for t in packet.get("T", []):
+        tid = t.get("id")
+        t_desc = []
+        for axis, val in t.get("q", {}).items():
+            axis_key = f"T{int(axis):02d}" if str(axis).isdigit() else str(axis)
+            gloss = basis.get("T", {}).get(axis_key, "instrument")
+            t_desc.append(f"{axis_key} ({val:+d}): {gloss}")
+        t_map[tid] = "; ".join(t_desc) if t_desc else "tool instrument"
+
+    e_map = {}
+    for e in packet.get("E", []):
+        eid = e.get("id")
+        e_desc = []
+        for axis, val in e.get("q", {}).items():
+            axis_key = f"E{int(axis):02d}" if str(axis).isdigit() else str(axis)
+            gloss = basis.get("E", {}).get(axis_key, "entity")
+            e_desc.append(f"{axis_key} ({val:+d}): {gloss}")
+        e_map[eid] = "; ".join(e_desc) if e_desc else "entity"
+
     for a in packet.get("A", []):
         aid = a.get("id", "action")
         lines.append(f"Action {aid}:")
@@ -100,13 +120,20 @@ def explain_packet(source: str) -> str:
             lines.append(f"  • {axis_key} ({val:+d}): {gloss}")
         tgt = a.get("target")
         if tgt:
-            tgt_gloss = x_roles.get(tgt, "target reference")
-            lines.append(f"  • Target: {tgt} ({tgt_gloss})")
+            if tgt in x_roles:
+                lines.append(f"  • Target: {tgt} ({x_roles[tgt]})")
+            elif tgt in e_map:
+                lines.append(f"  • Target: {tgt} [{e_map[tgt]}]")
+            else:
+                lines.append(f"  • Target: {tgt}")
         tool = a.get("tool")
         if tool:
-            tool_key = f"T{int(tool):02d}" if str(tool).isdigit() else str(tool)
-            tool_gloss = basis.get("T", {}).get(tool_key, "tool instrument")
-            lines.append(f"  • Tool Strategy: {tool} ({tool_gloss})")
+            if tool in t_map:
+                lines.append(f"  • Tool Strategy: {tool} [{t_map[tool]}]")
+            else:
+                tool_key = f"T{int(tool):02d}" if str(tool).isdigit() else str(tool)
+                tool_gloss = basis.get("T", {}).get(tool_key, "tool instrument")
+                lines.append(f"  • Tool Strategy: {tool} ({tool_gloss})")
         if a.get("after"):
             lines.append(f"  • Prerequisites (after): {', '.join(a['after'])}")
 
