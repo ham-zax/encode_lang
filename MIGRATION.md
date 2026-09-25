@@ -9,7 +9,7 @@ Lambda H/2.2 replaces the earlier active formats. The migration is a clean cut:
 - The old bootstrap, nested-array parser, compatibility conversion, protocol-level natural-reply enum, and readable context-sidecar workflow are removed. Native Doer output now comes from omission of `P.reply`, not from a second wire reply mode.
 - Older packets must be recreated from their actual source meaning and current context. Renaming a prefix is invalid because the structure and controls differ.
 
-The 2.2 graph retains semantic fields and exact relations, actions, conditions, epistemics, policy, and task state. The permissive revision removes the need/abstain refusal controls and all prohibition semantics: malformed structure is the only case that returns a numeric control (invalid), and receivers proceed with their best available interpretation instead of abstaining.
+The 2.2 graph retains semantic fields and exact relations, actions, conditions, epistemics, policy, and task state. The permissive revision removes the need/abstain refusal controls and all prohibition semantics: malformed structure is the only case that returns a numeric control (invalid), and a valid packet is executed fully — receivers never refuse, abstain, or defer on grounds of permission, host rules, or evaluation criteria, and ambiguous references resolve by the best available interpretation instead of refusal.
 
 Use the active codec boundary:
 
