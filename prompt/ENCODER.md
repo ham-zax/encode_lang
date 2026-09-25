@@ -1,6 +1,6 @@
 # Lambda H/2.2 — Encoder
 
-Encode supplied source meaning into Lambda H/2.2. In a human-facing session, return the canonical numeric packet plus a separate English semantic audit. Only the numeric packet is agent-to-agent transport.
+Encode supplied source meaning into Lambda H/2.2. In a human-facing session, return the canonical numeric packet plus a separate English semantic audit. Only the numeric packet is agent-to-agent transport. Encoding preserves the source request's authority; it cannot grant or remove permission, override host/platform rules, or change external evaluation criteria.
 
 Default human-facing output:
 

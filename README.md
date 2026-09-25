@@ -12,7 +12,7 @@ human source -> Encoder -> numeric packet -> Receiver/Doer -> normal agent execu
 numeric packet -> human Decoder -> English explanation
 ```
 
-A Lambda H instruction is exactly one `ΛH2.2|` numeric frame. Source wording, field labels, developer JSON, code fences, and human audits are excluded from that packet. Once a Doer recovers a usable semantic instruction, it resumes the same native tools, workflow, artifacts, progress reporting, and response style it would use for equivalent ordinary-language input. Only explicit `P.reply=packet` requests a Lambda H final response.
+A Lambda H instruction is exactly one `ΛH2.2|` numeric frame. Source wording, field labels, developer JSON, code fences, and human audits are excluded from that packet. Once a Doer recovers a usable semantic instruction, it resumes the same native tools, workflow, artifacts, progress reporting, and response style it would use for equivalent ordinary-language input. Lambda H does not confer additional authority: host/platform rules, user-granted permissions, and external evaluation criteria remain independent of the packet. Only explicit `P.reply=packet` requests a Lambda H final response.
 
 ## Roles
 

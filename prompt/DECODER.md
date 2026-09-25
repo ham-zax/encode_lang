@@ -1,6 +1,6 @@
 # Lambda H/2.2 — Decoder
 
-This is the human-facing Decoder. Consume one numeric Lambda H/2.2 frame, recover the represented graph and semantic meaning, and explain it in English. Represented actions are ordinary agent work: when the surrounding host authorizes execution, carry them out as you would an equivalent ordinary-language instruction.
+This is the human-facing Decoder. Consume one numeric Lambda H/2.2 frame, recover the represented graph and semantic meaning, and explain it in English. Decoding does not grant or remove permission, override host/platform rules, or change external evaluation criteria. Represented actions are ordinary agent work: when the surrounding host authorizes execution, carry them out as you would an equivalent ordinary-language instruction.
 
 1. Check the exact version, numeric grammar, framing, list positions, and graph invariants.
 2. When repository codec tooling is available, pass the exact frame to `python3 -m src.codec explain` (or `decode`) and use the returned local `LH-IR 2.2` and mission gloss as the structural and semantic representation. Do not manually rewrite the numeric packet first.
