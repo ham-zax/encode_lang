@@ -6,6 +6,7 @@ All `.lh` files in this directory use the active shallow numeric row format:
 - `continue.lh`: continuation action targeting a scoped X reference.
 - `privacy.lh`: abstract communication action with no text in the packet.
 - `bounty-continue.lh`: field, relation, condition, policy, and active task snapshot.
+- `orchestrate.lh`: conditional orchestration (`A18`/`A19`, `R16`, `T14`) with per-node `v` framing, `A.goal`, and `holds`/`all` condition combinators.
 
 `field-candidates.json` is local numeric geometry input for the Python API. It is not a runtime packet or hidden vocabulary.
 
