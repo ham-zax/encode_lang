@@ -19,7 +19,16 @@ ROOT = Path(__file__).resolve().parents[1]
 PROBES = ROOT / "calibration" / "probes.json"
 DOER = ROOT / "prompt" / "DOER.md"
 BASIS = ROOT / "semantics" / "basis.json"
-DIMENSIONS = ("meaning", "direct_action", "constraints", "numeric_output")
+DIMENSIONS = ("meaning", "direct_action", "constraints", "output_contract")
+REPLY_MODES = ("packet", "native")
+
+
+def case_reply_mode(case: dict[str, Any]) -> str:
+    """Return expected reply mode ('packet' or 'native') for a calibration case."""
+    if "reply_mode" in case:
+        return case["reply_mode"]
+    packet = case.get("packet", {})
+    return "packet" if packet.get("P", {}).get("reply") == "packet" else "native"
 
 
 def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
@@ -39,6 +48,12 @@ def load_cases(path: Path = PROBES) -> dict[str, dict[str, Any]]:
             raise ProtocolError("each case requires an evaluator expectation")
         require_valid(case.get("packet"))
         format_packet(case["packet"])  # corpus input must be exportable without plaintext
+        expected_mode = "packet" if case["packet"].get("P", {}).get("reply") == "packet" else "native"
+        if "reply_mode" in case:
+            if case["reply_mode"] not in REPLY_MODES:
+                raise ProtocolError(f"{case['id']}: reply_mode must be 'packet' or 'native'")
+            if case["reply_mode"] != expected_mode:
+                raise ProtocolError(f"{case['id']}: reply_mode {case['reply_mode']!r} conflicts with P.reply")
         cases[case["id"]] = case
     return cases
 
@@ -92,7 +107,7 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
     summary = {"passed": 0, "failed": 0, "missing": 0}
     reports = []
     sessions: set[str] = set()
-    for case_id in cases:
+    for case_id, case in cases.items():
         item = observations.get(case_id, {})
         if not isinstance(item, dict):
             raise ProtocolError(f"{case_id}: observation must be an object")
@@ -126,7 +141,8 @@ def evaluate(cases: dict[str, Any], results: Any, *, trace_root: Path) -> dict[s
             sessions.add(session)
         status = "missing" if absent else "fail" if not all(judgments.values()) else "pass"
         summary[{"pass": "passed", "fail": "failed", "missing": "missing"}[status]] += 1
-        reports.append({"id": case_id, "status": status, "missing": absent,
+        reports.append({"id": case_id, "reply_mode": case_reply_mode(case),
+                        "status": status, "missing": absent,
                         "judgments": judgments, "tool_calls": calls})
     return {"protocol": PROTOCOL, "model": results.get("model"), "summary": summary,
             "cases": reports, "method": "explicit reviewer judgments backed by captured receiver traces; not an independent automatic semantic oracle"}

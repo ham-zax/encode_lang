@@ -12,8 +12,9 @@ import math
 from copy import deepcopy
 from typing import Any
 
-from .protocol import (LAYERS, ProtocolError, _shape_errors,
-                       field_shape as field_schema, region as coordinates_schema)
+from .protocol import LAYERS, ProtocolError, _shape_errors
+from .protocol import field_shape as field_schema
+from .protocol import region as coordinates_schema
 
 
 def require_shape(value: Any, shape: dict[str, Any], path: str) -> None:

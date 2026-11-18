@@ -5,12 +5,15 @@ objects or text because this module never serializes them onto Lambda H wire.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
 import re
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
-from .protocol import XREF, references, require_valid
+from .protocol import XREF, ProtocolError, references, require_valid
 
 AMBIENT_ROLES = MappingProxyType({
     "subject": "X00",
@@ -45,13 +48,89 @@ class HostContext:
         object.__setattr__(self, "bindings", MappingProxyType(copied))
 
     @classmethod
-    def current(cls, bindings: Mapping[str, Any]) -> "HostContext":
+    def current(cls, bindings: Mapping[str, Any]) -> HostContext:
         """Build context 0 from values already grounded by the active host session.
 
         Callers supply the current bindings; this API never searches the filesystem
         or enumerates candidate repositories to discover X08.
         """
         return cls(CURRENT_CONTEXT, bindings)
+
+    @classmethod
+    def from_mapping(
+        cls,
+        data: Mapping[str, Any],
+        *,
+        default_namespace: str = CURRENT_CONTEXT,
+    ) -> HostContext:
+        """Build a HostContext from a structured mapping or raw X-binding dict."""
+        if not isinstance(data, Mapping):
+            raise ProtocolError("host context must be a JSON object")
+        if "bindings" in data:
+            unknown = set(data) - {"bindings", "context", "namespace"}
+            if unknown:
+                raise ProtocolError(f"unknown host context keys: {', '.join(sorted(unknown))}")
+            if "context" in data and "namespace" in data and str(data["context"]) != str(data["namespace"]):
+                raise ProtocolError("conflicting 'context' and 'namespace' keys in host context")
+            raw_ns = data.get("context", data.get("namespace", default_namespace))
+            if isinstance(raw_ns, bool):
+                raise ProtocolError("host context namespace must be a canonical decimal string")
+            namespace = str(raw_ns)
+            bindings = data["bindings"]
+            if not isinstance(bindings, Mapping):
+                raise ProtocolError("host context 'bindings' must be a JSON object")
+        elif all(isinstance(key, str) and _XREF.fullmatch(key) for key in data):
+            namespace = default_namespace
+            bindings = data
+        else:
+            raise ProtocolError("host context mapping must contain 'bindings' or canonical X reference keys")
+        try:
+            return cls(namespace, bindings)
+        except ValueError as exc:
+            raise ProtocolError(str(exc)) from exc
+
+    @classmethod
+    def from_file(
+        cls,
+        path: str | Path,
+        *,
+        default_namespace: str = CURRENT_CONTEXT,
+    ) -> HostContext:
+        """Load a HostContext from a local JSON sidecar file."""
+        raw = Path(path).read_text(encoding="utf-8")
+        try:
+            data = json.loads(
+                raw,
+                object_pairs_hook=_unique_context_object,
+                parse_constant=_reject_context_constant,
+            )
+        except ProtocolError:
+            raise
+        except (ValueError, RecursionError) as exc:
+            raise ProtocolError(f"invalid host context JSON: {exc}") from exc
+        return cls.from_mapping(data, default_namespace=default_namespace)
+
+
+def _unique_context_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ProtocolError(f"duplicate JSON key in host context: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_context_constant(value: str) -> None:
+    raise ProtocolError(f"non-finite JSON number in host context: {value}")
+
+
+def load_host_context(
+    data: Mapping[str, Any],
+    *,
+    default_namespace: str = CURRENT_CONTEXT,
+) -> HostContext:
+    """Load a HostContext from a mapping (structured or raw X-binding dict)."""
+    return HostContext.from_mapping(data, default_namespace=default_namespace)
 
 
 @dataclass(frozen=True)
@@ -162,10 +241,6 @@ def resolve_context(
         return ContextResolution({}, ())
 
     inline = packet.get("X", {}) if "control" not in packet else {}
-    same_namespace = (
-        host_context is not None
-        and packet.get("context") == host_context.namespace
-    )
     resolved: dict[str, Any] = {}
     for ref, classification in preflight.classifications.items():
         if classification == "packet-bound":

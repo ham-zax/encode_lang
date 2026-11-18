@@ -37,7 +37,7 @@ def validate_rows_graph(packet: dict[str, Any]) -> None:
     errors = validate_packet(packet)
     if errors:
         code = 1 if any("unbound local reference" in error for error in errors) else 0
-        if not code and any(error.startswith(("task.", "A.after:")) for error in errors):
+        if not code and any(error.startswith(("task.", "A.after:", "C.cycle:")) for error in errors):
             code = 3
         raise RowError("; ".join(errors), code)
     encode_graph(packet)
@@ -211,7 +211,7 @@ def parse_rows(text: str) -> dict[str, Any]:
     except ProtocolError as exc:
         message = str(exc)
         code = 1 if "unbound local reference" in message else 0
-        if not code and ("task." in message or "A.after:" in message):
+        if not code and ("task." in message or "A.after:" in message or "C.cycle:" in message):
             code = 3
         raise RowError(message, code) from exc
     validate_rows_graph(packet)

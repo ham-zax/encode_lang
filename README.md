@@ -42,16 +42,24 @@ Row counts detect truncation, while graph validation checks semantic structure. 
 
 ## Optional deterministic codec boundary
 
-Python 3.10+ and the standard library can translate local symbolic IR and numeric transport:
+Python 3.10+ and the standard library can translate local symbolic IR and numeric transport, as well as inspect and validate packets locally:
 
 ```sh
+# Transport conversion (owns IR <-> numeric rows and canonical framing)
 python3 -m src.codec encode local.ir
 python3 -m src.codec decode examples/field.lh
 python3 -m src.codec format examples/field.lh
 python3 -m src.codec format examples/field.lh --output /tmp/canonical-field.lh
+
+# Local inspection and authoring helpers
+python3 -m src.codec explain examples/field.lh --context ctx.json
+python3 -m src.codec lint examples/field.lh --context ctx.json
+python3 -m src.codec preflight examples/bounty-continue.lh --context ctx.json
+python3 -m src.codec fix examples/field.lh
+python3 -m src.codec recipe diagnose
 ```
 
-`encode` accepts local `LH-IR 2.2` and emits canonical numeric transport. `decode` accepts numeric transport and emits local symbolic IR for a Doer or human-facing Decoder to interpret. `format` only canonicalizes an already numeric frame. With `--output`, the destination must be new and success leaves stdout empty.
+`encode` accepts local `LH-IR 2.2` and emits canonical numeric transport. `decode` accepts numeric transport and emits local symbolic IR for a Doer or human-facing Decoder to interpret. `format` only canonicalizes an already numeric frame. Together, `encode`/`decode`/`format` own transport conversion. Local helpers `explain` (IR + mission gloss), `lint` (frame/graph validation), `fix` (repair row counts), `recipe` (standard templates: `diagnose`, `inspect`, `wayfinding`, `audit`, `fuzz`), and `preflight` (JSON report of `X` binding classifications) support local authoring and inspection without changing transport semantics. `--context <json-file>` loads a local `HostContext` JSON file for `explain`, `lint`, and `preflight`. With `--output`, the destination must be new and success leaves stdout empty.
 
 Python is optional. It owns deterministic structural conversion when available; it does not choose semantic meaning, execute tasks, acquire context, or make model-only behavior reliable.
 
@@ -81,6 +89,7 @@ The public anchors in `semantics/basis.json` make the numbers interpretable. Lam
 | `src/codec.py` | IR <-> numeric transport boundary and numeric canonicalizer |
 | `src/context.py` | Receiver-current context-0 conventions and strict nonzero host-context resolution |
 | `src/geometry.py` | Field activation and numeric candidate helpers |
+| `src/sync_docs.py` | Single-source-of-truth schema, anchor, and doc invariant sync/check CLI |
 | `semantics/basis.json` | Shared semantic directions |
 | `schema/lambda_h_packet.schema.json` | Generated local graph schema |
 | `examples/` | Numeric packets and numeric candidate data |

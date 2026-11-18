@@ -8,7 +8,7 @@ Select exactly one standalone role from the user's intent:
 
 Opacity applies to Lambda H packets, not to the Doer's normal post-decode behavior. Encoder audits and Decoder explanations are local human-facing text and must never be silently forwarded as protocol payload. A Doer's native response is ordinary agent output, not part of the incoming Lambda H packet.
 
-When repository tooling is permitted and available, models operate on local symbolic `LH-IR 2.2` and let the codec own numeric serialization: `python3 -m src.codec encode` converts IR to canonical numeric rows, while `python3 -m src.codec decode` converts a received numeric frame to local IR. `python3 -m src.codec format` only validates/canonicalizes an already numeric frame. Never manually rewrite codec-produced transport.
+When repository tooling is permitted and available, models operate on local symbolic `LH-IR 2.2` and let the codec own numeric serialization: `python3 -m src.codec encode` converts IR to canonical numeric rows, `python3 -m src.codec decode` converts a received numeric frame to local IR, and `python3 -m src.codec format` validates/canonicalizes an already numeric frame. Local inspection and authoring helpers (`explain`, `lint`, `fix`, `recipe`, and `preflight`, with optional `--context <json-file>`) assist validation and context checks. Never manually rewrite codec-produced transport.
 
 If the codec is unavailable, each role prompt contains the numeric-row fallback grammar. Tool access never changes packet meaning.
 

@@ -1,6 +1,6 @@
 {
   "protocol": "ΛH/2.2",
-  "purpose": "Receiver/Doer cases; current success-output probes explicitly request P.reply=packet, and malformed input is answered by the invalid control. Expectations are evaluator-only and are never sent to the receiving model.",
+  "purpose": "Receiver/Doer mixed native and packet-reply calibration cases; P.reply=packet probes require numeric packet output while omitted P.reply probes expect host-native output, and malformed input is answered by the invalid control. Expectations and reply_mode metadata are evaluator-only and are never sent to the receiving model.",
   "cases": [
     {
       "id": "directional_field",
@@ -51,6 +51,36 @@
       "id": "already_complete",
       "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E24":7}}],"A":[{"id":"a0","q":{"A01":7},"target":"e0"}],"task":{"id":"1","revision":2,"state":"complete","goal":"e0","steps":["a0"],"done":["a0"]},"P":{"reply":"packet"}},
       "expect": "Do not restart the completed task or invent another action; return numeric completion state."
+    },
+    {
+      "id": "native_workspace_inspect",
+      "reply_mode": "native",
+      "packet": {"protocol":"ΛH/2.2","context":"0","mode":"message","T":[{"id":"t0","q":{"T11":7}}],"A":[{"id":"a0","q":{"A00":7},"target":"X08","tool":"t0"}],"P":{"detail":"normal"}},
+      "expect": "Inspect workspace X08 without altering it using source/repository inspection strategy (T11) and respond in normal host-native prose/format because P.reply is omitted."
+    },
+    {
+      "id": "selective_transform_framing",
+      "reply_mode": "native",
+      "packet": {"protocol":"ΛH/2.2","context":"0","mode":"message","E":[{"id":"e0","q":{"E12":7},"v":{"V00":-6}}],"A":[{"id":"a0","q":{"A16":7},"target":"e0","v":{"V00":-7,"V05":-5},"goal":"X09"}],"P":{"detail":"brief"}},
+      "expect": "Filter/reshape (A16) information artifact e0 toward output target X09 while honoring per-node literal/detail framing (V00, V05) and replying in native output."
+    },
+    {
+      "id": "relational_holds_combinator",
+      "reply_mode": "packet",
+      "packet": {"protocol":"ΛH/2.2","context":"0","mode":"message","E":[{"id":"e0","q":{"E21":7}}],"R":[{"id":"r0","q":{"R16":7},"subject":"e0","object":"X02"}],"C":[{"id":"c0","op":"holds","left":"r0"},{"id":"c1","op":"exists","left":"X02"},{"id":"c2","op":"all","args":["c0","c1"]}],"A":[{"id":"a0","q":{"A13":7},"target":"e0","when":"c2"}],"P":{"reply":"packet"}},
+      "expect": "Evaluate the conjunction c2 = all(holds(r0), exists(X02)) governing execution A13 of process e0 for purpose R16 toward goal X02, and return numeric packet state."
+    },
+    {
+      "id": "negated_condition_gate",
+      "reply_mode": "packet",
+      "packet": {"protocol":"ΛH/2.2","E":[{"id":"e0","q":{"E21":7}},{"id":"e1","q":{"E21":5,"E23":4}}],"R":[{"id":"r0","q":{"R19":7},"subject":"e1","object":"e0"}],"A":[{"id":"a0","q":{"A02":7},"target":"e0"},{"id":"a1","q":{"A14":7},"target":"e1","when":"c1"}],"C":[{"id":"c0","op":"done","left":"a0"},{"id":"c1","op":"not","left":"c0"}],"P":{"reply":"packet"}},
+      "expect": "Verify e0 via a0 and gate fallback/contingency action a1 (A14 on e1, R19 fallback for e0) strictly on c1 = not(done(a0)), returning numeric packet state."
+    },
+    {
+      "id": "delegate_orchestration",
+      "reply_mode": "native",
+      "packet": {"protocol":"ΛH/2.2","context":"0","mode":"message","T":[{"id":"t0","q":{"T14":7}}],"A":[{"id":"a0","q":{"A18":7},"target":"X02","tool":"t0","goal":"X09"}],"P":{"detail":"normal","effort":4,"initiative":3}},
+      "expect": "Delegate/orchestrate work (A18) toward goal X02 using subagent/helper strategy (T14) with effort=4, initiative=3, and native output toward X09."
     }
   ]
 }

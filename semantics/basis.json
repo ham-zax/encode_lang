@@ -51,7 +51,11 @@
     "R12": "observation, communication, signalling, or information flow",
     "R13": "opposition, prevention, blocking, or contradiction",
     "R14": "association, support, compatibility, or correlation",
-    "R15": "social, normative, contractual, or institutional role"
+    "R15": "social, normative, contractual, or institutional role",
+    "R16": "purpose, objective, or intended outcome",
+    "R17": "constraint, limit, scope, or invariant",
+    "R18": "representation, encoding, format, or view",
+    "R19": "fallback, alternative path, or contingency"
   },
   "A": {
     "A00": "observe, read, or inspect without altering",
@@ -69,7 +73,11 @@
     "A12": "select, decide, recommend, or commit",
     "A13": "execute, perform, or carry out",
     "A14": "iterate, repeat, adapt, or continue",
-    "A15": "communicate, document, report, or record"
+    "A15": "communicate, document, report, or record",
+    "A16": "filter, mask, project, or reshape",
+    "A17": "format, serialize, structure, or re-encode",
+    "A18": "delegate, route, hand off, or orchestrate",
+    "A19": "synchronize, coordinate, join, or wait"
   },
   "T": {
     "T00": "HTTP request or client behavior",

@@ -13,7 +13,7 @@ from typing import Any
 
 PROTOCOL = "ΛH/2.2"
 PREFIX = "ΛH2.2|"
-LAYERS = {"E": 32, "R": 16, "A": 16, "T": 16, "V": 8}
+LAYERS = {"E": 32, "R": 20, "A": 20, "T": 16, "V": 8}
 NODE_LAYERS = ("E", "R", "A", "T", "C")
 REF = r"^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
 XREF = r"^X(?:0[0-9]|[1-9A-F][0-9A-F])$"
@@ -24,6 +24,8 @@ XREFERENCE = {"type": "string", "pattern": XREF}
 ACTION = {"type": "string", "pattern": r"^a[0-9]+$"}
 CONDITION = {"type": "string", "pattern": r"^c[0-9]+$"}
 BINARY_OPS = {"eq", "ne", "lt", "le", "gt", "ge"}
+UNARY_OPS = {"exists", "done", "holds", "not"}
+VARIADIC_OPS = {"all", "any"}
 
 
 class ProtocolError(ValueError):
@@ -70,7 +72,8 @@ def node(layer: str, fields: dict[str, Any], required: tuple[str, ...]) -> dict[
     common = {"id": {"type": "string", "pattern": rf"^{layer.lower()}[0-9]+$"}}
     if layer in LAYERS:
         common.update({"q": region(layer), "f": field_shape(layer),
-                       "u": {"type": "integer", "minimum": 0, "maximum": 7}})
+                       "u": {"type": "integer", "minimum": 0, "maximum": 7},
+                       "v": region("V")})
     result = object_shape(common | fields, ("id",) + required)
     if layer in LAYERS:
         result["not"] = {"required": ["q", "f"]}
@@ -90,12 +93,15 @@ def schema() -> dict[str, Any]:
         "target": REFERENCE, "tool": {"type": "string", "pattern": r"^t[0-9]+$"},
         "after": array_shape(ACTION, unique=True), "when": CONDITION,
         "until": CONDITION, "not": {"type": "boolean"},
+        "goal": REFERENCE,
     }, ("target",))
     action["anyOf"] = [{"required": ["q"]}, {"required": ["f"]}]
+    cond_args = array_shape(CONDITION, unique=True)
+    cond_args["minItems"] = 2
     condition = node("C", {
-        "op": choices("eq", "ne", "lt", "le", "gt", "ge", "exists", "done"),
-        "left": REFERENCE, "right": REFERENCE,
-    }, ("op", "left"))
+        "op": choices("eq", "ne", "lt", "le", "gt", "ge", "exists", "done", "holds", "not", "all", "any"),
+        "left": REFERENCE, "right": REFERENCE, "args": cond_args,
+    }, ("op",))
     epistemic = object_shape({
         "target": REFERENCE,
         "state": choices(*[f"K{i:02d}" for i in range(9)]),
@@ -227,7 +233,7 @@ def _shape_errors(value: Any, shape: dict[str, Any], path: str = "packet") -> li
 def references(packet: dict[str, Any]) -> list[tuple[str, str]]:
     """Only reference-bearing fields, never literal text that resembles an ID."""
     refs: list[tuple[str, str]] = []
-    for layer, fields in (("R", ("subject", "object")), ("A", ("target", "tool", "when", "until")),
+    for layer, fields in (("R", ("subject", "object")), ("A", ("target", "tool", "when", "until", "goal")),
                           ("C", ("left", "right")), ("K", ("target",))):
         for index, item in enumerate(packet.get(layer, [])):
             for key in fields:
@@ -235,6 +241,8 @@ def references(packet: dict[str, Any]) -> list[tuple[str, str]]:
                     refs.append((f"{layer}[{index}].{key}", item[key]))
             if layer == "A":
                 refs += [(f"A[{index}].after", ref) for ref in item.get("after", [])]
+            elif layer == "C":
+                refs += [(f"C[{index}].args", ref) for ref in item.get("args", [])]
     for key in ("goal", "next", "stop", "blocker"):
         if key in packet.get("task", {}):
             refs.append((f"task.{key}", packet["task"][key]))
@@ -242,6 +250,27 @@ def references(packet: dict[str, Any]) -> list[tuple[str, str]]:
         refs += [(f"task.{key}", ref) for ref in packet.get("task", {}).get(key, [])]
     refs += [("P.scope", ref) for ref in packet.get("P", {}).get("scope", [])]
     return refs
+
+
+def _detect_cycles(nodes: dict[str, dict[str, Any]], get_deps: Any, prefix: str, errors: list[str]) -> None:
+    """DFS checks the actual dependency graph, not array declaration order."""
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(node_id: str) -> None:
+        if node_id in visiting:
+            errors.append(f"{prefix}: cycle at {node_id}")
+            return
+        if node_id in visited or node_id not in nodes:
+            return
+        visiting.add(node_id)
+        for dependency in get_deps(nodes[node_id]):
+            visit(dependency)
+        visiting.remove(node_id)
+        visited.add(node_id)
+
+    for node_id in nodes:
+        visit(node_id)
 
 
 def validate_packet(packet: Any) -> list[str]:
@@ -263,15 +292,32 @@ def validate_packet(packet: Any) -> list[str]:
     external = {ref for _, ref in refs if ref.startswith("X")}
     if (external or "X" in packet) and "context" not in packet:
         errors.append("context: required whenever scoped X references or bindings are present")
-    if packet.get("mode") == "bind":
-        if "X" not in packet or set(packet) - {"protocol", "mode", "context", "X"}:
-            errors.append("mode: bind carries only protocol, mode, context, and nonempty X")
+    if packet.get("mode") == "bind" and ("X" not in packet or set(packet) - {"protocol", "mode", "context", "X"}):
+        errors.append("mode: bind carries only protocol, mode, context, and nonempty X")
     for item in packet.get("C", []):
-        binary = item["op"] in BINARY_OPS
-        if binary != ("right" in item):
-            errors.append(f"{item['id']}: right is required only for binary conditions")
-        if item["op"] == "done" and not re.fullmatch(r"a[0-9]+", item["left"]):
-            errors.append(f"{item['id']}: done requires an action reference")
+        op = item["op"]
+        if op in BINARY_OPS:
+            if not ("left" in item and "right" in item and "args" not in item):
+                errors.append(f"{item['id']}: binary conditions require left and right only")
+        elif op in UNARY_OPS:
+            if not ("left" in item and "right" not in item and "args" not in item):
+                errors.append(f"{item['id']}: unary conditions require left only")
+            if "left" in item:
+                if op == "done" and not re.fullmatch(r"a[0-9]+", item["left"]):
+                    errors.append(f"{item['id']}: done requires an action reference")
+                elif op == "holds" and not re.fullmatch(r"r[0-9]+", item["left"]):
+                    errors.append(f"{item['id']}: holds requires a relation reference")
+                elif op == "not" and not re.fullmatch(r"c[0-9]+", item["left"]):
+                    errors.append(f"{item['id']}: not requires a condition reference")
+        elif op in VARIADIC_OPS and not ("args" in item and "left" not in item and "right" not in item):
+            errors.append(f"{item['id']}: combinator conditions require args only")
+    conditions = {item["id"]: item for item in packet.get("C", [])}
+    _detect_cycles(
+        conditions,
+        lambda item: [item["left"]] if item["op"] == "not" and "left" in item else item.get("args", []) if item["op"] in VARIADIC_OPS else [],
+        "C.cycle",
+        errors,
+    )
     seen_k: set[str] = set()
     for item in packet.get("K", []):
         if item["target"] in seen_k:
@@ -280,22 +326,7 @@ def validate_packet(packet: Any) -> list[str]:
         if "truth" in item and not item["target"].startswith(("r", "c")):
             errors.append("K.truth: only a relation or condition can have proposition truth")
     actions = {item["id"]: item for item in packet.get("A", [])}
-    # DFS checks the actual prerequisite graph, not array declaration order.
-    visiting: set[str] = set()
-    visited: set[str] = set()
-    def visit(action_id: str) -> None:
-        if action_id in visiting:
-            errors.append(f"A.after: cycle at {action_id}")
-            return
-        if action_id in visited or action_id not in actions:
-            return
-        visiting.add(action_id)
-        for dependency in actions[action_id].get("after", []):
-            visit(dependency)
-        visiting.remove(action_id)
-        visited.add(action_id)
-    for action_id in actions:
-        visit(action_id)
+    _detect_cycles(actions, lambda item: item.get("after", []), "A.after", errors)
     task = packet.get("task")
     if task:
         steps, done = task["steps"], set(task["done"])

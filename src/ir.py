@@ -79,8 +79,7 @@ def _coord(token: str, layer: str) -> tuple[str, int]:
         raise IRError(f"invalid {layer} coordinate {token!r}")
     axis = int(parts[0])
     raw = parts[1]
-    if raw.startswith("+"):
-        raw = raw[1:]
+    raw = raw.removeprefix("+")
     value = _integer(raw)
     if not 0 <= axis < LAYERS[layer] or value == 0 or not -7 <= value <= 7:
         raise IRError(f"{layer} coordinate out of range")
@@ -171,11 +170,11 @@ def _parse_node(tokens: list[str], packet: dict[str, Any], layer: str) -> None:
     node: dict[str, Any] = {"id": node_id}
     packet.setdefault(layer, []).append(node)
     fields_by_layer = {
-        "E": {"q", "u", "value", "choices"},
-        "R": {"q", "u", "subject", "object", "not"},
-        "A": {"q", "u", "target", "tool", "after", "when", "until", "not"},
-        "T": {"q", "u", "value"},
-        "C": {"op", "left", "right"},
+        "E": {"q", "u", "value", "choices", "v"},
+        "R": {"q", "u", "subject", "object", "not", "v"},
+        "A": {"q", "u", "target", "tool", "after", "when", "until", "not", "v", "goal"},
+        "T": {"q", "u", "value", "v"},
+        "C": {"op", "left", "right", "args"},
     }
     fields = fields_by_layer[layer]
     seen: set[str] = set()
@@ -189,12 +188,15 @@ def _parse_node(tokens: list[str], packet: dict[str, Any], layer: str) -> None:
         if field == "q":
             values, index = _take(tokens, index, fields)
             node["q"] = _coords(values, layer)
-        elif field in {"subject", "object", "target", "tool", "when", "until", "left", "right"}:
+        elif field == "v":
+            values, index = _take(tokens, index, fields)
+            node["v"] = _coords(values, "V")
+        elif field in {"subject", "object", "target", "tool", "when", "until", "left", "right", "goal"}:
             if index >= len(tokens):
                 raise IRError(f"{field} requires a reference")
             node[field] = _ref(tokens[index])
             index += 1
-        elif field == "after":
+        elif field in {"after", "args"}:
             values, index = _take(tokens, index, fields)
             node[field] = [_ref(value) for value in values]
         elif field == "not":
@@ -348,7 +350,7 @@ def parse_ir(text: str) -> dict[str, Any]:
         raise IRError(f"expected {IR_HEADER!r}")
     packet: dict[str, Any] = {"protocol": PROTOCOL}
     components: dict[tuple[str, str], dict[int, dict[str, Any]]] = {}
-    singleton = {"context", "mode", "V", "control", "refs", "code"}
+    singleton = {"context", "mode", "V", "control", "code"}
     seen_root: set[str] = set()
     for line_number, line in enumerate(lines[1:], 2):
         tokens = line.split()
@@ -372,15 +374,6 @@ def parse_ir(text: str) -> dict[str, Any]:
                     if len(tokens) != 2:
                         raise IRError("control requires one value")
                     packet["control"] = tokens[1]
-                elif head == "refs":
-                    if len(tokens) < 2:
-                        raise IRError("refs requires at least one X reference")
-                    refs = []
-                    for token in tokens[1:]:
-                        if not XREF.fullmatch(token):
-                            raise IRError("refs accepts only X references")
-                        refs.append(token)
-                    packet["refs"] = refs
                 else:
                     if len(tokens) != 2:
                         raise IRError("code requires one integer")
@@ -424,11 +417,11 @@ def parse_ir(text: str) -> dict[str, Any]:
 def _node_line(layer: str, item: dict[str, Any]) -> str:
     tokens = [layer, item["id"]]
     order = {
-        "E": ("q", "u", "value", "choices"),
-        "R": ("q", "u", "subject", "object", "not"),
-        "A": ("q", "u", "target", "tool", "after", "when", "until", "not"),
-        "T": ("q", "u", "value"),
-        "C": ("op", "left", "right"),
+        "E": ("q", "u", "value", "choices", "v"),
+        "R": ("q", "u", "subject", "object", "not", "v"),
+        "A": ("q", "u", "target", "tool", "after", "when", "until", "not", "v", "goal"),
+        "T": ("q", "u", "value", "v"),
+        "C": ("op", "left", "right", "args"),
     }[layer]
     for field in order:
         if field not in item:
@@ -437,9 +430,11 @@ def _node_line(layer: str, item: dict[str, Any]) -> str:
         tokens.append(field)
         if field == "q":
             tokens.extend(_coord_tokens(value, layer))
-        elif field in {"subject", "object", "target", "tool", "when", "until", "left", "right"}:
+        elif field == "v":
+            tokens.extend(_coord_tokens(value, "V"))
+        elif field in {"subject", "object", "target", "tool", "when", "until", "left", "right", "goal"}:
             tokens.append(value)
-        elif field == "after":
+        elif field in {"after", "args"}:
             tokens.extend(value)
         elif field == "not":
             tokens.append("1" if value else "0")
@@ -513,8 +508,6 @@ def format_ir(packet: dict[str, Any]) -> str:
         lines.append(" ".join(tokens))
     if "control" in packet:
         lines.append(f"control {packet['control']}")
-    if "refs" in packet:
-        lines.append("refs " + " ".join(packet["refs"]))
     if "code" in packet:
         lines.append(f"code {packet['code']}")
     text = "\n".join(lines) + "\n"

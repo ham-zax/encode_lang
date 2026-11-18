@@ -16,7 +16,7 @@ MAX_INDEX = 9007199254740991
 REF_PREFIXES = ("e", "r", "a", "t", "c", "X")
 ENUMS = {
     "mode": ("message", "bind"),
-    "op": ("eq", "ne", "lt", "le", "gt", "ge", "exists", "done"),
+    "op": ("eq", "ne", "lt", "le", "gt", "ge", "exists", "done", "holds", "not", "all", "any"),
     "epistemic": tuple(f"K{i:02d}" for i in range(9)),
     "detail": ("brief", "normal", "full"),
     "reply": ("packet",),
@@ -29,16 +29,16 @@ RECORDS = {
              ("E", "nodes:E"), ("R", "nodes:R"), ("A", "nodes:A"), ("T", "nodes:T"),
              ("C", "nodes:C"), ("K", "nodes:K"), ("P", "record:P"),
              ("X", "bindings"), ("V", "q:V"), ("task", "record:task"),
-             ("control", "enum:control"), ("refs", "refs"), ("code", "number")),
+             ("control", "enum:control"), ("_reserved_13", "refs"), ("code", "number")),
     "E": (("id", "id:e"), ("q", "q:E"), ("f", "field:E"), ("u", "number"),
-          ("value", "scalar"), ("choices", "scalars")),
+          ("value", "scalar"), ("choices", "scalars"), ("v", "q:V")),
     "R": (("id", "id:r"), ("q", "q:R"), ("f", "field:R"), ("u", "number"),
-          ("subject", "ref"), ("object", "ref"), ("not", "bool")),
+          ("subject", "ref"), ("object", "ref"), ("not", "bool"), ("v", "q:V")),
     "A": (("id", "id:a"), ("q", "q:A"), ("f", "field:A"), ("u", "number"),
           ("target", "ref"), ("tool", "ref"), ("after", "refs"),
-          ("when", "ref"), ("until", "ref"), ("not", "bool")),
-    "T": (("id", "id:t"), ("q", "q:T"), ("f", "field:T"), ("u", "number"), ("value", "scalar")),
-    "C": (("id", "id:c"), ("op", "enum:op"), ("left", "ref"), ("right", "ref")),
+          ("when", "ref"), ("until", "ref"), ("not", "bool"), ("v", "q:V"), ("goal", "ref")),
+    "T": (("id", "id:t"), ("q", "q:T"), ("f", "field:T"), ("u", "number"), ("value", "scalar"), ("v", "q:V")),
+    "C": (("id", "id:c"), ("op", "enum:op"), ("left", "ref"), ("right", "ref"), ("args", "refs")),
     "K": (("target", "ref"), ("state", "enum:epistemic"), ("confidence", "number"), ("truth", "bool")),
     "P": (("mutation", "bool"), ("tools", "bool"), ("scope", "refs"),
           ("detail", "enum:detail"), ("reply", "enum:reply"), ("effort", "number"), ("initiative", "number")),
@@ -124,7 +124,7 @@ def _pairs(value: Any, width: int | None = None) -> list[tuple[int, Any]]:
 
 def _to_record(value: dict[str, Any], name: str) -> list[Any]:
     table = RECORDS[name]
-    permitted = {key for key, _ in table} | ({"protocol"} if name == "root" else set())
+    permitted = {key for key, _ in table if not key.startswith("_reserved")} | ({"protocol"} if name == "root" else set())
     if set(value) - permitted:
         raise ProtocolError("unmapped developer field cannot be silently omitted from wire")
     return [[tag, _to_value(value[key], kind)] for tag, (key, kind) in enumerate(table) if key in value]
@@ -132,7 +132,13 @@ def _to_record(value: dict[str, Any], name: str) -> list[Any]:
 
 def _from_record(value: Any, name: str) -> dict[str, Any]:
     table = RECORDS[name]
-    return {table[tag][0]: _from_value(content, table[tag][1]) for tag, content in _pairs(value, len(table))}
+    result: dict[str, Any] = {}
+    for tag, content in _pairs(value, len(table)):
+        key, kind = table[tag]
+        if key.startswith("_reserved"):
+            raise ProtocolError("reserved wire tag")
+        result[key] = _from_value(content, kind)
+    return result
 
 
 def _component_table(layer: str) -> tuple[tuple[str, str], ...]:

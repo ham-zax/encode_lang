@@ -225,6 +225,41 @@
                 "minimum": 0,
                 "maximum": 7
               },
+              "v": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "V00",
+                    "V01",
+                    "V02",
+                    "V03",
+                    "V04",
+                    "V05",
+                    "V06",
+                    "V07"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "enum": [
+                    -7,
+                    -6,
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                  ]
+                }
+              },
               "value": {
                 "type": [
                   "number",
@@ -309,7 +344,11 @@
                     "R12",
                     "R13",
                     "R14",
-                    "R15"
+                    "R15",
+                    "R16",
+                    "R17",
+                    "R18",
+                    "R19"
                   ]
                 },
                 "additionalProperties": {
@@ -357,7 +396,11 @@
                           "R12",
                           "R13",
                           "R14",
-                          "R15"
+                          "R15",
+                          "R16",
+                          "R17",
+                          "R18",
+                          "R19"
                         ]
                       },
                       "additionalProperties": {
@@ -405,7 +448,11 @@
                           "R12",
                           "R13",
                           "R14",
-                          "R15"
+                          "R15",
+                          "R16",
+                          "R17",
+                          "R18",
+                          "R19"
                         ]
                       },
                       "additionalProperties": {
@@ -437,6 +484,41 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 7
+              },
+              "v": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "V00",
+                    "V01",
+                    "V02",
+                    "V03",
+                    "V04",
+                    "V05",
+                    "V06",
+                    "V07"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "enum": [
+                    -7,
+                    -6,
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                  ]
+                }
               },
               "subject": {
                 "type": "string",
@@ -506,7 +588,11 @@
                     "A12",
                     "A13",
                     "A14",
-                    "A15"
+                    "A15",
+                    "A16",
+                    "A17",
+                    "A18",
+                    "A19"
                   ]
                 },
                 "additionalProperties": {
@@ -554,7 +640,11 @@
                           "A12",
                           "A13",
                           "A14",
-                          "A15"
+                          "A15",
+                          "A16",
+                          "A17",
+                          "A18",
+                          "A19"
                         ]
                       },
                       "additionalProperties": {
@@ -602,7 +692,11 @@
                           "A12",
                           "A13",
                           "A14",
-                          "A15"
+                          "A15",
+                          "A16",
+                          "A17",
+                          "A18",
+                          "A19"
                         ]
                       },
                       "additionalProperties": {
@@ -635,6 +729,41 @@
                 "minimum": 0,
                 "maximum": 7
               },
+              "v": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "V00",
+                    "V01",
+                    "V02",
+                    "V03",
+                    "V04",
+                    "V05",
+                    "V06",
+                    "V07"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "enum": [
+                    -7,
+                    -6,
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                  ]
+                }
+              },
               "target": {
                 "type": "string",
                 "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
@@ -662,6 +791,10 @@
               },
               "not": {
                 "type": "boolean"
+              },
+              "goal": {
+                "type": "string",
+                "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
               }
             },
             "required": [
@@ -848,6 +981,41 @@
                 "minimum": 0,
                 "maximum": 7
               },
+              "v": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "V00",
+                    "V01",
+                    "V02",
+                    "V03",
+                    "V04",
+                    "V05",
+                    "V06",
+                    "V07"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "enum": [
+                    -7,
+                    -6,
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                  ]
+                }
+              },
               "value": {
                 "type": [
                   "number",
@@ -905,7 +1073,11 @@
                   "gt",
                   "ge",
                   "exists",
-                  "done"
+                  "done",
+                  "holds",
+                  "not",
+                  "all",
+                  "any"
                 ]
               },
               "left": {
@@ -915,12 +1087,20 @@
               "right": {
                 "type": "string",
                 "pattern": "^(?:[eratc][0-9]+|X(?:0[0-9]|[1-9A-F][0-9A-F]))$"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^c[0-9]+$"
+                },
+                "minItems": 2,
+                "uniqueItems": true
               }
             },
             "required": [
               "id",
-              "op",
-              "left"
+              "op"
             ],
             "additionalProperties": false
           },
